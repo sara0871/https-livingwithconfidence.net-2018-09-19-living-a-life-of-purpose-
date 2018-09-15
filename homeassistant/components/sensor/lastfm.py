@@ -14,22 +14,24 @@ from homeassistant.const import CONF_API_KEY
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['pylast==2.4.0']
+REQUIREMENTS = ["pylast==2.4.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_LAST_PLAYED = 'last_played'
-ATTR_PLAY_COUNT = 'play_count'
-ATTR_TOP_PLAYED = 'top_played'
+ATTR_LAST_PLAYED = "last_played"
+ATTR_PLAY_COUNT = "play_count"
+ATTR_TOP_PLAYED = "top_played"
 
-CONF_USERS = 'users'
+CONF_USERS = "users"
 
-ICON = 'mdi:lastfm'
+ICON = "mdi:lastfm"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_API_KEY): cv.string,
-    vol.Required(CONF_USERS, default=[]): vol.All(cv.ensure_list, [cv.string]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_API_KEY): cv.string,
+        vol.Required(CONF_USERS, default=[]): vol.All(cv.ensure_list, [cv.string]),
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -76,7 +78,7 @@ class LastfmSensor(Entity):
     @property
     def entity_id(self):
         """Return the entity ID."""
-        return 'sensor.lastfm_{}'.format(self._name)
+        return "sensor.lastfm_{}".format(self._name)
 
     @property
     def state(self):
@@ -88,13 +90,11 @@ class LastfmSensor(Entity):
         self._cover = self._user.get_image()
         self._playcount = self._user.get_playcount()
         last = self._user.get_recent_tracks(limit=2)[0]
-        self._lastplayed = "{} - {}".format(
-            last.track.artist, last.track.title)
+        self._lastplayed = "{} - {}".format(last.track.artist, last.track.title)
         top = self._user.get_top_tracks(limit=1)[0]
         toptitle = re.search("', '(.+?)',", str(top))
         topartist = re.search("'(.+?)',", str(top))
-        self._topplayed = "{} - {}".format(
-            topartist.group(1), toptitle.group(1))
+        self._topplayed = "{} - {}".format(topartist.group(1), toptitle.group(1))
         if self._user.get_now_playing() is None:
             self._state = "Not Scrobbling"
             return

@@ -11,8 +11,8 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import callback
 from homeassistant.helpers.entity import Entity
 
-NAME_WS = 'homeassistant.components.websocket_api'
-NAME_STREAM = 'homeassistant.components.api'
+NAME_WS = "homeassistant.components.websocket_api"
+NAME_STREAM = "homeassistant.components.api"
 
 
 class StreamHandler(logging.Handler):
@@ -27,30 +27,29 @@ class StreamHandler(logging.Handler):
     def handle(self, record):
         """Handle a log message."""
         if record.name == NAME_STREAM:
-            if not record.msg.startswith('STREAM'):
+            if not record.msg.startswith("STREAM"):
                 return
 
-            if record.msg.endswith('ATTACHED'):
+            if record.msg.endswith("ATTACHED"):
                 self.entity.count += 1
-            elif record.msg.endswith('RESPONSE CLOSED'):
+            elif record.msg.endswith("RESPONSE CLOSED"):
                 self.entity.count -= 1
 
         else:
-            if not record.msg.startswith('WS'):
+            if not record.msg.startswith("WS"):
                 return
             if len(record.args) < 2:
                 return
-            if record.args[1] == 'Connected':
+            if record.args[1] == "Connected":
                 self.entity.count += 1
-            elif record.args[1] == 'Closed connection':
+            elif record.args[1] == "Closed connection":
                 self.entity.count -= 1
 
         self.entity.schedule_update_ha_state()
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the API stream platform."""
     entity = APICount()
     handler = StreamHandler(entity)

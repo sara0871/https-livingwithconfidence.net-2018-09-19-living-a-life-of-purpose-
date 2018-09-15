@@ -9,8 +9,7 @@ from timeit import default_timer as timer
 import async_timeout
 import voluptuous as vol
 
-from homeassistant.const import (
-    CONF_NAME, CONF_OPTIMISTIC, EVENT_HOMEASSISTANT_STOP)
+from homeassistant.const import CONF_NAME, CONF_OPTIMISTIC, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import callback
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
@@ -18,27 +17,42 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.setup import async_setup_component
 
 from .const import (
-    ATTR_DEVICES, CONF_BAUD_RATE, CONF_DEVICE, CONF_GATEWAYS, CONF_NODES,
-    CONF_PERSISTENCE, CONF_PERSISTENCE_FILE, CONF_RETAIN, CONF_TCP_PORT,
-    CONF_TOPIC_IN_PREFIX, CONF_TOPIC_OUT_PREFIX, CONF_VERSION, DOMAIN,
-    MYSENSORS_CONST_SCHEMA, MYSENSORS_GATEWAYS, PLATFORM, SCHEMA,
-    SIGNAL_CALLBACK, TYPE)
+    ATTR_DEVICES,
+    CONF_BAUD_RATE,
+    CONF_DEVICE,
+    CONF_GATEWAYS,
+    CONF_NODES,
+    CONF_PERSISTENCE,
+    CONF_PERSISTENCE_FILE,
+    CONF_RETAIN,
+    CONF_TCP_PORT,
+    CONF_TOPIC_IN_PREFIX,
+    CONF_TOPIC_OUT_PREFIX,
+    CONF_VERSION,
+    DOMAIN,
+    MYSENSORS_CONST_SCHEMA,
+    MYSENSORS_GATEWAYS,
+    PLATFORM,
+    SCHEMA,
+    SIGNAL_CALLBACK,
+    TYPE,
+)
 from .device import get_mysensors_devices
 
 _LOGGER = logging.getLogger(__name__)
 
 GATEWAY_READY_TIMEOUT = 15.0
-MQTT_COMPONENT = 'mqtt'
-MYSENSORS_GATEWAY_READY = 'mysensors_gateway_ready_{}'
+MQTT_COMPONENT = "mqtt"
+MYSENSORS_GATEWAY_READY = "mysensors_gateway_ready_{}"
 
 
 def is_serial_port(value):
     """Validate that value is a windows serial port or a unix device."""
-    if sys.platform.startswith('win'):
-        ports = ('COM{}'.format(idx + 1) for idx in range(256))
+    if sys.platform.startswith("win"):
+        ports = ("COM{}".format(idx + 1) for idx in range(256))
         if value in ports:
             return value
-        raise vol.Invalid('{} is not a serial port'.format(value))
+        raise vol.Invalid("{} is not a serial port".format(value))
     return cv.isdevice(value)
 
 
@@ -48,7 +62,7 @@ def is_socket_address(value):
         socket.getaddrinfo(value, None)
         return value
     except OSError:
-        raise vol.Invalid('Device is not a valid domain name or ip address')
+        raise vol.Invalid("Device is not a valid domain name or ip address")
 
 
 def get_mysensors_gateway(hass, gateway_id):
@@ -67,9 +81,9 @@ async def setup_gateways(hass, config):
     for index, gateway_conf in enumerate(conf[CONF_GATEWAYS]):
         persistence_file = gateway_conf.get(
             CONF_PERSISTENCE_FILE,
-            hass.config.path('mysensors{}.pickle'.format(index + 1)))
-        ready_gateway = await _get_gateway(
-            hass, config, gateway_conf, persistence_file)
+            hass.config.path("mysensors{}.pickle".format(index + 1)),
+        )
+        ready_gateway = await _get_gateway(hass, config, gateway_conf, persistence_file)
         if ready_gateway is not None:
             gateways[id(ready_gateway)] = ready_gateway
 
@@ -86,8 +100,8 @@ async def _get_gateway(hass, config, gateway_conf, persistence_file):
     device = gateway_conf[CONF_DEVICE]
     baud_rate = gateway_conf[CONF_BAUD_RATE]
     tcp_port = gateway_conf[CONF_TCP_PORT]
-    in_prefix = gateway_conf.get(CONF_TOPIC_IN_PREFIX, '')
-    out_prefix = gateway_conf.get(CONF_TOPIC_OUT_PREFIX, '')
+    in_prefix = gateway_conf.get(CONF_TOPIC_IN_PREFIX, "")
+    out_prefix = gateway_conf.get(CONF_TOPIC_OUT_PREFIX, "")
 
     if device == MQTT_COMPONENT:
         if not await async_setup_component(hass, MQTT_COMPONENT, config):
@@ -101,36 +115,51 @@ async def _get_gateway(hass, config, gateway_conf, persistence_file):
 
         def sub_callback(topic, sub_cb, qos):
             """Call MQTT subscribe function."""
+
             @callback
             def internal_callback(*args):
                 """Call callback."""
                 sub_cb(*args)
 
-            hass.async_add_job(
-                mqtt.async_subscribe(topic, internal_callback, qos))
+            hass.async_add_job(mqtt.async_subscribe(topic, internal_callback, qos))
 
         gateway = mysensors.AsyncMQTTGateway(
-            pub_callback, sub_callback, in_prefix=in_prefix,
-            out_prefix=out_prefix, retain=retain, loop=hass.loop,
-            event_callback=None, persistence=persistence,
+            pub_callback,
+            sub_callback,
+            in_prefix=in_prefix,
+            out_prefix=out_prefix,
+            retain=retain,
+            loop=hass.loop,
+            event_callback=None,
+            persistence=persistence,
             persistence_file=persistence_file,
-            protocol_version=version)
+            protocol_version=version,
+        )
     else:
         try:
             await hass.async_add_job(is_serial_port, device)
             gateway = mysensors.AsyncSerialGateway(
-                device, baud=baud_rate, loop=hass.loop,
-                event_callback=None, persistence=persistence,
+                device,
+                baud=baud_rate,
+                loop=hass.loop,
+                event_callback=None,
+                persistence=persistence,
                 persistence_file=persistence_file,
-                protocol_version=version)
+                protocol_version=version,
+            )
         except vol.Invalid:
             try:
                 await hass.async_add_job(is_socket_address, device)
                 # valid ip address
                 gateway = mysensors.AsyncTCPGateway(
-                    device, port=tcp_port, loop=hass.loop, event_callback=None,
-                    persistence=persistence, persistence_file=persistence_file,
-                    protocol_version=version)
+                    device,
+                    port=tcp_port,
+                    loop=hass.loop,
+                    event_callback=None,
+                    persistence=persistence,
+                    persistence_file=persistence_file,
+                    protocol_version=version,
+                )
             except vol.Invalid:
                 # invalid ip address
                 return None
@@ -178,9 +207,11 @@ async def _discover_persistent_devices(hass, gateway):
 @callback
 def _discover_mysensors_platform(hass, platform, new_devices):
     """Discover a MySensors platform."""
-    task = hass.async_create_task(discovery.async_load_platform(
-        hass, platform, DOMAIN,
-        {ATTR_DEVICES: new_devices, CONF_NAME: DOMAIN}))
+    task = hass.async_create_task(
+        discovery.async_load_platform(
+            hass, platform, DOMAIN, {ATTR_DEVICES: new_devices, CONF_NAME: DOMAIN}
+        )
+    )
     return task
 
 
@@ -197,7 +228,7 @@ async def _gw_start(hass, gateway):
             connect_task.cancel()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, gw_stop)
-    if gateway.device == 'mqtt':
+    if gateway.device == "mqtt":
         # Gatways connected via mqtt doesn't send gateway ready message.
         return
     gateway_ready = asyncio.Future()
@@ -210,19 +241,21 @@ async def _gw_start(hass, gateway):
     except asyncio.TimeoutError:
         _LOGGER.warning(
             "Gateway %s not ready after %s secs so continuing with setup",
-            gateway.device, GATEWAY_READY_TIMEOUT)
+            gateway.device,
+            GATEWAY_READY_TIMEOUT,
+        )
     finally:
         hass.data.pop(gateway_ready_key, None)
 
 
 def _gw_callback_factory(hass):
     """Return a new callback for the gateway."""
+
     @callback
     def mysensors_callback(msg):
         """Handle messages from a MySensors gateway."""
         start = timer()
-        _LOGGER.debug(
-            "Node update: node %s child %s", msg.node_id, msg.child_id)
+        _LOGGER.debug("Node update: node %s child %s", msg.node_id, msg.child_id)
 
         _set_gateway_ready(hass, msg)
 
@@ -256,18 +289,23 @@ def _gw_callback_factory(hass):
         if end - start > 0.1:
             _LOGGER.debug(
                 "Callback for node %s child %s took %.3f seconds",
-                msg.node_id, msg.child_id, end - start)
+                msg.node_id,
+                msg.child_id,
+                end - start,
+            )
+
     return mysensors_callback
 
 
 @callback
 def _set_gateway_ready(hass, msg):
     """Set asyncio future result if gateway is ready."""
-    if (msg.type != msg.gateway.const.MessageType.internal or
-            msg.sub_type != msg.gateway.const.Internal.I_GATEWAY_READY):
+    if (
+        msg.type != msg.gateway.const.MessageType.internal
+        or msg.sub_type != msg.gateway.const.Internal.I_GATEWAY_READY
+    ):
         return
-    gateway_ready = hass.data.get(MYSENSORS_GATEWAY_READY.format(
-        id(msg.gateway)))
+    gateway_ready = hass.data.get(MYSENSORS_GATEWAY_READY.format(id(msg.gateway)))
     if gateway_ready is None or gateway_ready.cancelled():
         return
     gateway_ready.set_result(True)
@@ -281,16 +319,14 @@ def _validate_child(gateway, node_id, child):
     validated = defaultdict(list)
 
     if not child.values:
-        _LOGGER.debug(
-            "No child values for node %s child %s", node_id, child.id)
+        _LOGGER.debug("No child values for node %s child %s", node_id, child.id)
         return validated
     if gateway.sensors[node_id].sketch_name is None:
         _LOGGER.debug("Node %s is missing sketch name", node_id)
         return validated
     pres = gateway.const.Presentation
     set_req = gateway.const.SetReq
-    s_name = next(
-        (member.name for member in pres if member.value == child.type), None)
+    s_name = next((member.name for member in pres if member.value == child.type), None)
     if s_name not in MYSENSORS_CONST_SCHEMA:
         _LOGGER.warning("Child type %s is not supported", s_name)
         return validated
@@ -299,31 +335,40 @@ def _validate_child(gateway, node_id, child):
     def msg(name):
         """Return a message for an invalid schema."""
         return "{} requires value_type {}".format(
-            pres(child.type).name, set_req[name].name)
+            pres(child.type).name, set_req[name].name
+        )
 
     for schema in child_schemas:
         platform = schema[PLATFORM]
         v_name = schema[TYPE]
         value_type = next(
-            (member.value for member in set_req if member.name == v_name),
-            None)
+            (member.value for member in set_req if member.name == v_name), None
+        )
         if value_type is None:
             continue
         _child_schema = child.get_schema(gateway.protocol_version)
         vol_schema = _child_schema.extend(
-            {vol.Required(set_req[key].value, msg=msg(key)):
-             _child_schema.schema.get(set_req[key].value, val)
-             for key, val in schema.get(SCHEMA, {v_name: cv.string}).items()},
-            extra=vol.ALLOW_EXTRA)
+            {
+                vol.Required(
+                    set_req[key].value, msg=msg(key)
+                ): _child_schema.schema.get(set_req[key].value, val)
+                for key, val in schema.get(SCHEMA, {v_name: cv.string}).items()
+            },
+            extra=vol.ALLOW_EXTRA,
+        )
         try:
             vol_schema(child.values)
         except vol.Invalid as exc:
-            level = (logging.WARNING if value_type in child.values
-                     else logging.DEBUG)
+            level = logging.WARNING if value_type in child.values else logging.DEBUG
             _LOGGER.log(
                 level,
                 "Invalid values: %s: %s platform: node %s child %s: %s",
-                child.values, platform, node_id, child.id, exc)
+                child.values,
+                platform,
+                node_id,
+                child.id,
+                exc,
+            )
             continue
         dev_id = id(gateway), node_id, child.id, value_type
         validated[platform].append(dev_id)

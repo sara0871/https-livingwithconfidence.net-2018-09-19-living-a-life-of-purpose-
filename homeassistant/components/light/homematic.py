@@ -7,13 +7,12 @@ https://home-assistant.io/components/light.homematic/
 import logging
 
 from homeassistant.components.homematic import ATTR_DISCOVER_DEVICES, HMDevice
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, Light)
+from homeassistant.components.light import ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, Light
 from homeassistant.const import STATE_UNKNOWN
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['homematic']
+DEPENDENCIES = ["homematic"]
 
 SUPPORT_HOMEMATIC = SUPPORT_BRIGHTNESS
 

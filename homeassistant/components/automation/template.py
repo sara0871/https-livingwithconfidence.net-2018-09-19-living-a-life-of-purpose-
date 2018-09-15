@@ -17,10 +17,12 @@ import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-TRIGGER_SCHEMA = IF_ACTION_SCHEMA = vol.Schema({
-    vol.Required(CONF_PLATFORM): 'template',
-    vol.Required(CONF_VALUE_TEMPLATE): cv.template,
-})
+TRIGGER_SCHEMA = IF_ACTION_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_PLATFORM): "template",
+        vol.Required(CONF_VALUE_TEMPLATE): cv.template,
+    }
+)
 
 
 @asyncio.coroutine
@@ -32,13 +34,18 @@ def async_trigger(hass, config, action):
     @callback
     def template_listener(entity_id, from_s, to_s):
         """Listen for state changes and calls action."""
-        hass.async_run_job(action({
-            'trigger': {
-                'platform': 'template',
-                'entity_id': entity_id,
-                'from_state': from_s,
-                'to_state': to_s,
-            },
-        }, context=to_s.context))
+        hass.async_run_job(
+            action(
+                {
+                    "trigger": {
+                        "platform": "template",
+                        "entity_id": entity_id,
+                        "from_state": from_s,
+                        "to_state": to_s,
+                    }
+                },
+                context=to_s.context,
+            )
+        )
 
     return async_track_template(hass, value_template, template_listener)

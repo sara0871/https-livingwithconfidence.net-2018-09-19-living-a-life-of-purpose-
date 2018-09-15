@@ -9,35 +9,47 @@ import logging
 import voluptuous as vol
 
 from homeassistant.const import (
-    ATTR_ENTITY_ID, CONF_ICON, CONF_NAME, SERVICE_TURN_OFF, SERVICE_TURN_ON,
-    SERVICE_TOGGLE, STATE_ON)
+    ATTR_ENTITY_ID,
+    CONF_ICON,
+    CONF_NAME,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    SERVICE_TOGGLE,
+    STATE_ON,
+)
 from homeassistant.loader import bind_hass
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.restore_state import async_get_last_state
 
-DOMAIN = 'input_boolean'
+DOMAIN = "input_boolean"
 
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_INITIAL = 'initial'
+CONF_INITIAL = "initial"
 
-SERVICE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-})
+SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        cv.slug: vol.Any({
-            vol.Optional(CONF_NAME): cv.string,
-            vol.Optional(CONF_INITIAL): cv.boolean,
-            vol.Optional(CONF_ICON): cv.icon,
-        }, None)
-    })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                cv.slug: vol.Any(
+                    {
+                        vol.Optional(CONF_NAME): cv.string,
+                        vol.Optional(CONF_INITIAL): cv.boolean,
+                        vol.Optional(CONF_ICON): cv.icon,
+                    },
+                    None,
+                )
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 @bind_hass
@@ -84,18 +96,15 @@ async def async_setup(hass, config):
         return False
 
     component.async_register_entity_service(
-        SERVICE_TURN_ON, SERVICE_SCHEMA,
-        'async_turn_on'
+        SERVICE_TURN_ON, SERVICE_SCHEMA, "async_turn_on"
     )
 
     component.async_register_entity_service(
-        SERVICE_TURN_OFF, SERVICE_SCHEMA,
-        'async_turn_off'
+        SERVICE_TURN_OFF, SERVICE_SCHEMA, "async_turn_off"
     )
 
     component.async_register_entity_service(
-        SERVICE_TOGGLE, SERVICE_SCHEMA,
-        'async_toggle'
+        SERVICE_TOGGLE, SERVICE_SCHEMA, "async_toggle"
     )
 
     await component.async_add_entities(entities)

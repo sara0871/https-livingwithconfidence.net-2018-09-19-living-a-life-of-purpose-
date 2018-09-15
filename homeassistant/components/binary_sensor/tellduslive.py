@@ -20,8 +20,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if discovery_info is None:
         return
     add_entities(
-        TelldusLiveSensor(hass, binary_sensor)
-        for binary_sensor in discovery_info
+        TelldusLiveSensor(hass, binary_sensor) for binary_sensor in discovery_info
     )
 
 

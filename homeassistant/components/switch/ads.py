@@ -17,14 +17,13 @@ from homeassistant.helpers.entity import ToggleEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['ads']
+DEPENDENCIES = ["ads"]
 
-DEFAULT_NAME = 'ADS Switch'
+DEFAULT_NAME = "ADS Switch"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ADS_VAR): cv.string,
-    vol.Optional(CONF_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_ADS_VAR): cv.string, vol.Optional(CONF_NAME): cv.string}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -50,15 +49,19 @@ class AdsSwitch(ToggleEntity):
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Register device notification."""
+
         def update(name, value):
             """Handle device notification."""
-            _LOGGER.debug('Variable %s changed its value to %d', name, value)
+            _LOGGER.debug("Variable %s changed its value to %d", name, value)
             self._on_state = value
             self.schedule_update_ha_state()
 
         self.hass.async_add_job(
             self._ads_hub.add_device_notification,
-            self.ads_var, self._ads_hub.PLCTYPE_BOOL, update)
+            self.ads_var,
+            self._ads_hub.PLCTYPE_BOOL,
+            update,
+        )
 
     @property
     def is_on(self):
@@ -77,10 +80,8 @@ class AdsSwitch(ToggleEntity):
 
     def turn_on(self, **kwargs):
         """Turn the switch on."""
-        self._ads_hub.write_by_name(
-            self.ads_var, True, self._ads_hub.PLCTYPE_BOOL)
+        self._ads_hub.write_by_name(self.ads_var, True, self._ads_hub.PLCTYPE_BOOL)
 
     def turn_off(self, **kwargs):
         """Turn the switch off."""
-        self._ads_hub.write_by_name(
-            self.ads_var, False, self._ads_hub.PLCTYPE_BOOL)
+        self._ads_hub.write_by_name(self.ads_var, False, self._ads_hub.PLCTYPE_BOOL)

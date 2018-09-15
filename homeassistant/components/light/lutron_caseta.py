@@ -8,20 +8,24 @@ import asyncio
 import logging
 
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, Light, DOMAIN)
-from homeassistant.components.light.lutron import (
-    to_hass_level, to_lutron_level)
+    ATTR_BRIGHTNESS,
+    SUPPORT_BRIGHTNESS,
+    Light,
+    DOMAIN,
+)
+from homeassistant.components.light.lutron import to_hass_level, to_lutron_level
 from homeassistant.components.lutron_caseta import (
-    LUTRON_CASETA_SMARTBRIDGE, LutronCasetaDevice)
+    LUTRON_CASETA_SMARTBRIDGE,
+    LutronCasetaDevice,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['lutron_caseta']
+DEPENDENCIES = ["lutron_caseta"]
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Lutron Caseta lights."""
     devs = []
     bridge = hass.data[LUTRON_CASETA_SMARTBRIDGE]
@@ -50,8 +54,7 @@ class LutronCasetaLight(LutronCasetaDevice, Light):
     def async_turn_on(self, **kwargs):
         """Turn the light on."""
         brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
-        self._smartbridge.set_value(self._device_id,
-                                    to_lutron_level(brightness))
+        self._smartbridge.set_value(self._device_id, to_lutron_level(brightness))
 
     @asyncio.coroutine
     def async_turn_off(self, **kwargs):

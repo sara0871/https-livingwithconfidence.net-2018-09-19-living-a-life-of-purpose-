@@ -18,7 +18,7 @@ class HideSensitiveDataFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Hide sensitive data in messages."""
-        record.msg = record.msg.replace(self.text, '*******')
+        record.msg = record.msg.replace(self.text, "*******")
 
         return True
 
@@ -27,8 +27,7 @@ class HideSensitiveDataFilter(logging.Filter):
 class AsyncHandler:
     """Logging handler wrapper to add an async layer."""
 
-    def __init__(
-            self, loop: AbstractEventLoop, handler: logging.Handler) -> None:
+    def __init__(self, loop: AbstractEventLoop, handler: logging.Handler) -> None:
         """Initialize async logging handler wrapper."""
         self.handler = handler
         self.loop = loop
@@ -81,8 +80,7 @@ class AsyncHandler:
     def _process(self) -> None:
         """Process log in a thread."""
         while True:
-            record = run_coroutine_threadsafe(
-                self._queue.get(), self.loop).result()
+            record = run_coroutine_threadsafe(self._queue.get(), self.loop).result()
 
             if record is None:
                 self.handler.close()

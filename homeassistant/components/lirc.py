@@ -11,24 +11,21 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.const import (
-    EVENT_HOMEASSISTANT_STOP, EVENT_HOMEASSISTANT_START)
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP, EVENT_HOMEASSISTANT_START
 
-REQUIREMENTS = ['python-lirc==1.2.3']
+REQUIREMENTS = ["python-lirc==1.2.3"]
 
 _LOGGER = logging.getLogger(__name__)
 
-BUTTON_NAME = 'button_name'
+BUTTON_NAME = "button_name"
 
-DOMAIN = 'lirc'
+DOMAIN = "lirc"
 
-EVENT_IR_COMMAND_RECEIVED = 'ir_command_received'
+EVENT_IR_COMMAND_RECEIVED = "ir_command_received"
 
-ICON = 'mdi:remote'
+ICON = "mdi:remote"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({}),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 
 
 def setup(hass, config):
@@ -38,7 +35,7 @@ def setup(hass, config):
     # blocking=True gives unexpected behavior (multiple responses for 1 press)
     # also by not blocking, we allow hass to shut down the thread gracefully
     # on exit.
-    lirc.init('home-assistant', blocking=False)
+    lirc.init("home-assistant", blocking=False)
     lirc_interface = LircInterface(hass)
 
     def _start_lirc(_event):
@@ -72,6 +69,7 @@ class LircInterface(threading.Thread):
     def run(self):
         """Run the loop of the LIRC interface thread."""
         import lirc
+
         _LOGGER.debug("LIRC interface thread started")
         while not self.stopped.isSet():
             try:
@@ -83,9 +81,8 @@ class LircInterface(threading.Thread):
             if code:
                 code = code[0]
                 _LOGGER.info("Got new LIRC code %s", code)
-                self.hass.bus.fire(
-                    EVENT_IR_COMMAND_RECEIVED, {BUTTON_NAME: code})
+                self.hass.bus.fire(EVENT_IR_COMMAND_RECEIVED, {BUTTON_NAME: code})
             else:
                 time.sleep(0.2)
         lirc.deinit()
-        _LOGGER.debug('LIRC interface thread stopped')
+        _LOGGER.debug("LIRC interface thread stopped")

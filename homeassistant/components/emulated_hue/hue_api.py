@@ -6,34 +6,45 @@ from aiohttp import web
 
 from homeassistant import core
 from homeassistant.const import (
-    ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, SERVICE_VOLUME_SET,
-    SERVICE_OPEN_COVER, SERVICE_CLOSE_COVER, STATE_ON, STATE_OFF,
-    HTTP_BAD_REQUEST, HTTP_NOT_FOUND, ATTR_SUPPORTED_FEATURES,
+    ATTR_ENTITY_ID,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    SERVICE_VOLUME_SET,
+    SERVICE_OPEN_COVER,
+    SERVICE_CLOSE_COVER,
+    STATE_ON,
+    STATE_OFF,
+    HTTP_BAD_REQUEST,
+    HTTP_NOT_FOUND,
+    ATTR_SUPPORTED_FEATURES,
 )
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS
-)
+from homeassistant.components.light import ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS
 from homeassistant.components.media_player import (
-    ATTR_MEDIA_VOLUME_LEVEL, SUPPORT_VOLUME_SET,
+    ATTR_MEDIA_VOLUME_LEVEL,
+    SUPPORT_VOLUME_SET,
 )
 from homeassistant.components.fan import (
-    ATTR_SPEED, SUPPORT_SET_SPEED, SPEED_OFF, SPEED_LOW,
-    SPEED_MEDIUM, SPEED_HIGH
+    ATTR_SPEED,
+    SUPPORT_SET_SPEED,
+    SPEED_OFF,
+    SPEED_LOW,
+    SPEED_MEDIUM,
+    SPEED_HIGH,
 )
 from homeassistant.components.http import HomeAssistantView
 
 _LOGGER = logging.getLogger(__name__)
 
-HUE_API_STATE_ON = 'on'
-HUE_API_STATE_BRI = 'bri'
+HUE_API_STATE_ON = "on"
+HUE_API_STATE_BRI = "bri"
 
 
 class HueUsernameView(HomeAssistantView):
     """Handle requests to create a username for the emulated hue bridge."""
 
-    url = '/api'
-    name = 'emulated_hue:api:create_username'
-    extra_urls = ['/api/']
+    url = "/api"
+    name = "emulated_hue:api:create_username"
+    extra_urls = ["/api/"]
     requires_auth = False
 
     @asyncio.coroutine
@@ -42,20 +53,19 @@ class HueUsernameView(HomeAssistantView):
         try:
             data = yield from request.json()
         except ValueError:
-            return self.json_message('Invalid JSON', HTTP_BAD_REQUEST)
+            return self.json_message("Invalid JSON", HTTP_BAD_REQUEST)
 
-        if 'devicetype' not in data:
-            return self.json_message('devicetype not specified',
-                                     HTTP_BAD_REQUEST)
+        if "devicetype" not in data:
+            return self.json_message("devicetype not specified", HTTP_BAD_REQUEST)
 
-        return self.json([{'success': {'username': '12345678901234567890'}}])
+        return self.json([{"success": {"username": "12345678901234567890"}}])
 
 
 class HueGroupView(HomeAssistantView):
     """Group handler to get Logitech Pop working."""
 
-    url = '/api/{username}/groups/0/action'
-    name = 'emulated_hue:groups:state'
+    url = "/api/{username}/groups/0/action"
+    name = "emulated_hue:groups:state"
     requires_auth = False
 
     def __init__(self, config):
@@ -65,20 +75,24 @@ class HueGroupView(HomeAssistantView):
     @core.callback
     def put(self, request, username):
         """Process a request to make the Logitech Pop working."""
-        return self.json([{
-            'error': {
-                'address': '/groups/0/action/scene',
-                'type': 7,
-                'description': 'invalid value, dummy for parameter, scene'
-            }
-        }])
+        return self.json(
+            [
+                {
+                    "error": {
+                        "address": "/groups/0/action/scene",
+                        "type": 7,
+                        "description": "invalid value, dummy for parameter, scene",
+                    }
+                }
+            ]
+        )
 
 
 class HueAllLightsStateView(HomeAssistantView):
     """Handle requests for getting and setting info about entities."""
 
-    url = '/api/{username}/lights'
-    name = 'emulated_hue:lights:state'
+    url = "/api/{username}/lights"
+    name = "emulated_hue:lights:state"
     requires_auth = False
 
     def __init__(self, config):
@@ -88,7 +102,7 @@ class HueAllLightsStateView(HomeAssistantView):
     @core.callback
     def get(self, request, username):
         """Process a request to get the list of available lights."""
-        hass = request.app['hass']
+        hass = request.app["hass"]
         json_response = {}
 
         for entity in hass.states.async_all():
@@ -97,7 +111,8 @@ class HueAllLightsStateView(HomeAssistantView):
 
                 number = self.config.entity_id_to_number(entity.entity_id)
                 json_response[number] = entity_to_json(
-                    self.config, entity, state, brightness)
+                    self.config, entity, state, brightness
+                )
 
         return self.json(json_response)
 
@@ -105,8 +120,8 @@ class HueAllLightsStateView(HomeAssistantView):
 class HueOneLightStateView(HomeAssistantView):
     """Handle requests for getting and setting info about entities."""
 
-    url = '/api/{username}/lights/{entity_id}'
-    name = 'emulated_hue:light:state'
+    url = "/api/{username}/lights/{entity_id}"
+    name = "emulated_hue:light:state"
     requires_auth = False
 
     def __init__(self, config):
@@ -116,16 +131,16 @@ class HueOneLightStateView(HomeAssistantView):
     @core.callback
     def get(self, request, username, entity_id):
         """Process a request to get the state of an individual light."""
-        hass = request.app['hass']
+        hass = request.app["hass"]
         entity_id = self.config.number_to_entity_id(entity_id)
         entity = hass.states.get(entity_id)
 
         if entity is None:
-            _LOGGER.error('Entity not found: %s', entity_id)
+            _LOGGER.error("Entity not found: %s", entity_id)
             return web.Response(text="Entity not found", status=404)
 
         if not self.config.is_entity_exposed(entity):
-            _LOGGER.error('Entity not exposed: %s', entity_id)
+            _LOGGER.error("Entity not exposed: %s", entity_id)
             return web.Response(text="Entity not exposed", status=404)
 
         state, brightness = get_entity_state(self.config, entity)
@@ -138,8 +153,8 @@ class HueOneLightStateView(HomeAssistantView):
 class HueOneLightChangeView(HomeAssistantView):
     """Handle requests for getting and setting info about entities."""
 
-    url = '/api/{username}/lights/{entity_number}/state'
-    name = 'emulated_hue:light:state'
+    url = "/api/{username}/lights/{entity_number}/state"
+    name = "emulated_hue:light:state"
     requires_auth = False
 
     def __init__(self, config):
@@ -150,34 +165,34 @@ class HueOneLightChangeView(HomeAssistantView):
     def put(self, request, username, entity_number):
         """Process a request to set the state of an individual light."""
         config = self.config
-        hass = request.app['hass']
+        hass = request.app["hass"]
         entity_id = config.number_to_entity_id(entity_number)
 
         if entity_id is None:
-            _LOGGER.error('Unknown entity number: %s', entity_number)
-            return self.json_message('Entity not found', HTTP_NOT_FOUND)
+            _LOGGER.error("Unknown entity number: %s", entity_number)
+            return self.json_message("Entity not found", HTTP_NOT_FOUND)
 
         entity = hass.states.get(entity_id)
 
         if entity is None:
-            _LOGGER.error('Entity not found: %s', entity_id)
-            return self.json_message('Entity not found', HTTP_NOT_FOUND)
+            _LOGGER.error("Entity not found: %s", entity_id)
+            return self.json_message("Entity not found", HTTP_NOT_FOUND)
 
         if not config.is_entity_exposed(entity):
-            _LOGGER.error('Entity not exposed: %s', entity_id)
+            _LOGGER.error("Entity not exposed: %s", entity_id)
             return web.Response(text="Entity not exposed", status=404)
 
         try:
             request_json = yield from request.json()
         except ValueError:
-            _LOGGER.error('Received invalid json')
-            return self.json_message('Invalid JSON', HTTP_BAD_REQUEST)
+            _LOGGER.error("Received invalid json")
+            return self.json_message("Invalid JSON", HTTP_BAD_REQUEST)
 
         # Parse the request into requested "on" status and brightness
         parsed = parse_hue_api_put_light_body(request_json, entity)
 
         if parsed is None:
-            _LOGGER.error('Unable to parse data: %s', request_json)
+            _LOGGER.error("Unable to parse data: %s", request_json)
             return web.Response(text="Bad request", status=400)
 
         result, brightness = parsed
@@ -204,12 +219,10 @@ class HueOneLightChangeView(HomeAssistantView):
 
         # If the requested entity is a script add some variables
         elif entity.domain == "script":
-            data['variables'] = {
-                'requested_state': STATE_ON if result else STATE_OFF
-            }
+            data["variables"] = {"requested_state": STATE_ON if result else STATE_OFF}
 
             if brightness is not None:
-                data['variables']['requested_level'] = brightness
+                data["variables"]["requested_level"] = brightness
 
         # If the requested entity is a media player, convert to volume
         elif entity.domain == "media_player":
@@ -257,19 +270,27 @@ class HueOneLightChangeView(HomeAssistantView):
 
         # Separate call to turn on needed
         if turn_on_needed:
-            hass.async_add_job(hass.services.async_call(
-                core.DOMAIN, SERVICE_TURN_ON, {ATTR_ENTITY_ID: entity_id},
-                blocking=True))
+            hass.async_add_job(
+                hass.services.async_call(
+                    core.DOMAIN,
+                    SERVICE_TURN_ON,
+                    {ATTR_ENTITY_ID: entity_id},
+                    blocking=True,
+                )
+            )
 
-        hass.async_add_job(hass.services.async_call(
-            domain, service, data, blocking=True))
+        hass.async_add_job(
+            hass.services.async_call(domain, service, data, blocking=True)
+        )
 
-        json_response = \
-            [create_hue_success_response(entity_id, HUE_API_STATE_ON, result)]
+        json_response = [
+            create_hue_success_response(entity_id, HUE_API_STATE_ON, result)
+        ]
 
         if brightness is not None:
-            json_response.append(create_hue_success_response(
-                entity_id, HUE_API_STATE_BRI, brightness))
+            json_response.append(
+                create_hue_success_response(entity_id, HUE_API_STATE_BRI, brightness)
+            )
 
         return self.json(json_response)
 
@@ -280,7 +301,7 @@ def parse_hue_api_put_light_body(request_json, entity):
         if not isinstance(request_json[HUE_API_STATE_ON], bool):
             return None
 
-        if request_json['on']:
+        if request_json["on"]:
             # Echo requested device be turned on
             brightness = None
             report_brightness = False
@@ -294,8 +315,7 @@ def parse_hue_api_put_light_body(request_json, entity):
     if HUE_API_STATE_BRI in request_json:
         try:
             # Clamp brightness from 0 to 255
-            brightness = \
-                max(0, min(int(request_json[HUE_API_STATE_BRI]), 255))
+            brightness = max(0, min(int(request_json[HUE_API_STATE_BRI]), 255))
         except ValueError:
             return None
 
@@ -305,16 +325,18 @@ def parse_hue_api_put_light_body(request_json, entity):
         if entity.domain == "light":
             if entity_features & SUPPORT_BRIGHTNESS:
                 report_brightness = True
-                result = (brightness > 0)
+                result = brightness > 0
 
         elif entity.domain == "scene":
             brightness = None
             report_brightness = False
             result = True
 
-        elif (entity.domain == "script" or
-              entity.domain == "media_player" or
-              entity.domain == "fan"):
+        elif (
+            entity.domain == "script"
+            or entity.domain == "media_player"
+            or entity.domain == "fan"
+        ):
             # Convert 0-255 to 0-100
             level = brightness / 255 * 100
             brightness = round(level)
@@ -331,7 +353,8 @@ def get_entity_state(config, entity):
     if cached_state is None:
         final_state = entity.state != STATE_OFF
         final_brightness = entity.attributes.get(
-            ATTR_BRIGHTNESS, 255 if final_state else 0)
+            ATTR_BRIGHTNESS, 255 if final_state else 0
+        )
 
         # Make sure the entity actually supports brightness
         entity_features = entity.attributes.get(ATTR_SUPPORTED_FEATURES, 0)
@@ -342,7 +365,8 @@ def get_entity_state(config, entity):
 
         elif entity.domain == "media_player":
             level = entity.attributes.get(
-                ATTR_MEDIA_VOLUME_LEVEL, 1.0 if final_state else 0.0)
+                ATTR_MEDIA_VOLUME_LEVEL, 1.0 if final_state else 0.0
+            )
             # Convert 0.0-1.0 to 0-255
             final_brightness = round(min(1.0, level) * 255)
         elif entity.domain == "fan":
@@ -367,21 +391,20 @@ def get_entity_state(config, entity):
 def entity_to_json(config, entity, is_on=None, brightness=None):
     """Convert an entity to its Hue bridge JSON representation."""
     return {
-        'state':
-        {
+        "state": {
             HUE_API_STATE_ON: is_on,
             HUE_API_STATE_BRI: brightness,
-            'reachable': True
+            "reachable": True,
         },
-        'type': 'Dimmable light',
-        'name': config.get_entity_name(entity),
-        'modelid': 'HASS123',
-        'uniqueid': entity.entity_id,
-        'swversion': '123'
+        "type": "Dimmable light",
+        "name": config.get_entity_name(entity),
+        "modelid": "HASS123",
+        "uniqueid": entity.entity_id,
+        "swversion": "123",
     }
 
 
 def create_hue_success_response(entity_id, attr, value):
     """Create a success response for an attribute set on a light."""
-    success_key = '/lights/{}/state/{}'.format(entity_id, attr)
-    return {'success': {success_key: value}}
+    success_key = "/lights/{}/state/{}".format(entity_id, attr)
+    return {"success": {success_key: value}}

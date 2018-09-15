@@ -4,7 +4,12 @@ import logging
 from pyhap.const import CATEGORY_DOOR_LOCK
 
 from homeassistant.components.lock import (
-    ATTR_ENTITY_ID, DOMAIN, STATE_LOCKED, STATE_UNLOCKED, STATE_UNKNOWN)
+    ATTR_ENTITY_ID,
+    DOMAIN,
+    STATE_LOCKED,
+    STATE_UNLOCKED,
+    STATE_UNKNOWN,
+)
 from homeassistant.const import ATTR_CODE
 
 from . import TYPES
@@ -13,16 +18,17 @@ from .const import CHAR_LOCK_CURRENT_STATE, CHAR_LOCK_TARGET_STATE, SERV_LOCK
 
 _LOGGER = logging.getLogger(__name__)
 
-HASS_TO_HOMEKIT = {STATE_UNLOCKED: 0,
-                   STATE_LOCKED: 1,
-                   # value 2 is Jammed which hass doesn't have a state for
-                   STATE_UNKNOWN: 3}
+HASS_TO_HOMEKIT = {
+    STATE_UNLOCKED: 0,
+    STATE_LOCKED: 1,
+    # value 2 is Jammed which hass doesn't have a state for
+    STATE_UNKNOWN: 3,
+}
 HOMEKIT_TO_HASS = {c: s for s, c in HASS_TO_HOMEKIT.items()}
-STATE_TO_SERVICE = {STATE_LOCKED: 'lock',
-                    STATE_UNLOCKED: 'unlock'}
+STATE_TO_SERVICE = {STATE_LOCKED: "lock", STATE_UNLOCKED: "unlock"}
 
 
-@TYPES.register('Lock')
+@TYPES.register("Lock")
 class Lock(HomeAccessory):
     """Generate a Lock accessory for a lock entity.
 
@@ -37,11 +43,13 @@ class Lock(HomeAccessory):
 
         serv_lock_mechanism = self.add_preload_service(SERV_LOCK)
         self.char_current_state = serv_lock_mechanism.configure_char(
-            CHAR_LOCK_CURRENT_STATE,
-            value=HASS_TO_HOMEKIT[STATE_UNKNOWN])
+            CHAR_LOCK_CURRENT_STATE, value=HASS_TO_HOMEKIT[STATE_UNKNOWN]
+        )
         self.char_target_state = serv_lock_mechanism.configure_char(
-            CHAR_LOCK_TARGET_STATE, value=HASS_TO_HOMEKIT[STATE_LOCKED],
-            setter_callback=self.set_state)
+            CHAR_LOCK_TARGET_STATE,
+            value=HASS_TO_HOMEKIT[STATE_LOCKED],
+            setter_callback=self.set_state,
+        )
 
     def set_state(self, value):
         """Set lock state to value if call came from HomeKit."""
@@ -62,8 +70,12 @@ class Lock(HomeAccessory):
         if hass_state in HASS_TO_HOMEKIT:
             current_lock_state = HASS_TO_HOMEKIT[hass_state]
             self.char_current_state.set_value(current_lock_state)
-            _LOGGER.debug('%s: Updated current state to %s (%d)',
-                          self.entity_id, hass_state, current_lock_state)
+            _LOGGER.debug(
+                "%s: Updated current state to %s (%d)",
+                self.entity_id,
+                hass_state,
+                current_lock_state,
+            )
 
             # LockTargetState only supports locked and unlocked
             if hass_state in (STATE_LOCKED, STATE_UNLOCKED):

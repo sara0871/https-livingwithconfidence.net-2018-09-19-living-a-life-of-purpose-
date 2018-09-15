@@ -14,7 +14,11 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_NAME, CONF_ENTITY_ID, STATE_UNKNOWN, ATTR_UNIT_OF_MEASUREMENT)
+    CONF_NAME,
+    CONF_ENTITY_ID,
+    STATE_UNKNOWN,
+    ATTR_UNIT_OF_MEASUREMENT,
+)
 from homeassistant.core import callback
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_state_change
@@ -23,44 +27,45 @@ from homeassistant.components.recorder.util import session_scope, execute
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_AVERAGE_CHANGE = 'average_change'
-ATTR_CHANGE = 'change'
-ATTR_CHANGE_RATE = 'change_rate'
-ATTR_COUNT = 'count'
-ATTR_MAX_AGE = 'max_age'
-ATTR_MAX_VALUE = 'max_value'
-ATTR_MEAN = 'mean'
-ATTR_MEDIAN = 'median'
-ATTR_MIN_AGE = 'min_age'
-ATTR_MIN_VALUE = 'min_value'
-ATTR_SAMPLING_SIZE = 'sampling_size'
-ATTR_STANDARD_DEVIATION = 'standard_deviation'
-ATTR_TOTAL = 'total'
-ATTR_VARIANCE = 'variance'
+ATTR_AVERAGE_CHANGE = "average_change"
+ATTR_CHANGE = "change"
+ATTR_CHANGE_RATE = "change_rate"
+ATTR_COUNT = "count"
+ATTR_MAX_AGE = "max_age"
+ATTR_MAX_VALUE = "max_value"
+ATTR_MEAN = "mean"
+ATTR_MEDIAN = "median"
+ATTR_MIN_AGE = "min_age"
+ATTR_MIN_VALUE = "min_value"
+ATTR_SAMPLING_SIZE = "sampling_size"
+ATTR_STANDARD_DEVIATION = "standard_deviation"
+ATTR_TOTAL = "total"
+ATTR_VARIANCE = "variance"
 
-CONF_SAMPLING_SIZE = 'sampling_size'
-CONF_MAX_AGE = 'max_age'
-CONF_PRECISION = 'precision'
+CONF_SAMPLING_SIZE = "sampling_size"
+CONF_MAX_AGE = "max_age"
+CONF_PRECISION = "precision"
 
-DEFAULT_NAME = 'Stats'
+DEFAULT_NAME = "Stats"
 DEFAULT_SIZE = 20
 DEFAULT_PRECISION = 2
-ICON = 'mdi:calculator'
+ICON = "mdi:calculator"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ENTITY_ID): cv.entity_id,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_SAMPLING_SIZE, default=DEFAULT_SIZE):
-        vol.All(vol.Coerce(int), vol.Range(min=1)),
-    vol.Optional(CONF_MAX_AGE): cv.time_period,
-    vol.Optional(CONF_PRECISION, default=DEFAULT_PRECISION):
-        vol.Coerce(int)
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_ENTITY_ID): cv.entity_id,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_SAMPLING_SIZE, default=DEFAULT_SIZE): vol.All(
+            vol.Coerce(int), vol.Range(min=1)
+        ),
+        vol.Optional(CONF_MAX_AGE): cv.time_period,
+        vol.Optional(CONF_PRECISION, default=DEFAULT_PRECISION): vol.Coerce(int),
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Statistics sensor."""
     entity_id = config.get(CONF_ENTITY_ID)
     name = config.get(CONF_NAME)
@@ -68,8 +73,10 @@ def async_setup_platform(hass, config, async_add_entities,
     max_age = config.get(CONF_MAX_AGE, None)
     precision = config.get(CONF_PRECISION)
 
-    async_add_entities([StatisticsSensor(hass, entity_id, name, sampling_size,
-                                         max_age, precision)], True)
+    async_add_entities(
+        [StatisticsSensor(hass, entity_id, name, sampling_size, max_age, precision)],
+        True,
+    )
 
     return True
 
@@ -77,17 +84,17 @@ def async_setup_platform(hass, config, async_add_entities,
 class StatisticsSensor(Entity):
     """Representation of a Statistics sensor."""
 
-    def __init__(self, hass, entity_id, name, sampling_size, max_age,
-                 precision):
+    def __init__(self, hass, entity_id, name, sampling_size, max_age, precision):
         """Initialize the Statistics sensor."""
         self._hass = hass
         self._entity_id = entity_id
-        self.is_binary = True if self._entity_id.split('.')[0] == \
-            'binary_sensor' else False
+        self.is_binary = (
+            True if self._entity_id.split(".")[0] == "binary_sensor" else False
+        )
         if not self.is_binary:
-            self._name = '{} {}'.format(name, ATTR_MEAN)
+            self._name = "{} {}".format(name, ATTR_MEAN)
         else:
-            self._name = '{} {}'.format(name, ATTR_COUNT)
+            self._name = "{} {}".format(name, ATTR_COUNT)
         self._sampling_size = sampling_size
         self._max_age = max_age
         self._precision = precision
@@ -101,7 +108,7 @@ class StatisticsSensor(Entity):
         self.min_age = self.max_age = None
         self.change = self.average_change = self.change_rate = None
 
-        if 'recorder' in self._hass.config.components:
+        if "recorder" in self._hass.config.components:
             # only use the database if it's configured
             hass.async_add_job(self._initialize_from_database)
 
@@ -109,14 +116,14 @@ class StatisticsSensor(Entity):
         def async_stats_sensor_state_listener(entity, old_state, new_state):
             """Handle the sensor state changes."""
             self._unit_of_measurement = new_state.attributes.get(
-                ATTR_UNIT_OF_MEASUREMENT)
+                ATTR_UNIT_OF_MEASUREMENT
+            )
 
             self._add_state_to_queue(new_state)
 
             hass.async_add_job(self.async_update_ha_state, True)
 
-        async_track_state_change(
-            hass, entity_id, async_stats_sensor_state_listener)
+        async_track_state_change(hass, entity_id, async_stats_sensor_state_listener)
 
     def _add_state_to_queue(self, new_state):
         try:
@@ -189,19 +196,15 @@ class StatisticsSensor(Entity):
 
         if not self.is_binary:
             try:  # require only one data point
-                self.mean = round(statistics.mean(self.states),
-                                  self._precision)
-                self.median = round(statistics.median(self.states),
-                                    self._precision)
+                self.mean = round(statistics.mean(self.states), self._precision)
+                self.median = round(statistics.median(self.states), self._precision)
             except statistics.StatisticsError as err:
                 _LOGGER.debug(err)
                 self.mean = self.median = STATE_UNKNOWN
 
             try:  # require at least two data points
-                self.stdev = round(statistics.stdev(self.states),
-                                   self._precision)
-                self.variance = round(statistics.variance(self.states),
-                                      self._precision)
+                self.stdev = round(statistics.stdev(self.states), self._precision)
+                self.variance = round(statistics.variance(self.states), self._precision)
             except statistics.StatisticsError as err:
                 _LOGGER.debug(err)
                 self.stdev = self.variance = STATE_UNKNOWN
@@ -226,8 +229,7 @@ class StatisticsSensor(Entity):
                         self.change_rate = self.average_change / time_diff
 
                 self.change = round(self.change, self._precision)
-                self.average_change = round(self.average_change,
-                                            self._precision)
+                self.average_change = round(self.average_change, self._precision)
                 self.change_rate = round(self.change_rate, self._precision)
 
             else:
@@ -245,14 +247,16 @@ class StatisticsSensor(Entity):
         list so that we get it in the right order again.
         """
         from homeassistant.components.recorder.models import States
-        _LOGGER.debug("initializing values for %s from the database",
-                      self.entity_id)
+
+        _LOGGER.debug("initializing values for %s from the database", self.entity_id)
 
         with session_scope(hass=self._hass) as session:
-            query = session.query(States)\
-                .filter(States.entity_id == self._entity_id.lower())\
-                .order_by(States.last_updated.desc())\
+            query = (
+                session.query(States)
+                .filter(States.entity_id == self._entity_id.lower())
+                .order_by(States.last_updated.desc())
                 .limit(self._sampling_size)
+            )
             states = execute(query)
 
         for state in reversed(states):

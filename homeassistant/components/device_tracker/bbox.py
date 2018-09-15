@@ -12,7 +12,7 @@ import homeassistant.util.dt as dt_util
 from homeassistant.components.device_tracker import DOMAIN, DeviceScanner
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['pybbox==0.0.5-alpha']
+REQUIREMENTS = ["pybbox==0.0.5-alpha"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def get_scanner(hass, config):
     return scanner if scanner.success_init else None
 
 
-Device = namedtuple('Device', ['mac', 'name', 'ip', 'last_update'])
+Device = namedtuple("Device", ["mac", "name", "ip", "last_update"])
 
 
 class BboxDeviceScanner(DeviceScanner):
@@ -47,8 +47,9 @@ class BboxDeviceScanner(DeviceScanner):
 
     def get_device_name(self, device):
         """Return the name of the given device or None if we don't know."""
-        filter_named = [result.name for result in self.last_results if
-                        result.mac == device]
+        filter_named = [
+            result.name for result in self.last_results if result.mac == device
+        ]
 
         if filter_named:
             return filter_named[0]
@@ -70,11 +71,13 @@ class BboxDeviceScanner(DeviceScanner):
         now = dt_util.now()
         last_results = []
         for device in result:
-            if device['active'] != 1:
+            if device["active"] != 1:
                 continue
             last_results.append(
-                Device(device['macaddress'], device['hostname'],
-                       device['ipaddress'], now))
+                Device(
+                    device["macaddress"], device["hostname"], device["ipaddress"], now
+                )
+            )
 
         self.last_results = last_results
 

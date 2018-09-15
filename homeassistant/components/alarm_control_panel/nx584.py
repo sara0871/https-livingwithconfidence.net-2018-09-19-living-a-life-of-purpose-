@@ -12,23 +12,31 @@ import voluptuous as vol
 import homeassistant.components.alarm_control_panel as alarm
 from homeassistant.components.alarm_control_panel import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_HOST, CONF_NAME, CONF_PORT, STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED, STATE_UNKNOWN)
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_DISARMED,
+    STATE_UNKNOWN,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['pynx584==0.4']
+REQUIREMENTS = ["pynx584==0.4"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_HOST = 'localhost'
-DEFAULT_NAME = 'NX584'
+DEFAULT_HOST = "localhost"
+DEFAULT_NAME = "NX584"
 DEFAULT_PORT = 5007
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -37,7 +45,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
 
-    url = 'http://{}:{}'.format(host, port)
+    url = "http://{}:{}".format(host, port)
 
     try:
         add_entities([NX584Alarm(hass, url, name)])
@@ -52,6 +60,7 @@ class NX584Alarm(alarm.AlarmControlPanel):
     def __init__(self, hass, url, name):
         """Init the nx584 alarm panel."""
         from nx584 import client
+
         self._hass = hass
         self._name = name
         self._url = url
@@ -70,7 +79,7 @@ class NX584Alarm(alarm.AlarmControlPanel):
     @property
     def code_format(self):
         """Return one or more digits/characters."""
-        return 'Number'
+        return "Number"
 
     @property
     def state(self):
@@ -83,8 +92,10 @@ class NX584Alarm(alarm.AlarmControlPanel):
             part = self._alarm.list_partitions()[0]
             zones = self._alarm.list_zones()
         except requests.exceptions.ConnectionError as ex:
-            _LOGGER.error("Unable to connect to %(host)s: %(reason)s",
-                          dict(host=self._url, reason=ex))
+            _LOGGER.error(
+                "Unable to connect to %(host)s: %(reason)s",
+                dict(host=self._url, reason=ex),
+            )
             self._state = STATE_UNKNOWN
             zones = []
         except IndexError:
@@ -94,13 +105,15 @@ class NX584Alarm(alarm.AlarmControlPanel):
 
         bypassed = False
         for zone in zones:
-            if zone['bypassed']:
-                _LOGGER.debug("Zone %(zone)s is bypassed, assuming HOME",
-                              dict(zone=zone['number']))
+            if zone["bypassed"]:
+                _LOGGER.debug(
+                    "Zone %(zone)s is bypassed, assuming HOME",
+                    dict(zone=zone["number"]),
+                )
                 bypassed = True
                 break
 
-        if not part['armed']:
+        if not part["armed"]:
             self._state = STATE_ALARM_DISARMED
         elif bypassed:
             self._state = STATE_ALARM_ARMED_HOME
@@ -113,8 +126,8 @@ class NX584Alarm(alarm.AlarmControlPanel):
 
     def alarm_arm_home(self, code=None):
         """Send arm home command."""
-        self._alarm.arm('stay')
+        self._alarm.arm("stay")
 
     def alarm_arm_away(self, code=None):
         """Send arm away command."""
-        self._alarm.arm('exit')
+        self._alarm.arm("exit")

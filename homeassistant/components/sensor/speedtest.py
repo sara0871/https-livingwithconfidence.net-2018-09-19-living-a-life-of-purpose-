@@ -17,48 +17,55 @@ from homeassistant.helpers.event import track_time_change
 from homeassistant.helpers.restore_state import async_get_last_state
 import homeassistant.util.dt as dt_util
 
-REQUIREMENTS = ['speedtest-cli==2.0.2']
+REQUIREMENTS = ["speedtest-cli==2.0.2"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_BYTES_RECEIVED = 'bytes_received'
-ATTR_BYTES_SENT = 'bytes_sent'
-ATTR_SERVER_COUNTRY = 'server_country'
-ATTR_SERVER_HOST = 'server_host'
-ATTR_SERVER_ID = 'server_id'
-ATTR_SERVER_LATENCY = 'latency'
-ATTR_SERVER_NAME = 'server_name'
+ATTR_BYTES_RECEIVED = "bytes_received"
+ATTR_BYTES_SENT = "bytes_sent"
+ATTR_SERVER_COUNTRY = "server_country"
+ATTR_SERVER_HOST = "server_host"
+ATTR_SERVER_ID = "server_id"
+ATTR_SERVER_LATENCY = "latency"
+ATTR_SERVER_NAME = "server_name"
 
 CONF_ATTRIBUTION = "Data retrieved from Speedtest by Ookla"
-CONF_SECOND = 'second'
-CONF_MINUTE = 'minute'
-CONF_HOUR = 'hour'
-CONF_DAY = 'day'
-CONF_SERVER_ID = 'server_id'
-CONF_MANUAL = 'manual'
+CONF_SECOND = "second"
+CONF_MINUTE = "minute"
+CONF_HOUR = "hour"
+CONF_DAY = "day"
+CONF_SERVER_ID = "server_id"
+CONF_MANUAL = "manual"
 
-ICON = 'mdi:speedometer'
+ICON = "mdi:speedometer"
 
 SENSOR_TYPES = {
-    'ping': ['Ping', 'ms'],
-    'download': ['Download', 'Mbit/s'],
-    'upload': ['Upload', 'Mbit/s'],
+    "ping": ["Ping", "ms"],
+    "download": ["Download", "Mbit/s"],
+    "upload": ["Upload", "Mbit/s"],
 }
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_MONITORED_CONDITIONS):
-        vol.All(cv.ensure_list, [vol.In(list(SENSOR_TYPES))]),
-    vol.Optional(CONF_DAY):
-        vol.All(cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(1, 31))]),
-    vol.Optional(CONF_HOUR):
-        vol.All(cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 23))]),
-    vol.Optional(CONF_MANUAL, default=False): cv.boolean,
-    vol.Optional(CONF_MINUTE, default=[0]):
-        vol.All(cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 59))]),
-    vol.Optional(CONF_SECOND, default=[0]):
-        vol.All(cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 59))]),
-    vol.Optional(CONF_SERVER_ID): cv.positive_int,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_MONITORED_CONDITIONS): vol.All(
+            cv.ensure_list, [vol.In(list(SENSOR_TYPES))]
+        ),
+        vol.Optional(CONF_DAY): vol.All(
+            cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(1, 31))]
+        ),
+        vol.Optional(CONF_HOUR): vol.All(
+            cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 23))]
+        ),
+        vol.Optional(CONF_MANUAL, default=False): cv.boolean,
+        vol.Optional(CONF_MINUTE, default=[0]): vol.All(
+            cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 59))]
+        ),
+        vol.Optional(CONF_SECOND, default=[0]): vol.All(
+            cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 59))]
+        ),
+        vol.Optional(CONF_SERVER_ID): cv.positive_int,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -77,7 +84,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         for sensor in dev:
             sensor.update()
 
-    hass.services.register(DOMAIN, 'update_speedtest', update)
+    hass.services.register(DOMAIN, "update_speedtest", update)
 
 
 class SpeedtestSensor(Entity):
@@ -95,7 +102,7 @@ class SpeedtestSensor(Entity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return '{} {}'.format('Speedtest', self._name)
+        return "{} {}".format("Speedtest", self._name)
 
     @property
     def state(self):
@@ -118,12 +125,12 @@ class SpeedtestSensor(Entity):
         if self._data is not None:
             return {
                 ATTR_ATTRIBUTION: CONF_ATTRIBUTION,
-                ATTR_BYTES_RECEIVED: self._data['bytes_received'],
-                ATTR_BYTES_SENT: self._data['bytes_sent'],
-                ATTR_SERVER_COUNTRY: self._data['server']['country'],
-                ATTR_SERVER_ID: self._data['server']['id'],
-                ATTR_SERVER_LATENCY: self._data['server']['latency'],
-                ATTR_SERVER_NAME: self._data['server']['name'],
+                ATTR_BYTES_RECEIVED: self._data["bytes_received"],
+                ATTR_BYTES_SENT: self._data["bytes_sent"],
+                ATTR_SERVER_COUNTRY: self._data["server"]["country"],
+                ATTR_SERVER_ID: self._data["server"]["id"],
+                ATTR_SERVER_LATENCY: self._data["server"]["latency"],
+                ATTR_SERVER_NAME: self._data["server"]["name"],
             }
 
     def update(self):
@@ -132,12 +139,12 @@ class SpeedtestSensor(Entity):
         if self._data is None:
             return
 
-        if self.type == 'ping':
-            self._state = self._data['ping']
-        elif self.type == 'download':
-            self._state = round(self._data['download'] / 10**6, 2)
-        elif self.type == 'upload':
-            self._state = round(self._data['upload'] / 10**6, 2)
+        if self.type == "ping":
+            self._state = self._data["ping"]
+        elif self.type == "download":
+            self._state = round(self._data["download"] / 10 ** 6, 2)
+        elif self.type == "upload":
+            self._state = round(self._data["upload"] / 10 ** 6, 2)
 
     @asyncio.coroutine
     def async_added_to_hass(self):
@@ -157,13 +164,18 @@ class SpeedtestData:
         self._server_id = config.get(CONF_SERVER_ID)
         if not config.get(CONF_MANUAL):
             track_time_change(
-                hass, self.update, second=config.get(CONF_SECOND),
-                minute=config.get(CONF_MINUTE), hour=config.get(CONF_HOUR),
-                day=config.get(CONF_DAY))
+                hass,
+                self.update,
+                second=config.get(CONF_SECOND),
+                minute=config.get(CONF_MINUTE),
+                hour=config.get(CONF_HOUR),
+                day=config.get(CONF_DAY),
+            )
 
     def update(self, now):
         """Get the latest data from speedtest.net."""
         import speedtest
+
         _LOGGER.debug("Executing speedtest...")
 
         servers = [] if self._server_id is None else [self._server_id]

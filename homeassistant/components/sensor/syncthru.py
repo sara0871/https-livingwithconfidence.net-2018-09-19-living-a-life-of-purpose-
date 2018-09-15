@@ -9,55 +9,52 @@ import logging
 import voluptuous as vol
 
 from homeassistant.const import (
-    CONF_RESOURCE, CONF_HOST, CONF_NAME, CONF_MONITORED_CONDITIONS)
+    CONF_RESOURCE,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_MONITORED_CONDITIONS,
+)
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 
-REQUIREMENTS = ['pysyncthru==0.3.1']
+REQUIREMENTS = ["pysyncthru==0.3.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'Samsung Printer'
+DEFAULT_NAME = "Samsung Printer"
 DEFAULT_MONITORED_CONDITIONS = [
-    'toner_black',
-    'toner_cyan',
-    'toner_magenta',
-    'toner_yellow',
-    'drum_black',
-    'drum_cyan',
-    'drum_magenta',
-    'drum_yellow',
-    'tray_1',
-    'tray_2',
-    'tray_3',
-    'tray_4',
-    'tray_5',
-    'output_tray_0',
-    'output_tray_1',
-    'output_tray_2',
-    'output_tray_3',
-    'output_tray_4',
-    'output_tray_5',
+    "toner_black",
+    "toner_cyan",
+    "toner_magenta",
+    "toner_yellow",
+    "drum_black",
+    "drum_cyan",
+    "drum_magenta",
+    "drum_yellow",
+    "tray_1",
+    "tray_2",
+    "tray_3",
+    "tray_4",
+    "tray_5",
+    "output_tray_0",
+    "output_tray_1",
+    "output_tray_2",
+    "output_tray_3",
+    "output_tray_4",
+    "output_tray_5",
 ]
-COLORS = [
-    'black',
-    'cyan',
-    'magenta',
-    'yellow'
-]
+COLORS = ["black", "cyan", "magenta", "yellow"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_RESOURCE): cv.url,
-    vol.Optional(
-        CONF_NAME,
-        default=DEFAULT_NAME
-    ): cv.string,
-    vol.Optional(
-        CONF_MONITORED_CONDITIONS,
-        default=DEFAULT_MONITORED_CONDITIONS
-    ): vol.All(cv.ensure_list, [vol.In(DEFAULT_MONITORED_CONDITIONS)])
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_RESOURCE): cv.url,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(
+            CONF_MONITORED_CONDITIONS, default=DEFAULT_MONITORED_CONDITIONS
+        ): vol.All(cv.ensure_list, [vol.In(DEFAULT_MONITORED_CONDITIONS)]),
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -89,16 +86,16 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     devices = [SyncThruMainSensor(printer, name)]
 
     for key in printer.toner_status(filter_supported=True):
-        if 'toner_{}'.format(key) in monitored:
+        if "toner_{}".format(key) in monitored:
             devices.append(SyncThruTonerSensor(printer, name, key))
     for key in printer.drum_status(filter_supported=True):
-        if 'drum_{}'.format(key) in monitored:
+        if "drum_{}".format(key) in monitored:
             devices.append(SyncThruDrumSensor(printer, name, key))
     for key in printer.input_tray_status(filter_supported=True):
-        if 'tray_{}'.format(key) in monitored:
+        if "tray_{}".format(key) in monitored:
             devices.append(SyncThruInputTraySensor(printer, name, key))
     for key in printer.output_tray_status():
-        if 'output_tray_{}'.format(key) in monitored:
+        if "output_tray_{}".format(key) in monitored:
             devices.append(SyncThruOutputTraySensor(printer, name, key))
 
     add_entities(devices, True)
@@ -113,7 +110,7 @@ class SyncThruSensor(Entity):
         self._attributes = {}
         self._state = None
         self._name = name
-        self._icon = 'mdi:printer'
+        self._icon = "mdi:printer"
         self._unit_of_measurement = None
 
     @property
@@ -159,16 +156,15 @@ class SyncThruTonerSensor(SyncThruSensor):
         super().__init__(syncthru, name)
         self._name = "{} Toner {}".format(name, color)
         self._color = color
-        self._unit_of_measurement = '%'
+        self._unit_of_measurement = "%"
 
     def update(self):
         """Get the latest data from SyncThru and update the state."""
         # Data fetching is taken care of through the Main sensor
 
         if self.syncthru.is_online():
-            self._attributes = self.syncthru.toner_status(
-                ).get(self._color, {})
-            self._state = self._attributes.get('remaining')
+            self._attributes = self.syncthru.toner_status().get(self._color, {})
+            self._state = self._attributes.get("remaining")
 
 
 class SyncThruDrumSensor(SyncThruSensor):
@@ -179,16 +175,15 @@ class SyncThruDrumSensor(SyncThruSensor):
         super().__init__(syncthru, name)
         self._name = "{} Drum {}".format(name, color)
         self._color = color
-        self._unit_of_measurement = '%'
+        self._unit_of_measurement = "%"
 
     def update(self):
         """Get the latest data from SyncThru and update the state."""
         # Data fetching is taken care of through the Main sensor
 
         if self.syncthru.is_online():
-            self._attributes = self.syncthru.drum_status(
-                ).get(self._color, {})
-            self._state = self._attributes.get('remaining')
+            self._attributes = self.syncthru.drum_status().get(self._color, {})
+            self._state = self._attributes.get("remaining")
 
 
 class SyncThruInputTraySensor(SyncThruSensor):
@@ -205,11 +200,10 @@ class SyncThruInputTraySensor(SyncThruSensor):
         # Data fetching is taken care of through the Main sensor
 
         if self.syncthru.is_online():
-            self._attributes = self.syncthru.input_tray_status(
-                ).get(self._number, {})
-            self._state = self._attributes.get('newError')
-            if self._state == '':
-                self._state = 'Ready'
+            self._attributes = self.syncthru.input_tray_status().get(self._number, {})
+            self._state = self._attributes.get("newError")
+            if self._state == "":
+                self._state = "Ready"
 
 
 class SyncThruOutputTraySensor(SyncThruSensor):
@@ -226,8 +220,7 @@ class SyncThruOutputTraySensor(SyncThruSensor):
         # Data fetching is taken care of through the Main sensor
 
         if self.syncthru.is_online():
-            self._attributes = self.syncthru.output_tray_status(
-                ).get(self._number, {})
-            self._state = self._attributes.get('status')
-            if self._state == '':
-                self._state = 'Ready'
+            self._attributes = self.syncthru.output_tray_status().get(self._number, {})
+            self._state = self._attributes.get("status")
+            if self._state == "":
+                self._state = "Ready"

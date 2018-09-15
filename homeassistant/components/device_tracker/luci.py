@@ -14,20 +14,24 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.components.device_tracker import (
-    DOMAIN, PLATFORM_SCHEMA, DeviceScanner)
-from homeassistant.const import (
-    CONF_HOST, CONF_USERNAME, CONF_PASSWORD, CONF_SSL)
+    DOMAIN,
+    PLATFORM_SCHEMA,
+    DeviceScanner,
+)
+from homeassistant.const import CONF_HOST, CONF_USERNAME, CONF_PASSWORD, CONF_SSL
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_SSL = False
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_SSL, default=DEFAULT_SSL): cv.boolean
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_SSL, default=DEFAULT_SSL): cv.boolean,
+    }
+)
 
 
 class InvalidLuciTokenError(HomeAssistantError):
@@ -49,8 +53,8 @@ class LuciDeviceScanner(DeviceScanner):
     def __init__(self, config):
         """Initialize the scanner."""
         host = config[CONF_HOST]
-        protocol = 'http' if not config[CONF_SSL] else 'https'
-        self.origin = '{}://{}'.format(protocol, host)
+        protocol = "http" if not config[CONF_SSL] else "https"
+        self.origin = "{}://{}".format(protocol, host)
         self.username = config[CONF_USERNAME]
         self.password = config[CONF_PASSWORD]
 
@@ -73,15 +77,15 @@ class LuciDeviceScanner(DeviceScanner):
     def get_device_name(self, device):
         """Return the name of the given device or None if we don't know."""
         if self.mac2name is None:
-            url = '{}/cgi-bin/luci/rpc/uci'.format(self.origin)
-            result = _req_json_rpc(
-                url, 'get_all', 'dhcp', params={'auth': self.token})
+            url = "{}/cgi-bin/luci/rpc/uci".format(self.origin)
+            result = _req_json_rpc(url, "get_all", "dhcp", params={"auth": self.token})
             if result:
-                hosts = [x for x in result.values()
-                         if x['.type'] == 'host' and
-                         'mac' in x and 'name' in x]
-                mac2name_list = [
-                    (x['mac'].upper(), x['name']) for x in hosts]
+                hosts = [
+                    x
+                    for x in result.values()
+                    if x[".type"] == "host" and "mac" in x and "name" in x
+                ]
+                mac2name_list = [(x["mac"].upper(), x["name"]) for x in hosts]
                 self.mac2name = dict(mac2name_list)
             else:
                 # Error, handled in the _req_json_rpc
@@ -98,11 +102,10 @@ class LuciDeviceScanner(DeviceScanner):
 
         _LOGGER.info("Checking ARP")
 
-        url = '{}/cgi-bin/luci/rpc/sys'.format(self.origin)
+        url = "{}/cgi-bin/luci/rpc/sys".format(self.origin)
 
         try:
-            result = _req_json_rpc(
-                url, 'net.arptable', params={'auth': self.token})
+            result = _req_json_rpc(url, "net.arptable", params={"auth": self.token})
         except InvalidLuciTokenError:
             _LOGGER.info("Refreshing token")
             self.refresh_token()
@@ -113,8 +116,8 @@ class LuciDeviceScanner(DeviceScanner):
             for device_entry in result:
                 # Check if the Flags for each device contain
                 # NUD_REACHABLE and if so, add it to last_results
-                if int(device_entry['Flags'], 16) & 0x2:
-                    self.last_results.append(device_entry['HW address'])
+                if int(device_entry["Flags"], 16) & 0x2:
+                    self.last_results.append(device_entry["HW address"])
 
             return True
 
@@ -123,7 +126,7 @@ class LuciDeviceScanner(DeviceScanner):
 
 def _req_json_rpc(url, method, *args, **kwargs):
     """Perform one JSON RPC operation."""
-    data = json.dumps({'method': method, 'params': args})
+    data = json.dumps({"method": method, "params": args})
 
     try:
         res = requests.post(url, data=data, timeout=5, **kwargs)
@@ -138,14 +141,13 @@ def _req_json_rpc(url, method, *args, **kwargs):
             _LOGGER.exception("Failed to parse response from luci")
             return
         try:
-            return result['result']
+            return result["result"]
         except KeyError:
             _LOGGER.exception("No result in response from luci")
             return
     elif res.status_code == 401:
         # Authentication error
-        _LOGGER.exception(
-            "Failed to authenticate, check your username and password")
+        _LOGGER.exception("Failed to authenticate, check your username and password")
         return
     elif res.status_code == 403:
         _LOGGER.error("Luci responded with a 403 Invalid token")
@@ -157,5 +159,5 @@ def _req_json_rpc(url, method, *args, **kwargs):
 
 def _get_token(origin, username, password):
     """Get authentication token for the given configuration."""
-    url = '{}/cgi-bin/luci/rpc/auth'.format(origin)
-    return _req_json_rpc(url, 'login', username, password)
+    url = "{}/cgi-bin/luci/rpc/auth".format(origin)
+    return _req_json_rpc(url, "login", username, password)

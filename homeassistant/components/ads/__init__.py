@@ -10,51 +10,62 @@ import logging
 import ctypes
 from collections import namedtuple
 import voluptuous as vol
-from homeassistant.const import CONF_DEVICE, CONF_PORT, CONF_IP_ADDRESS, \
-    EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import (
+    CONF_DEVICE,
+    CONF_PORT,
+    CONF_IP_ADDRESS,
+    EVENT_HOMEASSISTANT_STOP,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['pyads==2.2.6']
+REQUIREMENTS = ["pyads==2.2.6"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DATA_ADS = 'data_ads'
+DATA_ADS = "data_ads"
 
 # Supported Types
-ADSTYPE_INT = 'int'
-ADSTYPE_UINT = 'uint'
-ADSTYPE_BYTE = 'byte'
-ADSTYPE_BOOL = 'bool'
+ADSTYPE_INT = "int"
+ADSTYPE_UINT = "uint"
+ADSTYPE_BYTE = "byte"
+ADSTYPE_BOOL = "bool"
 
-DOMAIN = 'ads'
+DOMAIN = "ads"
 
-CONF_ADS_VAR = 'adsvar'
-CONF_ADS_VAR_BRIGHTNESS = 'adsvar_brightness'
-CONF_ADS_TYPE = 'adstype'
-CONF_ADS_FACTOR = 'factor'
-CONF_ADS_VALUE = 'value'
+CONF_ADS_VAR = "adsvar"
+CONF_ADS_VAR_BRIGHTNESS = "adsvar_brightness"
+CONF_ADS_TYPE = "adstype"
+CONF_ADS_FACTOR = "factor"
+CONF_ADS_VALUE = "value"
 
-SERVICE_WRITE_DATA_BY_NAME = 'write_data_by_name'
+SERVICE_WRITE_DATA_BY_NAME = "write_data_by_name"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_DEVICE): cv.string,
-        vol.Required(CONF_PORT): cv.port,
-        vol.Optional(CONF_IP_ADDRESS): cv.string,
-    })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_DEVICE): cv.string,
+                vol.Required(CONF_PORT): cv.port,
+                vol.Optional(CONF_IP_ADDRESS): cv.string,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
-SCHEMA_SERVICE_WRITE_DATA_BY_NAME = vol.Schema({
-    vol.Required(CONF_ADS_TYPE):
-        vol.In([ADSTYPE_INT, ADSTYPE_UINT, ADSTYPE_BYTE]),
-    vol.Required(CONF_ADS_VALUE): cv.match_all,
-    vol.Required(CONF_ADS_VAR): cv.string,
-})
+SCHEMA_SERVICE_WRITE_DATA_BY_NAME = vol.Schema(
+    {
+        vol.Required(CONF_ADS_TYPE): vol.In([ADSTYPE_INT, ADSTYPE_UINT, ADSTYPE_BYTE]),
+        vol.Required(CONF_ADS_VALUE): cv.match_all,
+        vol.Required(CONF_ADS_VAR): cv.string,
+    }
+)
 
 
 def setup(hass, config):
     """Set up the ADS component."""
     import pyads
+
     conf = config[DOMAIN]
 
     net_id = conf.get(CONF_DEVICE)
@@ -79,8 +90,7 @@ def setup(hass, config):
     try:
         ads = AdsHub(client)
     except pyads.pyads.ADSError:
-        _LOGGER.error(
-            "Could not connect to ADS host (netid=%s, port=%s)", net_id, port)
+        _LOGGER.error("Could not connect to ADS host (netid=%s, port=%s)", net_id, port)
         return False
 
     hass.data[DATA_ADS] = ads
@@ -98,15 +108,18 @@ def setup(hass, config):
             _LOGGER.error(err)
 
     hass.services.register(
-        DOMAIN, SERVICE_WRITE_DATA_BY_NAME, handle_write_data_by_name,
-        schema=SCHEMA_SERVICE_WRITE_DATA_BY_NAME)
+        DOMAIN,
+        SERVICE_WRITE_DATA_BY_NAME,
+        handle_write_data_by_name,
+        schema=SCHEMA_SERVICE_WRITE_DATA_BY_NAME,
+    )
 
     return True
 
 
 # Tuple to hold data needed for notification
 NotificationItem = namedtuple(
-    'NotificationItem', 'hnotify huser name plc_datatype callback'
+    "NotificationItem", "hnotify huser name plc_datatype callback"
 )
 
 
@@ -128,12 +141,13 @@ class AdsHub:
         _LOGGER.debug("Shutting down ADS")
         for notification_item in self._notification_items.values():
             self._client.del_device_notification(
-                notification_item.hnotify,
-                notification_item.huser
+                notification_item.hnotify, notification_item.huser
             )
             _LOGGER.debug(
                 "Deleting device notification %d, %d",
-                notification_item.hnotify, notification_item.huser)
+                notification_item.hnotify,
+                notification_item.huser,
+            )
         self._client.close()
 
     def register_device(self, device):
@@ -153,18 +167,20 @@ class AdsHub:
     def add_device_notification(self, name, plc_datatype, callback):
         """Add a notification to the ADS devices."""
         from pyads import NotificationAttrib
+
         attr = NotificationAttrib(ctypes.sizeof(plc_datatype))
 
         with self._lock:
             hnotify, huser = self._client.add_device_notification(
-                name, attr, self._device_notification_callback)
+                name, attr, self._device_notification_callback
+            )
             hnotify = int(hnotify)
 
-        _LOGGER.debug(
-            "Added device notification %d for variable %s", hnotify, name)
+        _LOGGER.debug("Added device notification %d for variable %s", hnotify, name)
 
         self._notification_items[hnotify] = NotificationItem(
-            hnotify, huser, name, plc_datatype, callback)
+            hnotify, huser, name, plc_datatype, callback
+        )
 
     def _device_notification_callback(self, addr, notification, huser):
         """Handle device notifications."""
@@ -182,13 +198,13 @@ class AdsHub:
 
         # Parse data to desired datatype
         if notification_item.plc_datatype == self.PLCTYPE_BOOL:
-            value = bool(struct.unpack('<?', bytearray(data)[:1])[0])
+            value = bool(struct.unpack("<?", bytearray(data)[:1])[0])
         elif notification_item.plc_datatype == self.PLCTYPE_INT:
-            value = struct.unpack('<h', bytearray(data)[:2])[0]
+            value = struct.unpack("<h", bytearray(data)[:2])[0]
         elif notification_item.plc_datatype == self.PLCTYPE_BYTE:
-            value = struct.unpack('<B', bytearray(data)[:1])[0]
+            value = struct.unpack("<B", bytearray(data)[:1])[0]
         elif notification_item.plc_datatype == self.PLCTYPE_UINT:
-            value = struct.unpack('<H', bytearray(data)[:2])[0]
+            value = struct.unpack("<H", bytearray(data)[:2])[0]
         else:
             value = bytearray(data)
             _LOGGER.warning("No callback available for this datatype")

@@ -6,36 +6,48 @@ https://home-assistant.io/components/climate.mysensors/
 """
 from homeassistant.components import mysensors
 from homeassistant.components.climate import (
-    ATTR_TARGET_TEMP_HIGH, ATTR_TARGET_TEMP_LOW, DOMAIN, STATE_AUTO,
-    STATE_COOL, STATE_HEAT, STATE_OFF, SUPPORT_FAN_MODE,
-    SUPPORT_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_TARGET_TEMPERATURE_HIGH, SUPPORT_TARGET_TEMPERATURE_LOW,
-    ClimateDevice)
+    ATTR_TARGET_TEMP_HIGH,
+    ATTR_TARGET_TEMP_LOW,
+    DOMAIN,
+    STATE_AUTO,
+    STATE_COOL,
+    STATE_HEAT,
+    STATE_OFF,
+    SUPPORT_FAN_MODE,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_TARGET_TEMPERATURE_HIGH,
+    SUPPORT_TARGET_TEMPERATURE_LOW,
+    ClimateDevice,
+)
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS, TEMP_FAHRENHEIT
 
 DICT_HA_TO_MYS = {
-    STATE_AUTO: 'AutoChangeOver',
-    STATE_COOL: 'CoolOn',
-    STATE_HEAT: 'HeatOn',
-    STATE_OFF: 'Off',
+    STATE_AUTO: "AutoChangeOver",
+    STATE_COOL: "CoolOn",
+    STATE_HEAT: "HeatOn",
+    STATE_OFF: "Off",
 }
 DICT_MYS_TO_HA = {
-    'AutoChangeOver': STATE_AUTO,
-    'CoolOn': STATE_COOL,
-    'HeatOn': STATE_HEAT,
-    'Off': STATE_OFF,
+    "AutoChangeOver": STATE_AUTO,
+    "CoolOn": STATE_COOL,
+    "HeatOn": STATE_HEAT,
+    "Off": STATE_OFF,
 }
 
-FAN_LIST = ['Auto', 'Min', 'Normal', 'Max']
+FAN_LIST = ["Auto", "Min", "Normal", "Max"]
 OPERATION_LIST = [STATE_OFF, STATE_AUTO, STATE_COOL, STATE_HEAT]
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the mysensors climate."""
     mysensors.setup_mysensors_platform(
-        hass, DOMAIN, discovery_info, MySensorsHVAC,
-        async_add_entities=async_add_entities)
+        hass,
+        DOMAIN,
+        discovery_info,
+        MySensorsHVAC,
+        async_add_entities=async_add_entities,
+    )
 
 
 class MySensorsHVAC(mysensors.device.MySensorsEntity, ClimateDevice):
@@ -48,11 +60,15 @@ class MySensorsHVAC(mysensors.device.MySensorsEntity, ClimateDevice):
         set_req = self.gateway.const.SetReq
         if set_req.V_HVAC_SPEED in self._values:
             features = features | SUPPORT_FAN_MODE
-        if (set_req.V_HVAC_SETPOINT_COOL in self._values and
-                set_req.V_HVAC_SETPOINT_HEAT in self._values):
+        if (
+            set_req.V_HVAC_SETPOINT_COOL in self._values
+            and set_req.V_HVAC_SETPOINT_HEAT in self._values
+        ):
             features = (
-                features | SUPPORT_TARGET_TEMPERATURE_HIGH |
-                SUPPORT_TARGET_TEMPERATURE_LOW)
+                features
+                | SUPPORT_TARGET_TEMPERATURE_HIGH
+                | SUPPORT_TARGET_TEMPERATURE_LOW
+            )
         else:
             features = features | SUPPORT_TARGET_TEMPERATURE
         return features
@@ -81,8 +97,10 @@ class MySensorsHVAC(mysensors.device.MySensorsEntity, ClimateDevice):
     def target_temperature(self):
         """Return the temperature we try to reach."""
         set_req = self.gateway.const.SetReq
-        if set_req.V_HVAC_SETPOINT_COOL in self._values and \
-                set_req.V_HVAC_SETPOINT_HEAT in self._values:
+        if (
+            set_req.V_HVAC_SETPOINT_COOL in self._values
+            and set_req.V_HVAC_SETPOINT_HEAT in self._values
+        ):
             return None
         temp = self._values.get(set_req.V_HVAC_SETPOINT_COOL)
         if temp is None:
@@ -146,10 +164,10 @@ class MySensorsHVAC(mysensors.device.MySensorsEntity, ClimateDevice):
         elif all(val is not None for val in (low, high, heat, cool)):
             updates = [
                 (set_req.V_HVAC_SETPOINT_HEAT, low),
-                (set_req.V_HVAC_SETPOINT_COOL, high)]
+                (set_req.V_HVAC_SETPOINT_COOL, high),
+            ]
         for value_type, value in updates:
-            self.gateway.set_child_value(
-                self.node_id, self.child_id, value_type, value)
+            self.gateway.set_child_value(self.node_id, self.child_id, value_type, value)
             if self.gateway.optimistic:
                 # Optimistically assume that device has changed state
                 self._values[value_type] = value
@@ -159,7 +177,8 @@ class MySensorsHVAC(mysensors.device.MySensorsEntity, ClimateDevice):
         """Set new target temperature."""
         set_req = self.gateway.const.SetReq
         self.gateway.set_child_value(
-            self.node_id, self.child_id, set_req.V_HVAC_SPEED, fan_mode)
+            self.node_id, self.child_id, set_req.V_HVAC_SPEED, fan_mode
+        )
         if self.gateway.optimistic:
             # Optimistically assume that device has changed state
             self._values[set_req.V_HVAC_SPEED] = fan_mode
@@ -168,8 +187,8 @@ class MySensorsHVAC(mysensors.device.MySensorsEntity, ClimateDevice):
     async def async_set_operation_mode(self, operation_mode):
         """Set new target temperature."""
         self.gateway.set_child_value(
-            self.node_id, self.child_id, self.value_type,
-            DICT_HA_TO_MYS[operation_mode])
+            self.node_id, self.child_id, self.value_type, DICT_HA_TO_MYS[operation_mode]
+        )
         if self.gateway.optimistic:
             # Optimistically assume that device has changed state
             self._values[self.value_type] = operation_mode
@@ -178,5 +197,4 @@ class MySensorsHVAC(mysensors.device.MySensorsEntity, ClimateDevice):
     async def async_update(self):
         """Update the controller with the latest value from a sensor."""
         await super().async_update()
-        self._values[self.value_type] = DICT_MYS_TO_HA[
-            self._values[self.value_type]]
+        self._values[self.value_type] = DICT_MYS_TO_HA[self._values[self.value_type]]

@@ -12,21 +12,21 @@ from homeassistant.const import STATE_UNKNOWN
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['homematic']
+DEPENDENCIES = ["homematic"]
 
 SENSOR_TYPES_CLASS = {
-    'IPShutterContact': 'opening',
-    'MaxShutterContact': 'opening',
-    'Motion': 'motion',
-    'MotionV2': 'motion',
-    'PresenceIP': 'motion',
-    'Remote': None,
-    'RemoteMotion': None,
-    'ShutterContact': 'opening',
-    'Smoke': 'smoke',
-    'SmokeV2': 'smoke',
-    'TiltSensor': None,
-    'WeatherSensor': None,
+    "IPShutterContact": "opening",
+    "MaxShutterContact": "opening",
+    "Motion": "motion",
+    "MotionV2": "motion",
+    "PresenceIP": "motion",
+    "Remote": None,
+    "RemoteMotion": None,
+    "ShutterContact": "opening",
+    "Smoke": "smoke",
+    "SmokeV2": "smoke",
+    "TiltSensor": None,
+    "WeatherSensor": None,
 }
 
 
@@ -57,8 +57,8 @@ class HMBinarySensor(HMDevice, BinarySensorDevice):
     def device_class(self):
         """Return the class of this sensor from DEVICE_CLASSES."""
         # If state is MOTION (Only RemoteMotion working)
-        if self._state == 'MOTION':
-            return 'motion'
+        if self._state == "MOTION":
+            return "motion"
         return SENSOR_TYPES_CLASS.get(self._hmdevice.__class__.__name__, None)
 
     def _init_data_struct(self):

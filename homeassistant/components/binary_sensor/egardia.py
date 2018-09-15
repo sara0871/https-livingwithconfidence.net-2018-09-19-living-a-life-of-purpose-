@@ -9,21 +9,21 @@ import logging
 
 from homeassistant.components.binary_sensor import BinarySensorDevice
 from homeassistant.const import STATE_ON, STATE_OFF
-from homeassistant.components.egardia import (
-    EGARDIA_DEVICE, ATTR_DISCOVER_DEVICES)
+from homeassistant.components.egardia import EGARDIA_DEVICE, ATTR_DISCOVER_DEVICES
+
 _LOGGER = logging.getLogger(__name__)
-DEPENDENCIES = ['egardia']
-EGARDIA_TYPE_TO_DEVICE_CLASS = {'IR Sensor': 'motion',
-                                'Door Contact': 'opening',
-                                'IR': 'motion'}
+DEPENDENCIES = ["egardia"]
+EGARDIA_TYPE_TO_DEVICE_CLASS = {
+    "IR Sensor": "motion",
+    "Door Contact": "opening",
+    "IR": "motion",
+}
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Initialize the platform."""
-    if (discovery_info is None or
-            discovery_info[ATTR_DISCOVER_DEVICES] is None):
+    if discovery_info is None or discovery_info[ATTR_DISCOVER_DEVICES] is None:
         return
 
     disc_info = discovery_info[ATTR_DISCOVER_DEVICES]
@@ -31,14 +31,17 @@ def async_setup_platform(hass, config, async_add_entities,
     async_add_entities(
         (
             EgardiaBinarySensor(
-                sensor_id=disc_info[sensor]['id'],
-                name=disc_info[sensor]['name'],
+                sensor_id=disc_info[sensor]["id"],
+                name=disc_info[sensor]["name"],
                 egardia_system=hass.data[EGARDIA_DEVICE],
                 device_class=EGARDIA_TYPE_TO_DEVICE_CLASS.get(
-                    disc_info[sensor]['type'], None)
+                    disc_info[sensor]["type"], None
+                ),
             )
             for sensor in disc_info
-        ), True)
+        ),
+        True,
+    )
 
 
 class EgardiaBinarySensor(BinarySensorDevice):

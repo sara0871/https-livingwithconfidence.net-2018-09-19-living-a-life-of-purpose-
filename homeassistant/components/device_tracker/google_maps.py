@@ -9,34 +9,35 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.components.device_tracker import (
-    PLATFORM_SCHEMA, SOURCE_TYPE_GPS)
+from homeassistant.components.device_tracker import PLATFORM_SCHEMA, SOURCE_TYPE_GPS
 from homeassistant.const import ATTR_ID, CONF_PASSWORD, CONF_USERNAME
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import track_time_interval
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import slugify, dt as dt_util
 
-REQUIREMENTS = ['locationsharinglib==2.0.11']
+REQUIREMENTS = ["locationsharinglib==2.0.11"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_ADDRESS = 'address'
-ATTR_FULL_NAME = 'full_name'
-ATTR_LAST_SEEN = 'last_seen'
-ATTR_NICKNAME = 'nickname'
+ATTR_ADDRESS = "address"
+ATTR_FULL_NAME = "full_name"
+ATTR_LAST_SEEN = "last_seen"
+ATTR_NICKNAME = "nickname"
 
-CONF_MAX_GPS_ACCURACY = 'max_gps_accuracy'
+CONF_MAX_GPS_ACCURACY = "max_gps_accuracy"
 
-CREDENTIALS_FILE = '.google_maps_location_sharing.cookies'
+CREDENTIALS_FILE = ".google_maps_location_sharing.cookies"
 
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=30)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Optional(CONF_MAX_GPS_ACCURACY, default=100000): vol.Coerce(float),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Optional(CONF_MAX_GPS_ACCURACY, default=100000): vol.Coerce(float),
+    }
+)
 
 
 def setup_scanner(hass, config: ConfigType, see, discovery_info=None):
@@ -59,12 +60,12 @@ class GoogleMapsScanner:
         self.max_gps_accuracy = config[CONF_MAX_GPS_ACCURACY]
 
         try:
-            self.service = Service(self.username, self.password,
-                                   hass.config.path(CREDENTIALS_FILE))
+            self.service = Service(
+                self.username, self.password, hass.config.path(CREDENTIALS_FILE)
+            )
             self._update_info()
 
-            track_time_interval(
-                hass, self._update_info, MIN_TIME_BETWEEN_SCANS)
+            track_time_interval(hass, self._update_info, MIN_TIME_BETWEEN_SCANS)
 
             self.success_init = True
 
@@ -75,17 +76,22 @@ class GoogleMapsScanner:
     def _update_info(self, now=None):
         for person in self.service.get_all_people():
             try:
-                dev_id = 'google_maps_{0}'.format(slugify(person.id))
+                dev_id = "google_maps_{0}".format(slugify(person.id))
             except TypeError:
                 _LOGGER.warning("No location(s) shared with this account")
                 return
 
-            if self.max_gps_accuracy is not None and \
-                    person.accuracy > self.max_gps_accuracy:
-                _LOGGER.info("Ignoring %s update because expected GPS "
-                             "accuracy %s is not met: %s",
-                             person.nickname, self.max_gps_accuracy,
-                             person.accuracy)
+            if (
+                self.max_gps_accuracy is not None
+                and person.accuracy > self.max_gps_accuracy
+            ):
+                _LOGGER.info(
+                    "Ignoring %s update because expected GPS "
+                    "accuracy %s is not met: %s",
+                    person.nickname,
+                    self.max_gps_accuracy,
+                    person.accuracy,
+                )
                 continue
 
             attrs = {

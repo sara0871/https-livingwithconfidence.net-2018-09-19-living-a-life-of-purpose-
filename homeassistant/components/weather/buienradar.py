@@ -10,54 +10,59 @@ import asyncio
 import voluptuous as vol
 
 from homeassistant.components.weather import (
-    WeatherEntity, PLATFORM_SCHEMA, ATTR_FORECAST_CONDITION,
-    ATTR_FORECAST_TEMP, ATTR_FORECAST_TEMP_LOW, ATTR_FORECAST_TIME)
-from homeassistant.const import \
-    CONF_NAME, TEMP_CELSIUS, CONF_LATITUDE, CONF_LONGITUDE
+    WeatherEntity,
+    PLATFORM_SCHEMA,
+    ATTR_FORECAST_CONDITION,
+    ATTR_FORECAST_TEMP,
+    ATTR_FORECAST_TEMP_LOW,
+    ATTR_FORECAST_TIME,
+)
+from homeassistant.const import CONF_NAME, TEMP_CELSIUS, CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.helpers import config_validation as cv
-# Reuse data and API logic from the sensor implementation
-from homeassistant.components.sensor.buienradar import (
-    BrData)
 
-REQUIREMENTS = ['buienradar==0.91']
+# Reuse data and API logic from the sensor implementation
+from homeassistant.components.sensor.buienradar import BrData
+
+REQUIREMENTS = ["buienradar==0.91"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DATA_CONDITION = 'buienradar_condition'
+DATA_CONDITION = "buienradar_condition"
 
 DEFAULT_TIMEFRAME = 60
 
-CONF_FORECAST = 'forecast'
+CONF_FORECAST = "forecast"
 
 
 CONDITION_CLASSES = {
-    'cloudy': ['c', 'p'],
-    'fog': ['d', 'n'],
-    'hail': [],
-    'lightning': ['g'],
-    'lightning-rainy': ['s'],
-    'partlycloudy': ['b', 'j', 'o', 'r'],
-    'pouring': ['l', 'q'],
-    'rainy': ['f', 'h', 'k', 'm'],
-    'snowy': ['u', 'i', 'v', 't'],
-    'snowy-rainy': ['w'],
-    'sunny': ['a'],
-    'windy': [],
-    'windy-variant': [],
-    'exceptional': [],
+    "cloudy": ["c", "p"],
+    "fog": ["d", "n"],
+    "hail": [],
+    "lightning": ["g"],
+    "lightning-rainy": ["s"],
+    "partlycloudy": ["b", "j", "o", "r"],
+    "pouring": ["l", "q"],
+    "rainy": ["f", "h", "k", "m"],
+    "snowy": ["u", "i", "v", "t"],
+    "snowy-rainy": ["w"],
+    "sunny": ["a"],
+    "windy": [],
+    "windy-variant": [],
+    "exceptional": [],
 }
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_LATITUDE): cv.latitude,
-    vol.Optional(CONF_LONGITUDE): cv.longitude,
-    vol.Optional(CONF_FORECAST, default=True): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_NAME): cv.string,
+        vol.Optional(CONF_LATITUDE): cv.latitude,
+        vol.Optional(CONF_LONGITUDE): cv.longitude,
+        vol.Optional(CONF_FORECAST, default=True): cv.boolean,
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the buienradar platform."""
     latitude = config.get(CONF_LATITUDE, hass.config.latitude)
     longitude = config.get(CONF_LONGITUDE, hass.config.longitude)
@@ -66,14 +71,12 @@ def async_setup_platform(hass, config, async_add_entities,
         _LOGGER.error("Latitude or longitude not set in Home Assistant config")
         return False
 
-    coordinates = {CONF_LATITUDE:  float(latitude),
-                   CONF_LONGITUDE: float(longitude)}
+    coordinates = {CONF_LATITUDE: float(latitude), CONF_LONGITUDE: float(longitude)}
 
     # create weather data:
     data = BrData(hass, coordinates, DEFAULT_TIMEFRAME, None)
     # create weather device:
-    _LOGGER.debug("Initializing buienradar weather: coordinates %s",
-                  coordinates)
+    _LOGGER.debug("Initializing buienradar weather: coordinates %s", coordinates)
 
     # create condition helper
     if DATA_CONDITION not in hass.data:
@@ -106,13 +109,15 @@ class BrWeather(WeatherEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return self._stationname or 'BR {}'.format(self._data.stationname
-                                                   or '(unknown station)')
+        return self._stationname or "BR {}".format(
+            self._data.stationname or "(unknown station)"
+        )
 
     @property
     def condition(self):
         """Return the current condition."""
-        from buienradar.buienradar import (CONDCODE)
+        from buienradar.buienradar import CONDCODE
+
         if self._data and self._data.condition:
             ccode = self._data.condition.get(CONDCODE)
             if ccode:
@@ -158,8 +163,13 @@ class BrWeather(WeatherEntity):
     @property
     def forecast(self):
         """Return the forecast array."""
-        from buienradar.buienradar import (CONDITION, CONDCODE, DATETIME,
-                                           MIN_TEMP, MAX_TEMP)
+        from buienradar.buienradar import (
+            CONDITION,
+            CONDCODE,
+            DATETIME,
+            MIN_TEMP,
+            MAX_TEMP,
+        )
 
         if self._forecast:
             fcdata_out = []

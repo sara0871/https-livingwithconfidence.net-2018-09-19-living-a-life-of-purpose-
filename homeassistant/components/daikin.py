@@ -13,68 +13,75 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.discovery import SERVICE_DAIKIN
 from homeassistant.const import (
-    CONF_HOSTS, CONF_ICON, CONF_MONITORED_CONDITIONS, CONF_NAME, CONF_TYPE
+    CONF_HOSTS,
+    CONF_ICON,
+    CONF_MONITORED_CONDITIONS,
+    CONF_NAME,
+    CONF_TYPE,
 )
 from homeassistant.helpers import discovery
 from homeassistant.helpers.discovery import load_platform
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['pydaikin==0.4']
+REQUIREMENTS = ["pydaikin==0.4"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'daikin'
-HTTP_RESOURCES = ['aircon/get_sensor_info', 'aircon/get_control_info']
+DOMAIN = "daikin"
+HTTP_RESOURCES = ["aircon/get_sensor_info", "aircon/get_control_info"]
 
-ATTR_TARGET_TEMPERATURE = 'target_temperature'
-ATTR_INSIDE_TEMPERATURE = 'inside_temperature'
-ATTR_OUTSIDE_TEMPERATURE = 'outside_temperature'
+ATTR_TARGET_TEMPERATURE = "target_temperature"
+ATTR_INSIDE_TEMPERATURE = "inside_temperature"
+ATTR_OUTSIDE_TEMPERATURE = "outside_temperature"
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
 
-COMPONENT_TYPES = ['climate', 'sensor']
+COMPONENT_TYPES = ["climate", "sensor"]
 
-SENSOR_TYPE_TEMPERATURE = 'temperature'
+SENSOR_TYPE_TEMPERATURE = "temperature"
 
 SENSOR_TYPES = {
     ATTR_INSIDE_TEMPERATURE: {
-        CONF_NAME: 'Inside Temperature',
-        CONF_ICON: 'mdi:thermometer',
-        CONF_TYPE: SENSOR_TYPE_TEMPERATURE
+        CONF_NAME: "Inside Temperature",
+        CONF_ICON: "mdi:thermometer",
+        CONF_TYPE: SENSOR_TYPE_TEMPERATURE,
     },
     ATTR_OUTSIDE_TEMPERATURE: {
-        CONF_NAME: 'Outside Temperature',
-        CONF_ICON: 'mdi:thermometer',
-        CONF_TYPE: SENSOR_TYPE_TEMPERATURE
-    }
-
+        CONF_NAME: "Outside Temperature",
+        CONF_ICON: "mdi:thermometer",
+        CONF_TYPE: SENSOR_TYPE_TEMPERATURE,
+    },
 }
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Optional(
-            CONF_HOSTS, default=[]
-        ): vol.All(cv.ensure_list, [cv.string]),
-        vol.Optional(
-            CONF_MONITORED_CONDITIONS,
-            default=list(SENSOR_TYPES.keys())
-        ): vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)])
-    })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Optional(CONF_HOSTS, default=[]): vol.All(
+                    cv.ensure_list, [cv.string]
+                ),
+                vol.Optional(
+                    CONF_MONITORED_CONDITIONS, default=list(SENSOR_TYPES.keys())
+                ): vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)]),
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 def setup(hass, config):
     """Establish connection with Daikin."""
+
     def discovery_dispatch(service, discovery_info):
         """Dispatcher for Daikin discovery events."""
-        host = discovery_info.get('ip')
+        host = discovery_info.get("ip")
 
         if daikin_api_setup(hass, host) is None:
             return
 
         for component in COMPONENT_TYPES:
-            load_platform(hass, component, DOMAIN, discovery_info,
-                          config)
+            load_platform(hass, component, DOMAIN, discovery_info, config)
 
     discovery.listen(hass, SERVICE_DAIKIN, discovery_dispatch)
 
@@ -83,11 +90,10 @@ def setup(hass, config):
             continue
 
         discovery_info = {
-            'ip': host,
-            CONF_MONITORED_CONDITIONS:
-                config[DOMAIN][CONF_MONITORED_CONDITIONS]
+            "ip": host,
+            CONF_MONITORED_CONDITIONS: config[DOMAIN][CONF_MONITORED_CONDITIONS],
         }
-        load_platform(hass, 'sensor', DOMAIN, discovery_info, config)
+        load_platform(hass, "sensor", DOMAIN, discovery_info, config)
 
     return True
 
@@ -108,7 +114,7 @@ def daikin_api_setup(hass, host, name=None):
             return False
 
         if name is None:
-            name = device.values['name']
+            name = device.values["name"]
 
         api = DaikinApi(device, name)
 
@@ -129,10 +135,6 @@ class DaikinApi:
         """Pull the latest data from Daikin."""
         try:
             for resource in HTTP_RESOURCES:
-                self.device.values.update(
-                    self.device.get_resource(resource)
-                )
+                self.device.values.update(self.device.get_resource(resource))
         except timeout:
-            _LOGGER.warning(
-                "Connection failed for %s", self.ip_address
-            )
+            _LOGGER.warning("Connection failed for %s", self.ip_address)

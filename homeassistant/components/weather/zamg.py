@@ -9,26 +9,40 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.weather import (
-    WeatherEntity, ATTR_WEATHER_HUMIDITY, ATTR_WEATHER_PRESSURE,
-    ATTR_WEATHER_TEMPERATURE, ATTR_WEATHER_WIND_BEARING,
-    ATTR_WEATHER_WIND_SPEED, PLATFORM_SCHEMA)
-from homeassistant.const import (
-    CONF_NAME, TEMP_CELSIUS, CONF_LATITUDE, CONF_LONGITUDE)
+    WeatherEntity,
+    ATTR_WEATHER_HUMIDITY,
+    ATTR_WEATHER_PRESSURE,
+    ATTR_WEATHER_TEMPERATURE,
+    ATTR_WEATHER_WIND_BEARING,
+    ATTR_WEATHER_WIND_SPEED,
+    PLATFORM_SCHEMA,
+)
+from homeassistant.const import CONF_NAME, TEMP_CELSIUS, CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.helpers import config_validation as cv
+
 # Reuse data and API logic from the sensor implementation
 from homeassistant.components.sensor.zamg import (
-    ATTRIBUTION, closest_station, CONF_STATION_ID, zamg_stations, ZamgData)
+    ATTRIBUTION,
+    closest_station,
+    CONF_STATION_ID,
+    zamg_stations,
+    ZamgData,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_STATION_ID): cv.string,
-    vol.Inclusive(CONF_LATITUDE, 'coordinates',
-                  'Latitude and longitude must exist together'): cv.latitude,
-    vol.Inclusive(CONF_LONGITUDE, 'coordinates',
-                  'Latitude and longitude must exist together'): cv.longitude,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_NAME): cv.string,
+        vol.Optional(CONF_STATION_ID): cv.string,
+        vol.Inclusive(
+            CONF_LATITUDE, "coordinates", "Latitude and longitude must exist together"
+        ): cv.latitude,
+        vol.Inclusive(
+            CONF_LONGITUDE, "coordinates", "Latitude and longitude must exist together"
+        ): cv.longitude,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -38,10 +52,14 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     longitude = config.get(CONF_LONGITUDE, hass.config.longitude)
 
     station_id = config.get(CONF_STATION_ID) or closest_station(
-        latitude, longitude, hass.config.config_dir)
+        latitude, longitude, hass.config.config_dir
+    )
     if station_id not in zamg_stations(hass.config.config_dir):
-        _LOGGER.error("Configured ZAMG %s (%s) is not a known station",
-                      CONF_STATION_ID, station_id)
+        _LOGGER.error(
+            "Configured ZAMG %s (%s) is not a known station",
+            CONF_STATION_ID,
+            station_id,
+        )
         return False
 
     probe = ZamgData(station_id=station_id)
@@ -65,8 +83,9 @@ class ZamgWeather(WeatherEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return self.stationname or 'ZAMG {}'.format(
-            self.zamg_data.data.get('Name') or '(unknown station)')
+        return self.stationname or "ZAMG {}".format(
+            self.zamg_data.data.get("Name") or "(unknown station)"
+        )
 
     @property
     def condition(self):

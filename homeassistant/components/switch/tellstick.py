@@ -5,25 +5,32 @@ For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/switch.tellstick/
 """
 from homeassistant.components.tellstick import (
-    DEFAULT_SIGNAL_REPETITIONS, ATTR_DISCOVER_DEVICES,
-    ATTR_DISCOVER_CONFIG, DATA_TELLSTICK, TellstickDevice)
+    DEFAULT_SIGNAL_REPETITIONS,
+    ATTR_DISCOVER_DEVICES,
+    ATTR_DISCOVER_CONFIG,
+    DATA_TELLSTICK,
+    TellstickDevice,
+)
 from homeassistant.helpers.entity import ToggleEntity
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up Tellstick switches."""
-    if (discovery_info is None or
-            discovery_info[ATTR_DISCOVER_DEVICES] is None):
+    if discovery_info is None or discovery_info[ATTR_DISCOVER_DEVICES] is None:
         return
 
     # Allow platform level override, fallback to module config
-    signal_repetitions = discovery_info.get(ATTR_DISCOVER_CONFIG,
-                                            DEFAULT_SIGNAL_REPETITIONS)
+    signal_repetitions = discovery_info.get(
+        ATTR_DISCOVER_CONFIG, DEFAULT_SIGNAL_REPETITIONS
+    )
 
-    add_entities([TellstickSwitch(hass.data[DATA_TELLSTICK][tellcore_id],
-                                  signal_repetitions)
-                  for tellcore_id in discovery_info[ATTR_DISCOVER_DEVICES]],
-                 True)
+    add_entities(
+        [
+            TellstickSwitch(hass.data[DATA_TELLSTICK][tellcore_id], signal_repetitions)
+            for tellcore_id in discovery_info[ATTR_DISCOVER_DEVICES]
+        ],
+        True,
+    )
 
 
 class TellstickSwitch(TellstickDevice, ToggleEntity):

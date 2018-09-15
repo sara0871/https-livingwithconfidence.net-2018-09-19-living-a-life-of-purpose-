@@ -11,20 +11,29 @@ import requests
 
 from homeassistant import util
 from homeassistant.components.light import (
-    Light, ATTR_BRIGHTNESS, ATTR_COLOR_TEMP, ATTR_HS_COLOR, ATTR_TRANSITION,
-    SUPPORT_BRIGHTNESS, SUPPORT_COLOR_TEMP, SUPPORT_COLOR, SUPPORT_TRANSITION)
+    Light,
+    ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP,
+    ATTR_HS_COLOR,
+    ATTR_TRANSITION,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR_TEMP,
+    SUPPORT_COLOR,
+    SUPPORT_TRANSITION,
+)
 from homeassistant.exceptions import PlatformNotReady
 import homeassistant.util.color as color_util
 
-DEPENDENCIES = ['wemo']
+DEPENDENCIES = ["wemo"]
 
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=10)
 MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(milliseconds=100)
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_WEMO = (SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP | SUPPORT_COLOR |
-                SUPPORT_TRANSITION)
+SUPPORT_WEMO = (
+    SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP | SUPPORT_COLOR | SUPPORT_TRANSITION
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -32,17 +41,19 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     from pywemo import discovery
 
     if discovery_info is not None:
-        location = discovery_info['ssdp_description']
-        mac = discovery_info['mac_address']
+        location = discovery_info["ssdp_description"]
+        mac = discovery_info["mac_address"]
 
         try:
             device = discovery.device_from_description(location, mac)
-        except (requests.exceptions.ConnectionError,
-                requests.exceptions.Timeout) as err:
-            _LOGGER.error('Unable to access %s (%s)', location, err)
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+        ) as err:
+            _LOGGER.error("Unable to access %s (%s)", location, err)
             raise PlatformNotReady
 
-        if device.model_name == 'Dimmer':
+        if device.model_name == "Dimmer":
             add_entities([WemoDimmer(device)])
         else:
             setup_bridge(device, add_entities)
@@ -92,23 +103,23 @@ class WemoLight(Light):
     @property
     def brightness(self):
         """Return the brightness of this light between 0..255."""
-        return self.wemo.state.get('level', 255)
+        return self.wemo.state.get("level", 255)
 
     @property
     def hs_color(self):
         """Return the hs color values of this light."""
-        xy_color = self.wemo.state.get('color_xy')
+        xy_color = self.wemo.state.get("color_xy")
         return color_util.color_xy_to_hs(*xy_color) if xy_color else None
 
     @property
     def color_temp(self):
         """Return the color temperature of this light in mireds."""
-        return self.wemo.state.get('temperature_mireds')
+        return self.wemo.state.get("temperature_mireds")
 
     @property
     def is_on(self):
         """Return true if device is on."""
-        return self.wemo.state['onoff'] != 0
+        return self.wemo.state["onoff"] != 0
 
     @property
     def supported_features(self):
@@ -118,7 +129,7 @@ class WemoLight(Light):
     @property
     def available(self):
         """Return if light is available."""
-        return self.wemo.state['available']
+        return self.wemo.state["available"]
 
     def turn_on(self, **kwargs):
         """Turn the light on."""
@@ -132,8 +143,7 @@ class WemoLight(Light):
 
         if ATTR_COLOR_TEMP in kwargs:
             colortemp = kwargs[ATTR_COLOR_TEMP]
-            self.wemo.set_temperature(mireds=colortemp,
-                                      transition=transitiontime)
+            self.wemo.set_temperature(mireds=colortemp, transition=transitiontime)
 
         if ATTR_BRIGHTNESS in kwargs:
             brightness = kwargs.get(ATTR_BRIGHTNESS, self.brightness or 255)
@@ -167,7 +177,8 @@ class WemoDimmer(Light):
         # The register method uses a threading condition, so call via executor.
         # and yield from to wait until the task is done.
         yield from self.hass.async_add_job(
-            wemo.SUBSCRIPTION_REGISTRY.register, self.wemo)
+            wemo.SUBSCRIPTION_REGISTRY.register, self.wemo
+        )
         # The on method just appends to a defaultdict list.
         wemo.SUBSCRIPTION_REGISTRY.on(self.wemo, None, self._update_callback)
 
@@ -215,8 +226,7 @@ class WemoDimmer(Light):
             wemobrightness = int(self.wemo.get_brightness(force_update))
             self._brightness = int((wemobrightness * 255) / 100)
         except AttributeError as err:
-            _LOGGER.warning("Could not update status for %s (%s)",
-                            self.name, err)
+            _LOGGER.warning("Could not update status for %s (%s)", self.name, err)
 
     def turn_on(self, **kwargs):
         """Turn the dimmer on."""

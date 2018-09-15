@@ -18,37 +18,44 @@ from homeassistant.loader import bind_hass
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_INITIAL = 'initial'
-ATTR_STEP = 'step'
+ATTR_INITIAL = "initial"
+ATTR_STEP = "step"
 
-CONF_INITIAL = 'initial'
-CONF_STEP = 'step'
+CONF_INITIAL = "initial"
+CONF_STEP = "step"
 
 DEFAULT_INITIAL = 0
 DEFAULT_STEP = 1
-DOMAIN = 'counter'
+DOMAIN = "counter"
 
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
-SERVICE_DECREMENT = 'decrement'
-SERVICE_INCREMENT = 'increment'
-SERVICE_RESET = 'reset'
+SERVICE_DECREMENT = "decrement"
+SERVICE_INCREMENT = "increment"
+SERVICE_RESET = "reset"
 
-SERVICE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-})
+SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        cv.slug: vol.Any({
-            vol.Optional(CONF_ICON): cv.icon,
-            vol.Optional(CONF_INITIAL, default=DEFAULT_INITIAL):
-                cv.positive_int,
-            vol.Optional(CONF_NAME): cv.string,
-            vol.Optional(CONF_STEP, default=DEFAULT_STEP): cv.positive_int,
-        }, None)
-    })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                cv.slug: vol.Any(
+                    {
+                        vol.Optional(CONF_ICON): cv.icon,
+                        vol.Optional(
+                            CONF_INITIAL, default=DEFAULT_INITIAL
+                        ): cv.positive_int,
+                        vol.Optional(CONF_NAME): cv.string,
+                        vol.Optional(CONF_STEP, default=DEFAULT_STEP): cv.positive_int,
+                    },
+                    None,
+                )
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 @bind_hass
@@ -61,8 +68,9 @@ def increment(hass, entity_id):
 @bind_hass
 def async_increment(hass, entity_id):
     """Increment a counter."""
-    hass.async_add_job(hass.services.async_call(
-        DOMAIN, SERVICE_INCREMENT, {ATTR_ENTITY_ID: entity_id}))
+    hass.async_add_job(
+        hass.services.async_call(DOMAIN, SERVICE_INCREMENT, {ATTR_ENTITY_ID: entity_id})
+    )
 
 
 @bind_hass
@@ -75,8 +83,9 @@ def decrement(hass, entity_id):
 @bind_hass
 def async_decrement(hass, entity_id):
     """Decrement a counter."""
-    hass.async_add_job(hass.services.async_call(
-        DOMAIN, SERVICE_DECREMENT, {ATTR_ENTITY_ID: entity_id}))
+    hass.async_add_job(
+        hass.services.async_call(DOMAIN, SERVICE_DECREMENT, {ATTR_ENTITY_ID: entity_id})
+    )
 
 
 @bind_hass
@@ -89,8 +98,9 @@ def reset(hass, entity_id):
 @bind_hass
 def async_reset(hass, entity_id):
     """Reset a counter."""
-    hass.async_add_job(hass.services.async_call(
-        DOMAIN, SERVICE_RESET, {ATTR_ENTITY_ID: entity_id}))
+    hass.async_add_job(
+        hass.services.async_call(DOMAIN, SERVICE_RESET, {ATTR_ENTITY_ID: entity_id})
+    )
 
 
 async def async_setup(hass, config):
@@ -114,14 +124,14 @@ async def async_setup(hass, config):
         return False
 
     component.async_register_entity_service(
-        SERVICE_INCREMENT, SERVICE_SCHEMA,
-        'async_increment')
+        SERVICE_INCREMENT, SERVICE_SCHEMA, "async_increment"
+    )
     component.async_register_entity_service(
-        SERVICE_DECREMENT, SERVICE_SCHEMA,
-        'async_decrement')
+        SERVICE_DECREMENT, SERVICE_SCHEMA, "async_decrement"
+    )
     component.async_register_entity_service(
-        SERVICE_RESET, SERVICE_SCHEMA,
-        'async_reset')
+        SERVICE_RESET, SERVICE_SCHEMA, "async_reset"
+    )
 
     await component.async_add_entities(entities)
     return True
@@ -161,10 +171,7 @@ class Counter(Entity):
     @property
     def state_attributes(self):
         """Return the state attributes."""
-        return {
-            ATTR_INITIAL: self._initial,
-            ATTR_STEP: self._step,
-        }
+        return {ATTR_INITIAL: self._initial, ATTR_STEP: self._step}
 
     async def async_added_to_hass(self):
         """Call when entity about to be added to Home Assistant."""

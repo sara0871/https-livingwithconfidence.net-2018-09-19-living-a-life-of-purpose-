@@ -18,26 +18,34 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components import group
 from homeassistant.helpers import intent
 from homeassistant.const import (
-    SERVICE_OPEN_COVER, SERVICE_CLOSE_COVER, SERVICE_SET_COVER_POSITION,
-    SERVICE_STOP_COVER, SERVICE_OPEN_COVER_TILT, SERVICE_CLOSE_COVER_TILT,
-    SERVICE_STOP_COVER_TILT, SERVICE_SET_COVER_TILT_POSITION, STATE_OPEN,
-    STATE_CLOSED, STATE_UNKNOWN, STATE_OPENING, STATE_CLOSING, ATTR_ENTITY_ID)
+    SERVICE_OPEN_COVER,
+    SERVICE_CLOSE_COVER,
+    SERVICE_SET_COVER_POSITION,
+    SERVICE_STOP_COVER,
+    SERVICE_OPEN_COVER_TILT,
+    SERVICE_CLOSE_COVER_TILT,
+    SERVICE_STOP_COVER_TILT,
+    SERVICE_SET_COVER_TILT_POSITION,
+    STATE_OPEN,
+    STATE_CLOSED,
+    STATE_UNKNOWN,
+    STATE_OPENING,
+    STATE_CLOSING,
+    ATTR_ENTITY_ID,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'cover'
-DEPENDENCIES = ['group']
+DOMAIN = "cover"
+DEPENDENCIES = ["group"]
 SCAN_INTERVAL = timedelta(seconds=15)
 
-GROUP_NAME_ALL_COVERS = 'all covers'
-ENTITY_ID_ALL_COVERS = group.ENTITY_ID_FORMAT.format('all_covers')
+GROUP_NAME_ALL_COVERS = "all covers"
+ENTITY_ID_ALL_COVERS = group.ENTITY_ID_FORMAT.format("all_covers")
 
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
-DEVICE_CLASSES = [
-    'window',        # Window control
-    'garage',        # Garage door control
-]
+DEVICE_CLASSES = ["window", "garage"]  # Window control  # Garage door control
 
 DEVICE_CLASSES_SCHEMA = vol.All(vol.Lower, vol.In(DEVICE_CLASSES))
 
@@ -50,27 +58,27 @@ SUPPORT_CLOSE_TILT = 32
 SUPPORT_STOP_TILT = 64
 SUPPORT_SET_TILT_POSITION = 128
 
-ATTR_CURRENT_POSITION = 'current_position'
-ATTR_CURRENT_TILT_POSITION = 'current_tilt_position'
-ATTR_POSITION = 'position'
-ATTR_TILT_POSITION = 'tilt_position'
+ATTR_CURRENT_POSITION = "current_position"
+ATTR_CURRENT_TILT_POSITION = "current_tilt_position"
+ATTR_POSITION = "position"
+ATTR_TILT_POSITION = "tilt_position"
 
-INTENT_OPEN_COVER = 'HassOpenCover'
-INTENT_CLOSE_COVER = 'HassCloseCover'
+INTENT_OPEN_COVER = "HassOpenCover"
+INTENT_CLOSE_COVER = "HassCloseCover"
 
-COVER_SERVICE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-})
+COVER_SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
-COVER_SET_COVER_POSITION_SCHEMA = COVER_SERVICE_SCHEMA.extend({
-    vol.Required(ATTR_POSITION):
-        vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
-})
+COVER_SET_COVER_POSITION_SCHEMA = COVER_SERVICE_SCHEMA.extend(
+    {vol.Required(ATTR_POSITION): vol.All(vol.Coerce(int), vol.Range(min=0, max=100))}
+)
 
-COVER_SET_COVER_TILT_POSITION_SCHEMA = COVER_SERVICE_SCHEMA.extend({
-    vol.Required(ATTR_TILT_POSITION):
-        vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
-})
+COVER_SET_COVER_TILT_POSITION_SCHEMA = COVER_SERVICE_SCHEMA.extend(
+    {
+        vol.Required(ATTR_TILT_POSITION): vol.All(
+            vol.Coerce(int), vol.Range(min=0, max=100)
+        )
+    }
+)
 
 
 @bind_hass
@@ -141,56 +149,57 @@ def stop_cover_tilt(hass, entity_id=None):
 async def async_setup(hass, config):
     """Track states and offer events for covers."""
     component = EntityComponent(
-        _LOGGER, DOMAIN, hass, SCAN_INTERVAL, GROUP_NAME_ALL_COVERS)
+        _LOGGER, DOMAIN, hass, SCAN_INTERVAL, GROUP_NAME_ALL_COVERS
+    )
 
     await component.async_setup(config)
 
     component.async_register_entity_service(
-        SERVICE_OPEN_COVER, COVER_SERVICE_SCHEMA,
-        'async_open_cover'
+        SERVICE_OPEN_COVER, COVER_SERVICE_SCHEMA, "async_open_cover"
     )
 
     component.async_register_entity_service(
-        SERVICE_CLOSE_COVER, COVER_SERVICE_SCHEMA,
-        'async_close_cover'
+        SERVICE_CLOSE_COVER, COVER_SERVICE_SCHEMA, "async_close_cover"
     )
 
     component.async_register_entity_service(
-        SERVICE_SET_COVER_POSITION, COVER_SET_COVER_POSITION_SCHEMA,
-        'async_set_cover_position'
+        SERVICE_SET_COVER_POSITION,
+        COVER_SET_COVER_POSITION_SCHEMA,
+        "async_set_cover_position",
     )
 
     component.async_register_entity_service(
-        SERVICE_STOP_COVER, COVER_SERVICE_SCHEMA,
-        'async_stop_cover'
+        SERVICE_STOP_COVER, COVER_SERVICE_SCHEMA, "async_stop_cover"
     )
 
     component.async_register_entity_service(
-        SERVICE_OPEN_COVER_TILT, COVER_SERVICE_SCHEMA,
-        'async_open_cover_tilt'
+        SERVICE_OPEN_COVER_TILT, COVER_SERVICE_SCHEMA, "async_open_cover_tilt"
     )
 
     component.async_register_entity_service(
-        SERVICE_CLOSE_COVER_TILT, COVER_SERVICE_SCHEMA,
-        'async_close_cover_tilt'
+        SERVICE_CLOSE_COVER_TILT, COVER_SERVICE_SCHEMA, "async_close_cover_tilt"
     )
 
     component.async_register_entity_service(
-        SERVICE_STOP_COVER_TILT, COVER_SERVICE_SCHEMA,
-        'async_stop_cover_tilt'
+        SERVICE_STOP_COVER_TILT, COVER_SERVICE_SCHEMA, "async_stop_cover_tilt"
     )
 
     component.async_register_entity_service(
-        SERVICE_SET_COVER_TILT_POSITION, COVER_SET_COVER_TILT_POSITION_SCHEMA,
-        'async_set_cover_tilt_position'
+        SERVICE_SET_COVER_TILT_POSITION,
+        COVER_SET_COVER_TILT_POSITION_SCHEMA,
+        "async_set_cover_tilt_position",
     )
 
-    hass.helpers.intent.async_register(intent.ServiceIntentHandler(
-        INTENT_OPEN_COVER, DOMAIN, SERVICE_OPEN_COVER,
-        "Opened {}"))
-    hass.helpers.intent.async_register(intent.ServiceIntentHandler(
-        INTENT_CLOSE_COVER, DOMAIN, SERVICE_CLOSE_COVER,
-        "Closed {}"))
+    hass.helpers.intent.async_register(
+        intent.ServiceIntentHandler(
+            INTENT_OPEN_COVER, DOMAIN, SERVICE_OPEN_COVER, "Opened {}"
+        )
+    )
+    hass.helpers.intent.async_register(
+        intent.ServiceIntentHandler(
+            INTENT_CLOSE_COVER, DOMAIN, SERVICE_CLOSE_COVER, "Closed {}"
+        )
+    )
 
     return True
 
@@ -254,8 +263,11 @@ class CoverDevice(Entity):
 
         if self.current_cover_tilt_position is not None:
             supported_features |= (
-                SUPPORT_OPEN_TILT | SUPPORT_CLOSE_TILT | SUPPORT_STOP_TILT |
-                SUPPORT_SET_TILT_POSITION)
+                SUPPORT_OPEN_TILT
+                | SUPPORT_CLOSE_TILT
+                | SUPPORT_STOP_TILT
+                | SUPPORT_SET_TILT_POSITION
+            )
 
         return supported_features
 
@@ -305,8 +317,7 @@ class CoverDevice(Entity):
 
         This method must be run in the event loop and returns a coroutine.
         """
-        return self.hass.async_add_job(
-            ft.partial(self.set_cover_position, **kwargs))
+        return self.hass.async_add_job(ft.partial(self.set_cover_position, **kwargs))
 
     def stop_cover(self, **kwargs):
         """Stop the cover."""
@@ -328,8 +339,7 @@ class CoverDevice(Entity):
 
         This method must be run in the event loop and returns a coroutine.
         """
-        return self.hass.async_add_job(
-            ft.partial(self.open_cover_tilt, **kwargs))
+        return self.hass.async_add_job(ft.partial(self.open_cover_tilt, **kwargs))
 
     def close_cover_tilt(self, **kwargs):
         """Close the cover tilt."""
@@ -340,8 +350,7 @@ class CoverDevice(Entity):
 
         This method must be run in the event loop and returns a coroutine.
         """
-        return self.hass.async_add_job(
-            ft.partial(self.close_cover_tilt, **kwargs))
+        return self.hass.async_add_job(ft.partial(self.close_cover_tilt, **kwargs))
 
     def set_cover_tilt_position(self, **kwargs):
         """Move the cover tilt to a specific position."""
@@ -353,7 +362,8 @@ class CoverDevice(Entity):
         This method must be run in the event loop and returns a coroutine.
         """
         return self.hass.async_add_job(
-            ft.partial(self.set_cover_tilt_position, **kwargs))
+            ft.partial(self.set_cover_tilt_position, **kwargs)
+        )
 
     def stop_cover_tilt(self, **kwargs):
         """Stop the cover."""
@@ -364,5 +374,4 @@ class CoverDevice(Entity):
 
         This method must be run in the event loop and returns a coroutine.
         """
-        return self.hass.async_add_job(
-            ft.partial(self.stop_cover_tilt, **kwargs))
+        return self.hass.async_add_job(ft.partial(self.stop_cover_tilt, **kwargs))

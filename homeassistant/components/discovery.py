@@ -21,89 +21,96 @@ from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.discovery import async_load_platform, async_discover
 import homeassistant.util.dt as dt_util
 
-REQUIREMENTS = ['netdisco==2.0.0']
+REQUIREMENTS = ["netdisco==2.0.0"]
 
-DOMAIN = 'discovery'
+DOMAIN = "discovery"
 
 SCAN_INTERVAL = timedelta(seconds=300)
-SERVICE_NETGEAR = 'netgear_router'
-SERVICE_WEMO = 'belkin_wemo'
-SERVICE_HASS_IOS_APP = 'hass_ios'
-SERVICE_IKEA_TRADFRI = 'ikea_tradfri'
-SERVICE_HASSIO = 'hassio'
-SERVICE_AXIS = 'axis'
-SERVICE_APPLE_TV = 'apple_tv'
-SERVICE_WINK = 'wink'
-SERVICE_XIAOMI_GW = 'xiaomi_gw'
-SERVICE_TELLDUSLIVE = 'tellstick'
-SERVICE_HUE = 'philips_hue'
-SERVICE_KONNECTED = 'konnected'
-SERVICE_DECONZ = 'deconz'
-SERVICE_DAIKIN = 'daikin'
-SERVICE_SABNZBD = 'sabnzbd'
-SERVICE_SAMSUNG_PRINTER = 'samsung_printer'
-SERVICE_HOMEKIT = 'homekit'
+SERVICE_NETGEAR = "netgear_router"
+SERVICE_WEMO = "belkin_wemo"
+SERVICE_HASS_IOS_APP = "hass_ios"
+SERVICE_IKEA_TRADFRI = "ikea_tradfri"
+SERVICE_HASSIO = "hassio"
+SERVICE_AXIS = "axis"
+SERVICE_APPLE_TV = "apple_tv"
+SERVICE_WINK = "wink"
+SERVICE_XIAOMI_GW = "xiaomi_gw"
+SERVICE_TELLDUSLIVE = "tellstick"
+SERVICE_HUE = "philips_hue"
+SERVICE_KONNECTED = "konnected"
+SERVICE_DECONZ = "deconz"
+SERVICE_DAIKIN = "daikin"
+SERVICE_SABNZBD = "sabnzbd"
+SERVICE_SAMSUNG_PRINTER = "samsung_printer"
+SERVICE_HOMEKIT = "homekit"
 
 CONFIG_ENTRY_HANDLERS = {
-    SERVICE_DECONZ: 'deconz',
-    'google_cast': 'cast',
-    SERVICE_HUE: 'hue',
-    'sonos': 'sonos',
+    SERVICE_DECONZ: "deconz",
+    "google_cast": "cast",
+    SERVICE_HUE: "hue",
+    "sonos": "sonos",
 }
 
 SERVICE_HANDLERS = {
-    SERVICE_HASS_IOS_APP: ('ios', None),
-    SERVICE_NETGEAR: ('device_tracker', None),
-    SERVICE_WEMO: ('wemo', None),
-    SERVICE_IKEA_TRADFRI: ('tradfri', None),
-    SERVICE_HASSIO: ('hassio', None),
-    SERVICE_AXIS: ('axis', None),
-    SERVICE_APPLE_TV: ('apple_tv', None),
-    SERVICE_WINK: ('wink', None),
-    SERVICE_XIAOMI_GW: ('xiaomi_aqara', None),
-    SERVICE_TELLDUSLIVE: ('tellduslive', None),
-    SERVICE_DAIKIN: ('daikin', None),
-    SERVICE_SABNZBD: ('sabnzbd', None),
-    SERVICE_SAMSUNG_PRINTER: ('sensor', 'syncthru'),
-    SERVICE_KONNECTED: ('konnected', None),
-    'panasonic_viera': ('media_player', 'panasonic_viera'),
-    'plex_mediaserver': ('media_player', 'plex'),
-    'roku': ('media_player', 'roku'),
-    'yamaha': ('media_player', 'yamaha'),
-    'logitech_mediaserver': ('media_player', 'squeezebox'),
-    'directv': ('media_player', 'directv'),
-    'denonavr': ('media_player', 'denonavr'),
-    'samsung_tv': ('media_player', 'samsungtv'),
-    'yeelight': ('light', 'yeelight'),
-    'frontier_silicon': ('media_player', 'frontier_silicon'),
-    'openhome': ('media_player', 'openhome'),
-    'harmony': ('remote', 'harmony'),
-    'bose_soundtouch': ('media_player', 'soundtouch'),
-    'bluesound': ('media_player', 'bluesound'),
-    'songpal': ('media_player', 'songpal'),
-    'kodi': ('media_player', 'kodi'),
-    'volumio': ('media_player', 'volumio'),
-    'nanoleaf_aurora': ('light', 'nanoleaf_aurora'),
-    'freebox': ('device_tracker', 'freebox'),
+    SERVICE_HASS_IOS_APP: ("ios", None),
+    SERVICE_NETGEAR: ("device_tracker", None),
+    SERVICE_WEMO: ("wemo", None),
+    SERVICE_IKEA_TRADFRI: ("tradfri", None),
+    SERVICE_HASSIO: ("hassio", None),
+    SERVICE_AXIS: ("axis", None),
+    SERVICE_APPLE_TV: ("apple_tv", None),
+    SERVICE_WINK: ("wink", None),
+    SERVICE_XIAOMI_GW: ("xiaomi_aqara", None),
+    SERVICE_TELLDUSLIVE: ("tellduslive", None),
+    SERVICE_DAIKIN: ("daikin", None),
+    SERVICE_SABNZBD: ("sabnzbd", None),
+    SERVICE_SAMSUNG_PRINTER: ("sensor", "syncthru"),
+    SERVICE_KONNECTED: ("konnected", None),
+    "panasonic_viera": ("media_player", "panasonic_viera"),
+    "plex_mediaserver": ("media_player", "plex"),
+    "roku": ("media_player", "roku"),
+    "yamaha": ("media_player", "yamaha"),
+    "logitech_mediaserver": ("media_player", "squeezebox"),
+    "directv": ("media_player", "directv"),
+    "denonavr": ("media_player", "denonavr"),
+    "samsung_tv": ("media_player", "samsungtv"),
+    "yeelight": ("light", "yeelight"),
+    "frontier_silicon": ("media_player", "frontier_silicon"),
+    "openhome": ("media_player", "openhome"),
+    "harmony": ("remote", "harmony"),
+    "bose_soundtouch": ("media_player", "soundtouch"),
+    "bluesound": ("media_player", "bluesound"),
+    "songpal": ("media_player", "songpal"),
+    "kodi": ("media_player", "kodi"),
+    "volumio": ("media_player", "volumio"),
+    "nanoleaf_aurora": ("light", "nanoleaf_aurora"),
+    "freebox": ("device_tracker", "freebox"),
 }
 
 OPTIONAL_SERVICE_HANDLERS = {
-    SERVICE_HOMEKIT: ('homekit_controller', None),
-    'dlna_dmr': ('media_player', 'dlna_dmr'),
+    SERVICE_HOMEKIT: ("homekit_controller", None),
+    "dlna_dmr": ("media_player", "dlna_dmr"),
 }
 
-CONF_IGNORE = 'ignore'
-CONF_ENABLE = 'enable'
+CONF_IGNORE = "ignore"
+CONF_ENABLE = "enable"
 
-CONFIG_SCHEMA = vol.Schema({
-    vol.Required(DOMAIN): vol.Schema({
-        vol.Optional(CONF_IGNORE, default=[]):
-            vol.All(cv.ensure_list, [
-                vol.In(list(CONFIG_ENTRY_HANDLERS) + list(SERVICE_HANDLERS))]),
-        vol.Optional(CONF_ENABLE, default=[]):
-            vol.All(cv.ensure_list, [vol.In(OPTIONAL_SERVICE_HANDLERS)])
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        vol.Required(DOMAIN): vol.Schema(
+            {
+                vol.Optional(CONF_IGNORE, default=[]): vol.All(
+                    cv.ensure_list,
+                    [vol.In(list(CONFIG_ENTRY_HANDLERS) + list(SERVICE_HANDLERS))],
+                ),
+                vol.Optional(CONF_ENABLE, default=[]): vol.All(
+                    cv.ensure_list, [vol.In(OPTIONAL_SERVICE_HANDLERS)]
+                ),
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 async def async_setup(hass, config):
@@ -115,7 +122,7 @@ async def async_setup(hass, config):
     already_discovered = set()
 
     # Disable zeroconf logging, it spams
-    logging.getLogger('zeroconf').setLevel(logging.CRITICAL)
+    logging.getLogger("zeroconf").setLevel(logging.CRITICAL)
 
     # Platforms ignore by config
     ignored_platforms = config[DOMAIN][CONF_IGNORE]
@@ -138,8 +145,8 @@ async def async_setup(hass, config):
         if service in CONFIG_ENTRY_HANDLERS:
             await hass.config_entries.flow.async_init(
                 CONFIG_ENTRY_HANDLERS[service],
-                context={'source': config_entries.SOURCE_DISCOVERY},
-                data=info
+                context={"source": config_entries.SOURCE_DISCOVERY},
+                data=info,
             )
             return
 
@@ -160,8 +167,7 @@ async def async_setup(hass, config):
         if platform is None:
             await async_discover(hass, service, info, component, config)
         else:
-            await async_load_platform(
-                hass, component, platform, info, config)
+            await async_load_platform(hass, component, platform, info, config)
 
     async def scan_devices(now):
         """Scan for devices."""
@@ -170,8 +176,9 @@ async def async_setup(hass, config):
         for result in results:
             hass.async_add_job(new_service_found(*result))
 
-        async_track_point_in_utc_time(hass, scan_devices,
-                                      dt_util.utcnow() + SCAN_INTERVAL)
+        async_track_point_in_utc_time(
+            hass, scan_devices, dt_util.utcnow() + SCAN_INTERVAL
+        )
 
     @callback
     def schedule_first(event):
@@ -179,7 +186,7 @@ async def async_setup(hass, config):
         async_track_point_in_utc_time(hass, scan_devices, dt_util.utcnow())
 
         # discovery local services
-        if 'HASSIO' in os.environ:
+        if "HASSIO" in os.environ:
             hass.async_add_job(new_service_found(SERVICE_HASSIO, {}))
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, schedule_first)

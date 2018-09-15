@@ -8,10 +8,10 @@ from homeassistant.util.location import distance
 
 from .const import DOMAIN
 
-ATTR_PASSIVE = 'passive'
-ATTR_RADIUS = 'radius'
+ATTR_PASSIVE = "passive"
+ATTR_RADIUS = "radius"
 
-STATE = 'zoning'
+STATE = "zoning"
 
 
 @bind_hass
@@ -29,8 +29,10 @@ def async_active_zone(hass, latitude, longitude, radius=0):
     This method must be run in the event loop.
     """
     # Sort entity IDs so that we are deterministic if equal distance to 2 zones
-    zones = (hass.states.get(entity_id) for entity_id
-             in sorted(hass.states.async_entity_ids(DOMAIN)))
+    zones = (
+        hass.states.get(entity_id)
+        for entity_id in sorted(hass.states.async_entity_ids(DOMAIN))
+    )
 
     min_dist = None
     closest = None
@@ -40,14 +42,18 @@ def async_active_zone(hass, latitude, longitude, radius=0):
             continue
 
         zone_dist = distance(
-            latitude, longitude,
-            zone.attributes[ATTR_LATITUDE], zone.attributes[ATTR_LONGITUDE])
+            latitude,
+            longitude,
+            zone.attributes[ATTR_LATITUDE],
+            zone.attributes[ATTR_LONGITUDE],
+        )
 
         within_zone = zone_dist - radius < zone.attributes[ATTR_RADIUS]
         closer_zone = closest is None or zone_dist < min_dist
-        smaller_zone = (zone_dist == min_dist and
-                        zone.attributes[ATTR_RADIUS] <
-                        closest.attributes[ATTR_RADIUS])
+        smaller_zone = (
+            zone_dist == min_dist
+            and zone.attributes[ATTR_RADIUS] < closest.attributes[ATTR_RADIUS]
+        )
 
         if within_zone and (closer_zone or smaller_zone):
             min_dist = zone_dist
@@ -62,8 +68,11 @@ def in_zone(zone, latitude, longitude, radius=0):
     Async friendly.
     """
     zone_dist = distance(
-        latitude, longitude,
-        zone.attributes[ATTR_LATITUDE], zone.attributes[ATTR_LONGITUDE])
+        latitude,
+        longitude,
+        zone.attributes[ATTR_LATITUDE],
+        zone.attributes[ATTR_LONGITUDE],
+    )
 
     return zone_dist - radius < zone.attributes[ATTR_RADIUS]
 

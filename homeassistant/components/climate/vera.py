@@ -8,32 +8,35 @@ import logging
 
 from homeassistant.util import convert
 from homeassistant.components.climate import (
-    ClimateDevice, ENTITY_ID_FORMAT, SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_OPERATION_MODE, SUPPORT_FAN_MODE)
-from homeassistant.const import (
-    TEMP_FAHRENHEIT,
-    TEMP_CELSIUS,
-    ATTR_TEMPERATURE)
+    ClimateDevice,
+    ENTITY_ID_FORMAT,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_FAN_MODE,
+)
+from homeassistant.const import TEMP_FAHRENHEIT, TEMP_CELSIUS, ATTR_TEMPERATURE
 
-from homeassistant.components.vera import (
-    VERA_CONTROLLER, VERA_DEVICES, VeraDevice)
+from homeassistant.components.vera import VERA_CONTROLLER, VERA_DEVICES, VeraDevice
 
-DEPENDENCIES = ['vera']
+DEPENDENCIES = ["vera"]
 
 _LOGGER = logging.getLogger(__name__)
 
-OPERATION_LIST = ['Heat', 'Cool', 'Auto Changeover', 'Off']
-FAN_OPERATION_LIST = ['On', 'Auto', 'Cycle']
+OPERATION_LIST = ["Heat", "Cool", "Auto Changeover", "Off"]
+FAN_OPERATION_LIST = ["On", "Auto", "Cycle"]
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE |
-                 SUPPORT_FAN_MODE)
+SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | SUPPORT_FAN_MODE
 
 
 def setup_platform(hass, config, add_entities_callback, discovery_info=None):
     """Set up of Vera thermostats."""
     add_entities_callback(
-        [VeraThermostat(device, hass.data[VERA_CONTROLLER]) for
-         device in hass.data[VERA_DEVICES]['climate']], True)
+        [
+            VeraThermostat(device, hass.data[VERA_CONTROLLER])
+            for device in hass.data[VERA_DEVICES]["climate"]
+        ],
+        True,
+    )
 
 
 class VeraThermostat(VeraDevice, ClimateDevice):
@@ -53,15 +56,15 @@ class VeraThermostat(VeraDevice, ClimateDevice):
     def current_operation(self):
         """Return current operation ie. heat, cool, idle."""
         mode = self.vera_device.get_hvac_mode()
-        if mode == 'HeatOn':
+        if mode == "HeatOn":
             return OPERATION_LIST[0]  # heat
-        if mode == 'CoolOn':
+        if mode == "CoolOn":
             return OPERATION_LIST[1]  # cool
-        if mode == 'AutoChangeOver':
+        if mode == "AutoChangeOver":
             return OPERATION_LIST[2]  # auto
-        if mode == 'Off':
+        if mode == "Off":
             return OPERATION_LIST[3]  # off
-        return 'Off'
+        return "Off"
 
     @property
     def operation_list(self):
@@ -104,10 +107,9 @@ class VeraThermostat(VeraDevice, ClimateDevice):
     @property
     def temperature_unit(self):
         """Return the unit of measurement."""
-        vera_temp_units = (
-            self.vera_device.vera_controller.temperature_units)
+        vera_temp_units = self.vera_device.vera_controller.temperature_units
 
-        if vera_temp_units == 'F':
+        if vera_temp_units == "F":
             return TEMP_FAHRENHEIT
 
         return TEMP_CELSIUS

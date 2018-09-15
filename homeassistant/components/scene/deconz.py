@@ -5,22 +5,25 @@ For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/scene.deconz/
 """
 from homeassistant.components.deconz import (
-    DOMAIN as DATA_DECONZ, DATA_DECONZ_ID, DATA_DECONZ_UNSUB)
+    DOMAIN as DATA_DECONZ,
+    DATA_DECONZ_ID,
+    DATA_DECONZ_UNSUB,
+)
 from homeassistant.components.scene import Scene
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-DEPENDENCIES = ['deconz']
+DEPENDENCIES = ["deconz"]
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Old way of setting up deCONZ scenes."""
     pass
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up scenes for deCONZ component."""
+
     @callback
     def async_add_scene(scenes):
         """Add scene from deCONZ."""
@@ -28,8 +31,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         for scene in scenes:
             entities.append(DeconzScene(scene))
         async_add_entities(entities)
+
     hass.data[DATA_DECONZ_UNSUB].append(
-        async_dispatcher_connect(hass, 'deconz_new_scene', async_add_scene))
+        async_dispatcher_connect(hass, "deconz_new_scene", async_add_scene)
+    )
 
     async_add_scene(hass.data[DATA_DECONZ].scenes.values())
 

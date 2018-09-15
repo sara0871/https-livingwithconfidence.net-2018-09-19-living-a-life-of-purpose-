@@ -18,27 +18,32 @@ from homeassistant.util import Throttle
 
 REQUIREMENTS = ["mychevy==0.4.0"]
 
-DOMAIN = 'mychevy'
+DOMAIN = "mychevy"
 UPDATE_TOPIC = DOMAIN
 ERROR_TOPIC = DOMAIN + "_error"
 
 MYCHEVY_SUCCESS = "success"
 MYCHEVY_ERROR = "error"
 
-NOTIFICATION_ID = 'mychevy_website_notification'
-NOTIFICATION_TITLE = 'MyChevy website status'
+NOTIFICATION_ID = "mychevy_website_notification"
+NOTIFICATION_TITLE = "MyChevy website status"
 
 _LOGGER = logging.getLogger(__name__)
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=30)
 ERROR_SLEEP_TIME = timedelta(minutes=30)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_USERNAME): cv.string,
+                vol.Required(CONF_PASSWORD): cv.string,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 class EVSensorConfig:
@@ -111,8 +116,8 @@ class MyChevyHub(threading.Thread):
         self._client.get_cars()
         self.cars = self._client.cars
         if self.ready is not True:
-            discovery.load_platform(self.hass, 'sensor', DOMAIN, {}, {})
-            discovery.load_platform(self.hass, 'binary_sensor', DOMAIN, {}, {})
+            discovery.load_platform(self.hass, "sensor", DOMAIN, {}, {})
+            discovery.load_platform(self.hass, "binary_sensor", DOMAIN, {}, {})
             self.ready = True
         self.cars = self._client.update_cars()
 
@@ -138,6 +143,7 @@ class MyChevyHub(threading.Thread):
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(
                     "Error updating mychevy data. "
-                    "This probably means the OnStar link is down again")
+                    "This probably means the OnStar link is down again"
+                )
                 self.hass.helpers.dispatcher.dispatcher_send(ERROR_TOPIC)
                 time.sleep(ERROR_SLEEP_TIME.seconds)

@@ -11,18 +11,20 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.notify import (
-    PLATFORM_SCHEMA, BaseNotificationService, ATTR_TARGET, ATTR_DATA)
+    PLATFORM_SCHEMA,
+    BaseNotificationService,
+    ATTR_TARGET,
+    ATTR_DATA,
+)
 from homeassistant.const import CONF_TOKEN
 
 _LOGGER = logging.getLogger(__name__)
 
-REQUIREMENTS = ['discord.py==0.16.12']
+REQUIREMENTS = ["discord.py==0.16.12"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_TOKEN): cv.string
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({vol.Required(CONF_TOKEN): cv.string})
 
-ATTR_IMAGES = 'images'
+ATTR_IMAGES = "images"
 
 
 def get_service(hass, config, discovery_info=None):
@@ -43,6 +45,7 @@ class DiscordNotificationService(BaseNotificationService):
     def async_send_message(self, message, **kwargs):
         """Login to Discord, send message to channel(s) and log out."""
         import discord
+
         discord_bot = discord.Client(loop=self.hass.loop)
 
         if ATTR_TARGET not in kwargs:
@@ -64,8 +67,7 @@ class DiscordNotificationService(BaseNotificationService):
                     if images:
                         for anum, f_name in enumerate(images):
                             yield from discord_bot.send_file(channel, f_name)
-            except (discord.errors.HTTPException,
-                    discord.errors.NotFound) as error:
+            except (discord.errors.HTTPException, discord.errors.NotFound) as error:
                 _LOGGER.warning("Communication error: %s", error)
             yield from discord_bot.logout()
             yield from discord_bot.close()

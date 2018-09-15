@@ -22,7 +22,7 @@ class PasswordChangeRequired(CloudError):
 
     # https://github.com/PyCQA/pylint/issues/1085
     # pylint: disable=useless-super-delegation
-    def __init__(self, message='Password change required.'):
+    def __init__(self, message="Password change required."):
         """Initialize a password change required error."""
         super().__init__(message)
 
@@ -32,17 +32,17 @@ class UnknownError(CloudError):
 
 
 AWS_EXCEPTIONS = {
-    'UserNotFoundException': UserNotFound,
-    'NotAuthorizedException': Unauthenticated,
-    'UserNotConfirmedException': UserNotConfirmed,
-    'PasswordResetRequiredException': PasswordChangeRequired,
+    "UserNotFoundException": UserNotFound,
+    "NotAuthorizedException": Unauthenticated,
+    "UserNotConfirmedException": UserNotConfirmed,
+    "PasswordResetRequiredException": PasswordChangeRequired,
 }
 
 
 def _map_aws_exception(err):
     """Map AWS exception to our exceptions."""
-    ex = AWS_EXCEPTIONS.get(err.response['Error']['Code'], UnknownError)
-    return ex(err.response['Error']['Message'])
+    ex = AWS_EXCEPTIONS.get(err.response["Error"]["Code"], UnknownError)
+    return ex(err.response["Error"]["Message"])
 
 
 def register(cloud, email, password):
@@ -67,8 +67,7 @@ def resend_email_confirm(cloud, email):
 
     try:
         cognito.client.resend_confirmation_code(
-            Username=email,
-            ClientId=cognito.client_id
+            Username=email, ClientId=cognito.client_id
         )
     except ClientError as err:
         raise _map_aws_exception(err)
@@ -100,9 +99,8 @@ def check_token(cloud):
     from botocore.exceptions import ClientError
 
     cognito = _cognito(
-        cloud,
-        access_token=cloud.access_token,
-        refresh_token=cloud.refresh_token)
+        cloud, access_token=cloud.access_token, refresh_token=cloud.refresh_token
+    )
 
     try:
         if cognito.check_token():
@@ -118,7 +116,7 @@ def _authenticate(cloud, email, password):
     from botocore.exceptions import ClientError
     from warrant.exceptions import ForceChangePasswordException
 
-    assert not cloud.is_logged_in, 'Cannot login if already logged in.'
+    assert not cloud.is_logged_in, "Cannot login if already logged in."
 
     cognito = _cognito(cloud, username=email)
 
@@ -146,10 +144,8 @@ def _cognito(cloud, **kwargs):
         **kwargs
     )
     cognito.client = boto3.client(
-        'cognito-idp',
+        "cognito-idp",
         region_name=cloud.region,
-        config=botocore.config.Config(
-            signature_version=botocore.UNSIGNED
-        )
+        config=botocore.config.Config(signature_version=botocore.UNSIGNED),
     )
     return cognito

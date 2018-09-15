@@ -4,7 +4,7 @@ from homeassistant.loader import bind_hass
 
 from .const import DOMAIN, STEP_USER, STEPS
 
-DEPENDENCIES = ['http']
+DEPENDENCIES = ["http"]
 
 STORAGE_KEY = DOMAIN
 STORAGE_VERSION = 1
@@ -27,11 +27,9 @@ async def async_setup(hass, config):
     data = await store.async_load()
 
     if data is None:
-        data = {
-            'done': []
-        }
+        data = {"done": []}
 
-    if STEP_USER not in data['done']:
+    if STEP_USER not in data["done"]:
         # Users can already have created an owner account via the command line
         # If so, mark the user step as done.
         has_owner = False
@@ -42,10 +40,10 @@ async def async_setup(hass, config):
                 break
 
         if has_owner:
-            data['done'].append(STEP_USER)
+            data["done"].append(STEP_USER)
             await store.async_save(data)
 
-    if set(data['done']) == set(STEPS):
+    if set(data["done"]) == set(STEPS):
         return True
 
     hass.data[DOMAIN] = False

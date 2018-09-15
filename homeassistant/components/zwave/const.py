@@ -22,11 +22,11 @@ ATTR_VALUE_INSTANCE = "value_instance"
 NETWORK_READY_WAIT_SECS = 300
 NODE_READY_WAIT_SECS = 30
 
-DISCOVERY_DEVICE = 'device'
+DISCOVERY_DEVICE = "device"
 
-DATA_DEVICES = 'zwave_devices'
-DATA_NETWORK = 'zwave_network'
-DATA_ENTITY_VALUES = 'zwave_entity_values'
+DATA_DEVICES = "zwave_devices"
+DATA_NETWORK = "zwave_network"
+DATA_ENTITY_VALUES = "zwave_entity_values"
 
 SERVICE_CHANGE_ASSOCIATION = "change_association"
 SERVICE_ADD_NODE = "add_node"

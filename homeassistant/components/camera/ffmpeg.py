@@ -12,25 +12,28 @@ import voluptuous as vol
 from homeassistant.const import CONF_NAME
 from homeassistant.components.camera import Camera, PLATFORM_SCHEMA
 from homeassistant.components.ffmpeg import (
-    DATA_FFMPEG, CONF_INPUT, CONF_EXTRA_ARGUMENTS)
+    DATA_FFMPEG,
+    CONF_INPUT,
+    CONF_EXTRA_ARGUMENTS,
+)
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.aiohttp_client import (
-    async_aiohttp_proxy_stream)
+from homeassistant.helpers.aiohttp_client import async_aiohttp_proxy_stream
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['ffmpeg']
-DEFAULT_NAME = 'FFmpeg'
+DEPENDENCIES = ["ffmpeg"]
+DEFAULT_NAME = "FFmpeg"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_INPUT): cv.string,
-    vol.Optional(CONF_EXTRA_ARGUMENTS): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_INPUT): cv.string,
+        vol.Optional(CONF_EXTRA_ARGUMENTS): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
+)
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up a FFmpeg camera."""
     if not hass.data[DATA_FFMPEG].async_run_test(config.get(CONF_INPUT)):
         return
@@ -52,11 +55,15 @@ class FFmpegCamera(Camera):
     async def async_camera_image(self):
         """Return a still image response from the camera."""
         from haffmpeg import ImageFrame, IMAGE_JPEG
+
         ffmpeg = ImageFrame(self._manager.binary, loop=self.hass.loop)
 
-        image = await asyncio.shield(ffmpeg.get_image(
-            self._input, output_format=IMAGE_JPEG,
-            extra_cmd=self._extra_arguments), loop=self.hass.loop)
+        image = await asyncio.shield(
+            ffmpeg.get_image(
+                self._input, output_format=IMAGE_JPEG, extra_cmd=self._extra_arguments
+            ),
+            loop=self.hass.loop,
+        )
         return image
 
     async def handle_async_mjpeg_stream(self, request):
@@ -64,13 +71,15 @@ class FFmpegCamera(Camera):
         from haffmpeg import CameraMjpeg
 
         stream = CameraMjpeg(self._manager.binary, loop=self.hass.loop)
-        await stream.open_camera(
-            self._input, extra_cmd=self._extra_arguments)
+        await stream.open_camera(self._input, extra_cmd=self._extra_arguments)
 
         try:
             return await async_aiohttp_proxy_stream(
-                self.hass, request, stream,
-                'multipart/x-mixed-replace;boundary=ffserver')
+                self.hass,
+                request,
+                stream,
+                "multipart/x-mixed-replace;boundary=ffserver",
+            )
         finally:
             await stream.close()
 

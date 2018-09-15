@@ -34,7 +34,7 @@ class HomeAssistantView:
     # pylint: disable=no-self-use
     def context(self, request):
         """Generate a context from a request."""
-        user = request.get('hass_user')
+        user = request.get("hass_user")
         if user is None:
             return Context()
 
@@ -43,32 +43,33 @@ class HomeAssistantView:
     def json(self, result, status_code=200, headers=None):
         """Return a JSON response."""
         try:
-            msg = json.dumps(
-                result, sort_keys=True, cls=JSONEncoder).encode('UTF-8')
+            msg = json.dumps(result, sort_keys=True, cls=JSONEncoder).encode("UTF-8")
         except TypeError as err:
-            _LOGGER.error('Unable to serialize to JSON: %s\n%s', err, result)
+            _LOGGER.error("Unable to serialize to JSON: %s\n%s", err, result)
             raise HTTPInternalServerError
         response = web.Response(
-            body=msg, content_type=CONTENT_TYPE_JSON, status=status_code,
-            headers=headers)
+            body=msg,
+            content_type=CONTENT_TYPE_JSON,
+            status=status_code,
+            headers=headers,
+        )
         response.enable_compression()
         return response
 
-    def json_message(self, message, status_code=200, message_code=None,
-                     headers=None):
+    def json_message(self, message, status_code=200, message_code=None, headers=None):
         """Return a JSON message response."""
-        data = {'message': message}
+        data = {"message": message}
         if message_code is not None:
-            data['code'] = message_code
+            data["code"] = message_code
         return self.json(data, status_code, headers=headers)
 
     def register(self, app, router):
         """Register the view with a router."""
-        assert self.url is not None, 'No url set for view'
+        assert self.url is not None, "No url set for view"
         urls = [self.url] + self.extra_urls
         routes = []
 
-        for method in ('get', 'post', 'delete', 'put'):
+        for method in ("get", "post", "delete", "put"):
             handler = getattr(self, method, None)
 
             if not handler:
@@ -83,17 +84,18 @@ class HomeAssistantView:
             return
 
         for route in routes:
-            app['allow_cors'](route)
+            app["allow_cors"](route)
 
 
 def request_handler_factory(view, handler):
     """Wrap the handler classes."""
-    assert asyncio.iscoroutinefunction(handler) or is_callback(handler), \
-        "Handler should be a coroutine or a callback."
+    assert asyncio.iscoroutinefunction(handler) or is_callback(
+        handler
+    ), "Handler should be a coroutine or a callback."
 
     async def handle(request):
         """Handle incoming request."""
-        if not request.app['hass'].is_running:
+        if not request.app["hass"].is_running:
             return web.Response(status=503)
 
         authenticated = request.get(KEY_AUTHENTICATED, False)
@@ -104,8 +106,12 @@ def request_handler_factory(view, handler):
             else:
                 raise HTTPUnauthorized()
 
-        _LOGGER.info('Serving %s to %s (auth: %s)',
-                     request.path, request.get(KEY_REAL_IP), authenticated)
+        _LOGGER.info(
+            "Serving %s to %s (auth: %s)",
+            request.path,
+            request.get(KEY_REAL_IP),
+            authenticated,
+        )
 
         result = handler(request, **request.match_info)
 
@@ -122,12 +128,13 @@ def request_handler_factory(view, handler):
             result, status_code = result
 
         if isinstance(result, str):
-            result = result.encode('utf-8')
+            result = result.encode("utf-8")
         elif result is None:
-            result = b''
+            result = b""
         elif not isinstance(result, bytes):
-            assert False, ('Result should be None, string, bytes or Response. '
-                           'Got: {}').format(result)
+            assert False, (
+                "Result should be None, string, bytes or Response. " "Got: {}"
+            ).format(result)
 
         return web.Response(body=result, status=status_code)
 

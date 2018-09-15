@@ -12,39 +12,61 @@ import time
 import voluptuous as vol
 
 from homeassistant.components.media_player import (
-    MEDIA_TYPE_MUSIC, PLATFORM_SCHEMA, SUPPORT_NEXT_TRACK, SUPPORT_PAUSE,
-    SUPPORT_PLAY, SUPPORT_PREVIOUS_TRACK, SUPPORT_SELECT_SOURCE,
-    SUPPORT_VOLUME_SET, SUPPORT_VOLUME_STEP, MediaPlayerDevice)
+    MEDIA_TYPE_MUSIC,
+    PLATFORM_SCHEMA,
+    SUPPORT_NEXT_TRACK,
+    SUPPORT_PAUSE,
+    SUPPORT_PLAY,
+    SUPPORT_PREVIOUS_TRACK,
+    SUPPORT_SELECT_SOURCE,
+    SUPPORT_VOLUME_SET,
+    SUPPORT_VOLUME_STEP,
+    MediaPlayerDevice,
+)
 from homeassistant.const import (
-    CONF_ACCESS_TOKEN, CONF_HOST, CONF_NAME, CONF_PORT, STATE_OFF,
-    STATE_PAUSED, STATE_PLAYING)
+    CONF_ACCESS_TOKEN,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    STATE_OFF,
+    STATE_PAUSED,
+    STATE_PLAYING,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['python-clementine-remote==1.0.1']
+REQUIREMENTS = ["python-clementine-remote==1.0.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'Clementine Remote'
+DEFAULT_NAME = "Clementine Remote"
 DEFAULT_PORT = 5500
 
 SCAN_INTERVAL = timedelta(seconds=5)
 
-SUPPORT_CLEMENTINE = SUPPORT_PAUSE | SUPPORT_VOLUME_STEP | \
-                     SUPPORT_PREVIOUS_TRACK | SUPPORT_VOLUME_SET | \
-                     SUPPORT_NEXT_TRACK | \
-                     SUPPORT_SELECT_SOURCE | SUPPORT_PLAY
+SUPPORT_CLEMENTINE = (
+    SUPPORT_PAUSE
+    | SUPPORT_VOLUME_STEP
+    | SUPPORT_PREVIOUS_TRACK
+    | SUPPORT_VOLUME_SET
+    | SUPPORT_NEXT_TRACK
+    | SUPPORT_SELECT_SOURCE
+    | SUPPORT_PLAY
+)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_ACCESS_TOKEN): cv.positive_int,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_ACCESS_TOKEN): cv.positive_int,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Clementine platform."""
     from clementineremote import ClementineRemote
+
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
     token = config.get(CONF_ACCESS_TOKEN)
@@ -65,9 +87,9 @@ class ClementineDevice(MediaPlayerDevice):
         self._volume = 0.0
         self._track_id = 0
         self._last_track_id = 0
-        self._track_name = ''
-        self._track_artist = ''
-        self._track_album_name = ''
+        self._track_name = ""
+        self._track_artist = ""
+        self._track_album_name = ""
         self._state = None
 
     def update(self):
@@ -75,11 +97,11 @@ class ClementineDevice(MediaPlayerDevice):
         try:
             client = self._client
 
-            if client.state == 'Playing':
+            if client.state == "Playing":
                 self._state = STATE_PLAYING
-            elif client.state == 'Paused':
+            elif client.state == "Paused":
                 self._state = STATE_PAUSED
-            elif client.state == 'Disconnected':
+            elif client.state == "Disconnected":
                 self._state = STATE_OFF
             else:
                 self._state = STATE_PAUSED
@@ -90,10 +112,10 @@ class ClementineDevice(MediaPlayerDevice):
             self._volume = float(client.volume) if client.volume else 0.0
 
             if client.current_track:
-                self._track_id = client.current_track['track_id']
-                self._track_name = client.current_track['title']
-                self._track_artist = client.current_track['track_artist']
-                self._track_album_name = client.current_track['track_album']
+                self._track_id = client.current_track["track_id"]
+                self._track_name = client.current_track["title"]
+                self._track_artist = client.current_track["track_artist"]
+                self._track_album_name = client.current_track["track_album"]
 
         except Exception:
             self._state = STATE_OFF
@@ -120,7 +142,7 @@ class ClementineDevice(MediaPlayerDevice):
         source_name = "Unknown"
         client = self._client
         if client.active_playlist_id in client.playlists:
-            source_name = client.playlists[client.active_playlist_id]['name']
+            source_name = client.playlists[client.active_playlist_id]["name"]
         return source_name
 
     @property
@@ -132,9 +154,9 @@ class ClementineDevice(MediaPlayerDevice):
     def select_source(self, source):
         """Select input source."""
         client = self._client
-        sources = [s for s in client.playlists.values() if s['name'] == source]
+        sources = [s for s in client.playlists.values() if s["name"] == source]
         if len(sources) == 1:
-            client.change_song(sources[0]['id'], 0)
+            client.change_song(sources[0]["id"], 0)
 
     @property
     def media_content_type(self):
@@ -165,7 +187,7 @@ class ClementineDevice(MediaPlayerDevice):
     def media_image_hash(self):
         """Hash value for media image."""
         if self._client.current_track:
-            return self._client.current_track['track_id']
+            return self._client.current_track["track_id"]
 
         return None
 
@@ -173,8 +195,8 @@ class ClementineDevice(MediaPlayerDevice):
     def async_get_media_image(self):
         """Fetch media image of current playing image."""
         if self._client.current_track:
-            image = bytes(self._client.current_track['art'])
-            return (image, 'image/png')
+            image = bytes(self._client.current_track["art"])
+            return (image, "image/png")
 
         return None, None
 

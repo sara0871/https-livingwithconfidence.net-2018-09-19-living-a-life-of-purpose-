@@ -11,29 +11,41 @@ import telnetlib
 import voluptuous as vol
 
 from homeassistant.components.switch import (
-    ENTITY_ID_FORMAT, PLATFORM_SCHEMA, SwitchDevice)
+    ENTITY_ID_FORMAT,
+    PLATFORM_SCHEMA,
+    SwitchDevice,
+)
 from homeassistant.const import (
-    CONF_COMMAND_OFF, CONF_COMMAND_ON, CONF_COMMAND_STATE, CONF_NAME,
-    CONF_PORT, CONF_RESOURCE, CONF_SWITCHES, CONF_VALUE_TEMPLATE)
+    CONF_COMMAND_OFF,
+    CONF_COMMAND_ON,
+    CONF_COMMAND_STATE,
+    CONF_NAME,
+    CONF_PORT,
+    CONF_RESOURCE,
+    CONF_SWITCHES,
+    CONF_VALUE_TEMPLATE,
+)
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_PORT = 23
 
-SWITCH_SCHEMA = vol.Schema({
-    vol.Required(CONF_COMMAND_OFF): cv.string,
-    vol.Required(CONF_COMMAND_ON): cv.string,
-    vol.Required(CONF_RESOURCE): cv.string,
-    vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
-    vol.Optional(CONF_COMMAND_STATE): cv.string,
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-})
+SWITCH_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_COMMAND_OFF): cv.string,
+        vol.Required(CONF_COMMAND_ON): cv.string,
+        vol.Required(CONF_RESOURCE): cv.string,
+        vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
+        vol.Optional(CONF_COMMAND_STATE): cv.string,
+        vol.Optional(CONF_NAME): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    }
+)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_SWITCHES): vol.Schema({cv.slug: SWITCH_SCHEMA}),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_SWITCHES): vol.Schema({cv.slug: SWITCH_SCHEMA})}
+)
 
 SCAN_INTERVAL = timedelta(seconds=10)
 
@@ -59,7 +71,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
                 device_config.get(CONF_COMMAND_ON),
                 device_config.get(CONF_COMMAND_OFF),
                 device_config.get(CONF_COMMAND_STATE),
-                value_template
+                value_template,
             )
         )
 
@@ -73,8 +85,18 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class TelnetSwitch(SwitchDevice):
     """Representation of a switch that can be toggled using telnet commands."""
 
-    def __init__(self, hass, object_id, resource, port, friendly_name,
-                 command_on, command_off, command_state, value_template):
+    def __init__(
+        self,
+        hass,
+        object_id,
+        resource,
+        port,
+        friendly_name,
+        command_on,
+        command_off,
+        command_state,
+        value_template,
+    ):
         """Initialize the switch."""
         self._hass = hass
         self.entity_id = ENTITY_ID_FORMAT.format(object_id)
@@ -90,13 +112,13 @@ class TelnetSwitch(SwitchDevice):
     def _telnet_command(self, command):
         try:
             telnet = telnetlib.Telnet(self._resource, self._port)
-            telnet.write(command.encode('ASCII') + b'\r')
-            response = telnet.read_until(b'\r', timeout=0.2)
-            return response.decode('ASCII').strip()
+            telnet.write(command.encode("ASCII") + b"\r")
+            response = telnet.read_until(b"\r", timeout=0.2)
+            return response.decode("ASCII").strip()
         except IOError as error:
             _LOGGER.error(
-                'Command "%s" failed with exception: %s',
-                command, repr(error))
+                'Command "%s" failed with exception: %s', command, repr(error)
+            )
             return None
 
     @property
@@ -123,12 +145,10 @@ class TelnetSwitch(SwitchDevice):
         """Update device state."""
         response = self._telnet_command(self._command_state)
         if response:
-            rendered = self._value_template \
-                .render_with_possible_json_value(response)
+            rendered = self._value_template.render_with_possible_json_value(response)
             self._state = rendered == "True"
         else:
-            _LOGGER.warning(
-                "Empty response for command: %s", self._command_state)
+            _LOGGER.warning("Empty response for command: %s", self._command_state)
 
     def turn_on(self, **kwargs):
         """Turn the device on."""

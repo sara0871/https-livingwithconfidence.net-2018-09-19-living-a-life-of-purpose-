@@ -14,9 +14,19 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import ENTITY_ID_FORMAT, PLATFORM_SCHEMA
 from homeassistant.const import (
-    ATTR_ATTRIBUTION, ATTR_ID, ATTR_LATITUDE, ATTR_LOCATION, ATTR_LONGITUDE,
-    ATTR_NAME, CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME, CONF_RADIUS,
-    LENGTH_FEET, LENGTH_METERS)
+    ATTR_ATTRIBUTION,
+    ATTR_ID,
+    ATTR_LATITUDE,
+    ATTR_LOCATION,
+    ATTR_LONGITUDE,
+    ATTR_NAME,
+    CONF_LATITUDE,
+    CONF_LONGITUDE,
+    CONF_NAME,
+    CONF_RADIUS,
+    LENGTH_FEET,
+    LENGTH_METERS,
+)
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
@@ -26,76 +36,91 @@ from homeassistant.util import distance, location
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_EMPTY_SLOTS = 'empty_slots'
-ATTR_EXTRA = 'extra'
-ATTR_FREE_BIKES = 'free_bikes'
-ATTR_NETWORK = 'network'
-ATTR_NETWORKS_LIST = 'networks'
-ATTR_STATIONS_LIST = 'stations'
-ATTR_TIMESTAMP = 'timestamp'
-ATTR_UID = 'uid'
+ATTR_EMPTY_SLOTS = "empty_slots"
+ATTR_EXTRA = "extra"
+ATTR_FREE_BIKES = "free_bikes"
+ATTR_NETWORK = "network"
+ATTR_NETWORKS_LIST = "networks"
+ATTR_STATIONS_LIST = "stations"
+ATTR_TIMESTAMP = "timestamp"
+ATTR_UID = "uid"
 
-CONF_NETWORK = 'network'
-CONF_STATIONS_LIST = 'stations'
+CONF_NETWORK = "network"
+CONF_STATIONS_LIST = "stations"
 
-DEFAULT_ENDPOINT = 'https://api.citybik.es/{uri}'
-PLATFORM = 'citybikes'
+DEFAULT_ENDPOINT = "https://api.citybik.es/{uri}"
+PLATFORM = "citybikes"
 
-MONITORED_NETWORKS = 'monitored-networks'
+MONITORED_NETWORKS = "monitored-networks"
 
-NETWORKS_URI = 'v2/networks'
+NETWORKS_URI = "v2/networks"
 
 REQUEST_TIMEOUT = 5  # In seconds; argument to asyncio.timeout
 
 SCAN_INTERVAL = timedelta(minutes=5)  # Timely, and doesn't suffocate the API
 
-STATIONS_URI = 'v2/networks/{uid}?fields=network.stations'
+STATIONS_URI = "v2/networks/{uid}?fields=network.stations"
 
-CITYBIKES_ATTRIBUTION = "Information provided by the CityBikes Project "\
-                        "(https://citybik.es/#about)"
+CITYBIKES_ATTRIBUTION = "Information provided by the CityBikes Project " "(https://citybik.es/#about)"
 
 PLATFORM_SCHEMA = vol.All(
     cv.has_at_least_one_key(CONF_RADIUS, CONF_STATIONS_LIST),
-    PLATFORM_SCHEMA.extend({
-        vol.Optional(CONF_NAME, default=''): cv.string,
-        vol.Optional(CONF_NETWORK): cv.string,
-        vol.Inclusive(CONF_LATITUDE, 'coordinates'): cv.latitude,
-        vol.Inclusive(CONF_LONGITUDE, 'coordinates'): cv.longitude,
-        vol.Optional(CONF_RADIUS, 'station_filter'): cv.positive_int,
-        vol.Optional(CONF_STATIONS_LIST, 'station_filter'):
-            vol.All(cv.ensure_list, vol.Length(min=1), [cv.string])
-    }))
+    PLATFORM_SCHEMA.extend(
+        {
+            vol.Optional(CONF_NAME, default=""): cv.string,
+            vol.Optional(CONF_NETWORK): cv.string,
+            vol.Inclusive(CONF_LATITUDE, "coordinates"): cv.latitude,
+            vol.Inclusive(CONF_LONGITUDE, "coordinates"): cv.longitude,
+            vol.Optional(CONF_RADIUS, "station_filter"): cv.positive_int,
+            vol.Optional(CONF_STATIONS_LIST, "station_filter"): vol.All(
+                cv.ensure_list, vol.Length(min=1), [cv.string]
+            ),
+        }
+    ),
+)
 
-NETWORK_SCHEMA = vol.Schema({
-    vol.Required(ATTR_ID): cv.string,
-    vol.Required(ATTR_NAME): cv.string,
-    vol.Required(ATTR_LOCATION): vol.Schema({
+NETWORK_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ID): cv.string,
+        vol.Required(ATTR_NAME): cv.string,
+        vol.Required(ATTR_LOCATION): vol.Schema(
+            {
+                vol.Required(ATTR_LATITUDE): cv.latitude,
+                vol.Required(ATTR_LONGITUDE): cv.longitude,
+            },
+            extra=vol.REMOVE_EXTRA,
+        ),
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
+NETWORKS_RESPONSE_SCHEMA = vol.Schema(
+    {vol.Required(ATTR_NETWORKS_LIST): [NETWORK_SCHEMA]}
+)
+
+STATION_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_FREE_BIKES): cv.positive_int,
+        vol.Required(ATTR_EMPTY_SLOTS): vol.Any(cv.positive_int, None),
         vol.Required(ATTR_LATITUDE): cv.latitude,
         vol.Required(ATTR_LONGITUDE): cv.longitude,
-        }, extra=vol.REMOVE_EXTRA),
-    }, extra=vol.REMOVE_EXTRA)
+        vol.Required(ATTR_ID): cv.string,
+        vol.Required(ATTR_NAME): cv.string,
+        vol.Required(ATTR_TIMESTAMP): cv.string,
+        vol.Optional(ATTR_EXTRA): vol.Schema(
+            {vol.Optional(ATTR_UID): cv.string}, extra=vol.REMOVE_EXTRA
+        ),
+    },
+    extra=vol.REMOVE_EXTRA,
+)
 
-NETWORKS_RESPONSE_SCHEMA = vol.Schema({
-    vol.Required(ATTR_NETWORKS_LIST): [NETWORK_SCHEMA],
-    })
-
-STATION_SCHEMA = vol.Schema({
-    vol.Required(ATTR_FREE_BIKES): cv.positive_int,
-    vol.Required(ATTR_EMPTY_SLOTS): vol.Any(cv.positive_int, None),
-    vol.Required(ATTR_LATITUDE): cv.latitude,
-    vol.Required(ATTR_LONGITUDE): cv.longitude,
-    vol.Required(ATTR_ID): cv.string,
-    vol.Required(ATTR_NAME): cv.string,
-    vol.Required(ATTR_TIMESTAMP): cv.string,
-    vol.Optional(ATTR_EXTRA):
-        vol.Schema({vol.Optional(ATTR_UID): cv.string}, extra=vol.REMOVE_EXTRA)
-    }, extra=vol.REMOVE_EXTRA)
-
-STATIONS_RESPONSE_SCHEMA = vol.Schema({
-    vol.Required(ATTR_NETWORK): vol.Schema({
-        vol.Required(ATTR_STATIONS_LIST): [STATION_SCHEMA]
-        }, extra=vol.REMOVE_EXTRA)
-    })
+STATIONS_RESPONSE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_NETWORK): vol.Schema(
+            {vol.Required(ATTR_STATIONS_LIST): [STATION_SCHEMA]}, extra=vol.REMOVE_EXTRA
+        )
+    }
+)
 
 
 class CityBikesRequestError(Exception):
@@ -120,14 +145,14 @@ def async_citybikes_request(hass, uri, schema):
     except ValueError:
         _LOGGER.error("Received non-JSON data from CityBikes API endpoint")
     except vol.Invalid as err:
-        _LOGGER.error("Received unexpected JSON from CityBikes"
-                      " API endpoint: %s", err)
+        _LOGGER.error(
+            "Received unexpected JSON from CityBikes" " API endpoint: %s", err
+        )
     raise CityBikesRequestError
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the CityBikes platform."""
     if PLATFORM not in hass.data:
         hass.data[PLATFORM] = {MONITORED_NETWORKS: {}}
@@ -143,7 +168,8 @@ def async_setup_platform(hass, config, async_add_entities,
 
     if not network_id:
         network_id = yield from CityBikesNetwork.get_closest_network_id(
-            hass, latitude, longitude)
+            hass, latitude, longitude
+        )
 
     if network_id not in hass.data[PLATFORM][MONITORED_NETWORKS]:
         network = CityBikesNetwork(hass, network_id)
@@ -158,13 +184,12 @@ def async_setup_platform(hass, config, async_add_entities,
     devices = []
     for station in network.stations:
         dist = location.distance(
-            latitude, longitude, station[ATTR_LATITUDE],
-            station[ATTR_LONGITUDE])
+            latitude, longitude, station[ATTR_LATITUDE], station[ATTR_LONGITUDE]
+        )
         station_id = station[ATTR_ID]
-        station_uid = str(station.get(ATTR_EXTRA, {}).get(ATTR_UID, ''))
+        station_uid = str(station.get(ATTR_EXTRA, {}).get(ATTR_UID, ""))
 
-        if radius > dist or stations_list.intersection(
-                (station_id, station_uid)):
+        if radius > dist or stations_list.intersection((station_id, station_uid)):
             devices.append(CityBikesStation(hass, network, station_id, name))
 
     async_add_entities(devices, True)
@@ -184,7 +209,8 @@ class CityBikesNetwork:
             yield from cls.NETWORKS_LIST_LOADING.acquire()
             if cls.NETWORKS_LIST is None:
                 networks = yield from async_citybikes_request(
-                    hass, NETWORKS_URI, NETWORKS_RESPONSE_SCHEMA)
+                    hass, NETWORKS_URI, NETWORKS_RESPONSE_SCHEMA
+                )
                 cls.NETWORKS_LIST = networks[ATTR_NETWORKS_LIST]
             result = None
             minimum_dist = None
@@ -192,7 +218,8 @@ class CityBikesNetwork:
                 network_latitude = network[ATTR_LOCATION][ATTR_LATITUDE]
                 network_longitude = network[ATTR_LOCATION][ATTR_LONGITUDE]
                 dist = location.distance(
-                    latitude, longitude, network_latitude, network_longitude)
+                    latitude, longitude, network_latitude, network_longitude
+                )
                 if minimum_dist is None or dist < minimum_dist:
                     minimum_dist = dist
                     result = network[ATTR_ID]
@@ -215,8 +242,10 @@ class CityBikesNetwork:
         """Refresh the state of the network."""
         try:
             network = yield from async_citybikes_request(
-                self.hass, STATIONS_URI.format(uid=self.network_id),
-                STATIONS_RESPONSE_SCHEMA)
+                self.hass,
+                STATIONS_URI.format(uid=self.network_id),
+                STATIONS_RESPONSE_SCHEMA,
+            )
             self.stations = network[ATTR_NETWORK][ATTR_STATIONS_LIST]
             self.ready.set()
         except CityBikesRequestError:
@@ -229,7 +258,7 @@ class CityBikesNetwork:
 class CityBikesStation(Entity):
     """CityBikes API Sensor."""
 
-    def __init__(self, hass, network, station_id, base_name=''):
+    def __init__(self, hass, network, station_id, base_name=""):
         """Initialize the sensor."""
         self._network = network
         self._station_id = station_id
@@ -238,8 +267,7 @@ class CityBikesStation(Entity):
             uid = "_".join([network.network_id, base_name, station_id])
         else:
             uid = "_".join([network.network_id, station_id])
-        self.entity_id = async_generate_entity_id(
-            ENTITY_ID_FORMAT, uid, hass=hass)
+        self.entity_id = async_generate_entity_id(ENTITY_ID_FORMAT, uid, hass=hass)
 
     @property
     def state(self):
@@ -279,9 +307,9 @@ class CityBikesStation(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return 'bikes'
+        return "bikes"
 
     @property
     def icon(self):
         """Return the icon."""
-        return 'mdi:bike'
+        return "mdi:bike"

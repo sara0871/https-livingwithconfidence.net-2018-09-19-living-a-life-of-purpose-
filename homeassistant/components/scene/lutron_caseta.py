@@ -12,12 +12,11 @@ from homeassistant.components.scene import Scene
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['lutron_caseta']
+DEPENDENCIES = ["lutron_caseta"]
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Lutron Caseta lights."""
     devs = []
     bridge = hass.data[LUTRON_CASETA_SMARTBRIDGE]

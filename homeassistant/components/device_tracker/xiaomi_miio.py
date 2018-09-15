@@ -9,18 +9,23 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.device_tracker import (DOMAIN, PLATFORM_SCHEMA,
-                                                     DeviceScanner)
-from homeassistant.const import (CONF_HOST, CONF_TOKEN)
+from homeassistant.components.device_tracker import (
+    DOMAIN,
+    PLATFORM_SCHEMA,
+    DeviceScanner,
+)
+from homeassistant.const import CONF_HOST, CONF_TOKEN
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
+    }
+)
 
-REQUIREMENTS = ['python-miio==0.4.1', 'construct==2.9.41']
+REQUIREMENTS = ["python-miio==0.4.1", "construct==2.9.41"]
 
 
 def get_scanner(hass, config):
@@ -31,16 +36,17 @@ def get_scanner(hass, config):
     host = config[DOMAIN].get(CONF_HOST)
     token = config[DOMAIN].get(CONF_TOKEN)
 
-    _LOGGER.info(
-        "Initializing with host %s (token %s...)", host, token[:5])
+    _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
 
     try:
         device = WifiRepeater(host, token)
         device_info = device.info()
-        _LOGGER.info("%s %s %s detected",
-                     device_info.model,
-                     device_info.firmware_version,
-                     device_info.hardware_version)
+        _LOGGER.info(
+            "%s %s %s detected",
+            device_info.model,
+            device_info.firmware_version,
+            device_info.hardware_version,
+        )
         scanner = XiaomiMiioDeviceScanner(device)
     except DeviceException as ex:
         _LOGGER.error("Device unavailable or token incorrect: %s", ex)
@@ -65,7 +71,7 @@ class XiaomiMiioDeviceScanner(DeviceScanner):
             _LOGGER.debug("Got new station info: %s", station_info)
 
             for device in station_info.associated_stations:
-                devices.append(device['mac'])
+                devices.append(device["mac"])
 
         except DeviceException as ex:
             _LOGGER.error("Got exception while fetching the state: %s", ex)

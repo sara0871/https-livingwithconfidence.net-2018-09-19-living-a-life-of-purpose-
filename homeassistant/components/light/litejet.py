@@ -7,19 +7,18 @@ https://home-assistant.io/components/light.litejet/
 import logging
 
 from homeassistant.components import litejet
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, Light)
+from homeassistant.components.light import ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, Light
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['litejet']
+DEPENDENCIES = ["litejet"]
 
-ATTR_NUMBER = 'number'
+ATTR_NUMBER = "number"
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up lights for the LiteJet platform."""
-    litejet_ = hass.data['litejet_system']
+    litejet_ = hass.data["litejet_system"]
 
     devices = []
     for i in litejet_.loads():
@@ -76,9 +75,7 @@ class LiteJetLight(Light):
     @property
     def device_state_attributes(self):
         """Return the device state attributes."""
-        return {
-            ATTR_NUMBER: self._index
-        }
+        return {ATTR_NUMBER: self._index}
 
     def turn_on(self, **kwargs):
         """Turn on the light."""

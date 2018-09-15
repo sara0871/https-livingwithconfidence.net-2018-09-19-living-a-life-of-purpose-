@@ -13,11 +13,10 @@ from homeassistant.util.temperature import convert as convert_temperature
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['zha']
+DEPENDENCIES = ["zha"]
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up Zigbee Home Automation sensors."""
     discovery_info = zha.get_discovery_info(hass, discovery_info)
     if discovery_info is None:
@@ -30,12 +29,15 @@ async def async_setup_platform(hass, config, async_add_entities,
 async def make_sensor(discovery_info):
     """Create ZHA sensors factory."""
     from zigpy.zcl.clusters.measurement import (
-        RelativeHumidity, TemperatureMeasurement, PressureMeasurement,
-        IlluminanceMeasurement
+        RelativeHumidity,
+        TemperatureMeasurement,
+        PressureMeasurement,
+        IlluminanceMeasurement,
     )
     from zigpy.zcl.clusters.smartenergy import Metering
     from zigpy.zcl.clusters.homeautomation import ElectricalMeasurement
-    in_clusters = discovery_info['in_clusters']
+
+    in_clusters = discovery_info["in_clusters"]
     if RelativeHumidity.cluster_id in in_clusters:
         sensor = RelativeHumiditySensor(**discovery_info)
     elif TemperatureMeasurement.cluster_id in in_clusters:
@@ -52,11 +54,13 @@ async def make_sensor(discovery_info):
     else:
         sensor = Sensor(**discovery_info)
 
-    if discovery_info['new_join']:
+    if discovery_info["new_join"]:
         cluster = list(in_clusters.values())[0]
         await zha.configure_reporting(
-            sensor.entity_id, cluster, sensor.value_attribute,
-            reportable_change=sensor.min_reportable_change
+            sensor.entity_id,
+            cluster,
+            sensor.value_attribute,
+            reportable_change=sensor.min_reportable_change,
         )
 
     return sensor
@@ -94,7 +98,7 @@ class Sensor(zha.Entity):
             list(self._in_clusters.values())[0],
             [self.value_attribute],
             allow_cache=False,
-            only_cache=(not self._initialized)
+            only_cache=(not self._initialized),
         )
         self._state = result.get(self.value_attribute, self._state)
 
@@ -115,10 +119,9 @@ class TemperatureSensor(Sensor):
         if self._state is None:
             return None
         celsius = self._state / 100
-        return round(convert_temperature(celsius,
-                                         TEMP_CELSIUS,
-                                         self.unit_of_measurement),
-                     1)
+        return round(
+            convert_temperature(celsius, TEMP_CELSIUS, self.unit_of_measurement), 1
+        )
 
 
 class RelativeHumiditySensor(Sensor):
@@ -129,7 +132,7 @@ class RelativeHumiditySensor(Sensor):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity."""
-        return '%'
+        return "%"
 
     @property
     def state(self):
@@ -146,7 +149,7 @@ class PressureSensor(Sensor):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity."""
-        return 'hPa'
+        return "hPa"
 
     @property
     def state(self):
@@ -163,7 +166,7 @@ class IlluminanceMeasurementSensor(Sensor):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity."""
-        return 'lx'
+        return "lx"
 
     @property
     def state(self):
@@ -179,7 +182,7 @@ class MeteringSensor(Sensor):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity."""
-        return 'W'
+        return "W"
 
     @property
     def state(self):
@@ -198,7 +201,7 @@ class ElectricalMeasurementSensor(Sensor):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity."""
-        return 'W'
+        return "W"
 
     @property
     def force_update(self) -> bool:
@@ -223,6 +226,9 @@ class ElectricalMeasurementSensor(Sensor):
         _LOGGER.debug("%s async_update", self.entity_id)
 
         result = await zha.safe_read(
-            self._endpoint.electrical_measurement, ['active_power'],
-            allow_cache=False, only_cache=(not self._initialized))
-        self._state = result.get('active_power', self._state)
+            self._endpoint.electrical_measurement,
+            ["active_power"],
+            allow_cache=False,
+            only_cache=(not self._initialized),
+        )
+        self._state = result.get("active_power", self._state)

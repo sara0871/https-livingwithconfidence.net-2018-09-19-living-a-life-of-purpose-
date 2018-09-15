@@ -12,7 +12,7 @@ from homeassistant.components.amcrest import DATA_AMCREST, SENSORS
 from homeassistant.helpers.entity import Entity
 from homeassistant.const import CONF_NAME, CONF_SENSORS, STATE_UNKNOWN
 
-DEPENDENCIES = ['amcrest']
+DEPENDENCIES = ["amcrest"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,8 +20,7 @@ SCAN_INTERVAL = timedelta(seconds=10)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up a sensor for an Amcrest IP Camera."""
     if discovery_info is None:
         return
@@ -32,8 +31,7 @@ def async_setup_platform(hass, config, async_add_entities,
 
     amcrest_sensors = []
     for sensor_type in sensors:
-        amcrest_sensors.append(
-            AmcrestSensor(amcrest.name, amcrest.device, sensor_type))
+        amcrest_sensors.append(AmcrestSensor(amcrest.name, amcrest.device, sensor_type))
 
     async_add_entities(amcrest_sensors, True)
     return True
@@ -47,9 +45,8 @@ class AmcrestSensor(Entity):
         self._attrs = {}
         self._camera = camera
         self._sensor_type = sensor_type
-        self._name = '{0}_{1}'.format(name,
-                                      SENSORS.get(self._sensor_type)[0])
-        self._icon = 'mdi:{}'.format(SENSORS.get(self._sensor_type)[2])
+        self._name = "{0}_{1}".format(name, SENSORS.get(self._sensor_type)[0])
+        self._icon = "mdi:{}".format(SENSORS.get(self._sensor_type)[2])
         self._state = STATE_UNKNOWN
 
     @property
@@ -83,27 +80,27 @@ class AmcrestSensor(Entity):
 
         try:
             version, build_date = self._camera.software_information
-            self._attrs['Build Date'] = build_date.split('=')[-1]
-            self._attrs['Version'] = version.split('=')[-1]
+            self._attrs["Build Date"] = build_date.split("=")[-1]
+            self._attrs["Version"] = version.split("=")[-1]
         except ValueError:
-            self._attrs['Build Date'] = 'Not Available'
-            self._attrs['Version'] = 'Not Available'
+            self._attrs["Build Date"] = "Not Available"
+            self._attrs["Version"] = "Not Available"
 
         try:
-            self._attrs['Serial Number'] = self._camera.serial_number
+            self._attrs["Serial Number"] = self._camera.serial_number
         except ValueError:
-            self._attrs['Serial Number'] = 'Not Available'
+            self._attrs["Serial Number"] = "Not Available"
 
-        if self._sensor_type == 'motion_detector':
+        if self._sensor_type == "motion_detector":
             self._state = self._camera.is_motion_detected
-            self._attrs['Record Mode'] = self._camera.record_mode
+            self._attrs["Record Mode"] = self._camera.record_mode
 
-        elif self._sensor_type == 'ptz_preset':
+        elif self._sensor_type == "ptz_preset":
             self._state = self._camera.ptz_presets_count
 
-        elif self._sensor_type == 'sdcard':
+        elif self._sensor_type == "sdcard":
             sd_used = self._camera.storage_used
             sd_total = self._camera.storage_total
-            self._attrs['Total'] = '{0} {1}'.format(*sd_total)
-            self._attrs['Used'] = '{0} {1}'.format(*sd_used)
+            self._attrs["Total"] = "{0} {1}".format(*sd_total)
+            self._attrs["Used"] = "{0} {1}".format(*sd_used)
             self._state = self._camera.storage_used_percent

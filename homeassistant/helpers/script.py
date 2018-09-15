@@ -10,41 +10,49 @@ from homeassistant.core import HomeAssistant, Context, callback
 from homeassistant.const import CONF_CONDITION, CONF_TIMEOUT
 from homeassistant.exceptions import TemplateError
 from homeassistant.helpers import (
-    service, condition, template as template,
-    config_validation as cv)
+    service,
+    condition,
+    template as template,
+    config_validation as cv,
+)
 from homeassistant.helpers.event import (
-    async_track_point_in_utc_time, async_track_template)
+    async_track_point_in_utc_time,
+    async_track_template,
+)
 from homeassistant.helpers.typing import ConfigType
 import homeassistant.util.dt as date_util
-from homeassistant.util.async_ import (
-    run_coroutine_threadsafe, run_callback_threadsafe)
+from homeassistant.util.async_ import run_coroutine_threadsafe, run_callback_threadsafe
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_ALIAS = 'alias'
-CONF_SERVICE = 'service'
-CONF_SERVICE_DATA = 'data'
-CONF_SEQUENCE = 'sequence'
-CONF_EVENT = 'event'
-CONF_EVENT_DATA = 'event_data'
-CONF_EVENT_DATA_TEMPLATE = 'event_data_template'
-CONF_DELAY = 'delay'
-CONF_WAIT_TEMPLATE = 'wait_template'
-CONF_CONTINUE = 'continue_on_timeout'
+CONF_ALIAS = "alias"
+CONF_SERVICE = "service"
+CONF_SERVICE_DATA = "data"
+CONF_SEQUENCE = "sequence"
+CONF_EVENT = "event"
+CONF_EVENT_DATA = "event_data"
+CONF_EVENT_DATA_TEMPLATE = "event_data_template"
+CONF_DELAY = "delay"
+CONF_WAIT_TEMPLATE = "wait_template"
+CONF_CONTINUE = "continue_on_timeout"
 
 
-def call_from_config(hass: HomeAssistant, config: ConfigType,
-                     variables: Optional[Sequence] = None,
-                     context: Optional[Context] = None) -> None:
+def call_from_config(
+    hass: HomeAssistant,
+    config: ConfigType,
+    variables: Optional[Sequence] = None,
+    context: Optional[Context] = None,
+) -> None:
     """Call a script based on a config entry."""
     Script(hass, cv.SCRIPT_SCHEMA(config)).run(variables, context)
 
 
-class Script():
+class Script:
     """Representation of a script."""
 
-    def __init__(self, hass: HomeAssistant, sequence, name: str = None,
-                 change_listener=None) -> None:
+    def __init__(
+        self, hass: HomeAssistant, sequence, name: str = None, change_listener=None
+    ) -> None:
         """Initialize the script."""
         self.hass = hass
         self.sequence = sequence
@@ -54,8 +62,10 @@ class Script():
         self._cur = -1
         self.last_action = None
         self.last_triggered = None
-        self.can_cancel = any(CONF_DELAY in action or CONF_WAIT_TEMPLATE
-                              in action for action in self.sequence)
+        self.can_cancel = any(
+            CONF_DELAY in action or CONF_WAIT_TEMPLATE in action
+            for action in self.sequence
+        )
         self._async_listener = []
         self._template_cache = {}
         self._config_cache = {}
@@ -68,17 +78,19 @@ class Script():
     def run(self, variables=None, context=None):
         """Run script."""
         run_coroutine_threadsafe(
-            self.async_run(variables, context), self.hass.loop).result()
+            self.async_run(variables, context), self.hass.loop
+        ).result()
 
-    async def async_run(self, variables: Optional[Sequence] = None,
-                        context: Optional[Context] = None) -> None:
+    async def async_run(
+        self, variables: Optional[Sequence] = None, context: Optional[Context] = None
+    ) -> None:
         """Run script.
 
         This method is a coroutine.
         """
         self.last_triggered = date_util.utcnow()
         if self._cur == -1:
-            self._log('Running script')
+            self._log("Running script")
             self._cur = 0
 
         # Unregister callback if we were in a delay or wait but turn on is
@@ -96,25 +108,23 @@ class Script():
                     """Handle delay."""
                     # pylint: disable=cell-var-from-loop
                     self._async_listener.remove(unsub)
-                    self.hass.async_create_task(
-                        self.async_run(variables, context))
+                    self.hass.async_create_task(self.async_run(variables, context))
 
                 delay = action[CONF_DELAY]
 
                 try:
                     if isinstance(delay, template.Template):
-                        delay = vol.All(
-                            cv.time_period,
-                            cv.positive_timedelta)(
-                                delay.async_render(variables))
+                        delay = vol.All(cv.time_period, cv.positive_timedelta)(
+                            delay.async_render(variables)
+                        )
                 except (TemplateError, vol.Invalid) as ex:
-                    _LOGGER.error("Error rendering '%s' delay template: %s",
-                                  self.name, ex)
+                    _LOGGER.error(
+                        "Error rendering '%s' delay template: %s", self.name, ex
+                    )
                     break
 
                 unsub = async_track_point_in_utc_time(
-                    self.hass, async_script_delay,
-                    date_util.utcnow() + delay
+                    self.hass, async_script_delay, date_util.utcnow() + delay
                 )
                 self._async_listener.append(unsub)
 
@@ -129,19 +139,20 @@ class Script():
                 wait_template.hass = self.hass
 
                 # check if condition already okay
-                if condition.async_template(
-                        self.hass, wait_template, variables):
+                if condition.async_template(self.hass, wait_template, variables):
                     continue
 
                 @callback
                 def async_script_wait(entity_id, from_s, to_s):
                     """Handle script after template condition is true."""
                     self._async_remove_listener()
-                    self.hass.async_create_task(
-                        self.async_run(variables, context))
+                    self.hass.async_create_task(self.async_run(variables, context))
 
-                self._async_listener.append(async_track_template(
-                    self.hass, wait_template, async_script_wait, variables))
+                self._async_listener.append(
+                    async_track_template(
+                        self.hass, wait_template, async_script_wait, variables
+                    )
+                )
 
                 self._cur = cur + 1
                 if self._change_listener:
@@ -149,8 +160,8 @@ class Script():
 
                 if CONF_TIMEOUT in action:
                     self._async_set_timeout(
-                        action, variables, context,
-                        action.get(CONF_CONTINUE, True))
+                        action, variables, context, action.get(CONF_CONTINUE, True)
+                    )
 
                 return
 
@@ -188,14 +199,15 @@ class Script():
 
         This method is a coroutine.
         """
-        self.last_action = action.get(CONF_ALIAS, 'call service')
+        self.last_action = action.get(CONF_ALIAS, "call service")
         self._log("Executing step %s" % self.last_action)
         await service.async_call_from_config(
-            self.hass, action,
+            self.hass,
+            action,
             blocking=True,
             variables=variables,
             validate_config=False,
-            context=context
+            context=context,
         )
 
     def _async_fire_event(self, action, variables, context):
@@ -205,13 +217,13 @@ class Script():
         event_data = dict(action.get(CONF_EVENT_DATA, {}))
         if CONF_EVENT_DATA_TEMPLATE in action:
             try:
-                event_data.update(template.render_complex(
-                    action[CONF_EVENT_DATA_TEMPLATE], variables))
+                event_data.update(
+                    template.render_complex(action[CONF_EVENT_DATA_TEMPLATE], variables)
+                )
             except TemplateError as ex:
-                _LOGGER.error('Error rendering event data template: %s', ex)
+                _LOGGER.error("Error rendering event data template: %s", ex)
 
-        self.hass.bus.async_fire(action[CONF_EVENT],
-                                 event_data, context=context)
+        self.hass.bus.async_fire(action[CONF_EVENT], event_data, context=context)
 
     def _async_check_condition(self, action, variables):
         """Test if condition is matching."""
@@ -226,8 +238,7 @@ class Script():
         self._log("Test condition {}: {}".format(self.last_action, check))
         return check
 
-    def _async_set_timeout(self, action, variables, context,
-                           continue_on_timeout):
+    def _async_set_timeout(self, action, variables, context, continue_on_timeout):
         """Schedule a timeout to abort or continue script."""
         timeout = action[CONF_TIMEOUT]
         unsub = None
@@ -240,15 +251,13 @@ class Script():
             # Check if we want to continue to execute
             # the script after the timeout
             if continue_on_timeout:
-                self.hass.async_create_task(
-                    self.async_run(variables, context))
+                self.hass.async_create_task(self.async_run(variables, context))
             else:
                 self._log("Timeout reached, abort script.")
                 self.async_stop()
 
         unsub = async_track_point_in_utc_time(
-            self.hass, async_script_timeout,
-            date_util.utcnow() + timeout
+            self.hass, async_script_timeout, date_util.utcnow() + timeout
         )
         self._async_listener.append(unsub)
 

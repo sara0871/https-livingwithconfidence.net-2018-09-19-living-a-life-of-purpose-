@@ -12,46 +12,54 @@ import voluptuous as vol
 
 from homeassistant.core import callback
 from homeassistant.const import (
-    CONF_ENTITY_ID, STATE_IDLE, CONF_NAME, CONF_STATE, STATE_ON, STATE_OFF,
-    SERVICE_TURN_ON, SERVICE_TURN_OFF, SERVICE_TOGGLE, ATTR_ENTITY_ID)
+    CONF_ENTITY_ID,
+    STATE_IDLE,
+    CONF_NAME,
+    CONF_STATE,
+    STATE_ON,
+    STATE_OFF,
+    SERVICE_TURN_ON,
+    SERVICE_TURN_OFF,
+    SERVICE_TOGGLE,
+    ATTR_ENTITY_ID,
+)
 from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.helpers import service, event
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'alert'
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+DOMAIN = "alert"
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
-CONF_DONE_MESSAGE = 'done_message'
-CONF_CAN_ACK = 'can_acknowledge'
-CONF_NOTIFIERS = 'notifiers'
-CONF_REPEAT = 'repeat'
-CONF_SKIP_FIRST = 'skip_first'
+CONF_DONE_MESSAGE = "done_message"
+CONF_CAN_ACK = "can_acknowledge"
+CONF_NOTIFIERS = "notifiers"
+CONF_REPEAT = "repeat"
+CONF_SKIP_FIRST = "skip_first"
 
 DEFAULT_CAN_ACK = True
 DEFAULT_SKIP_FIRST = False
 
-ALERT_SCHEMA = vol.Schema({
-    vol.Required(CONF_NAME): cv.string,
-    vol.Optional(CONF_DONE_MESSAGE): cv.string,
-    vol.Required(CONF_ENTITY_ID): cv.entity_id,
-    vol.Required(CONF_STATE, default=STATE_ON): cv.string,
-    vol.Required(CONF_REPEAT): vol.All(cv.ensure_list, [vol.Coerce(float)]),
-    vol.Required(CONF_CAN_ACK, default=DEFAULT_CAN_ACK): cv.boolean,
-    vol.Required(CONF_SKIP_FIRST, default=DEFAULT_SKIP_FIRST): cv.boolean,
-    vol.Required(CONF_NOTIFIERS): cv.ensure_list})
+ALERT_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_NAME): cv.string,
+        vol.Optional(CONF_DONE_MESSAGE): cv.string,
+        vol.Required(CONF_ENTITY_ID): cv.entity_id,
+        vol.Required(CONF_STATE, default=STATE_ON): cv.string,
+        vol.Required(CONF_REPEAT): vol.All(cv.ensure_list, [vol.Coerce(float)]),
+        vol.Required(CONF_CAN_ACK, default=DEFAULT_CAN_ACK): cv.boolean,
+        vol.Required(CONF_SKIP_FIRST, default=DEFAULT_SKIP_FIRST): cv.boolean,
+        vol.Required(CONF_NOTIFIERS): cv.ensure_list,
+    }
+)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        cv.slug: ALERT_SCHEMA,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: vol.Schema({cv.slug: ALERT_SCHEMA})}, extra=vol.ALLOW_EXTRA
+)
 
 
-ALERT_SERVICE_SCHEMA = vol.Schema({
-    vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-})
+ALERT_SERVICE_SCHEMA = vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_ids})
 
 
 def is_on(hass, entity_id):
@@ -68,8 +76,7 @@ def turn_on(hass, entity_id):
 def async_turn_on(hass, entity_id):
     """Async reset the alert."""
     data = {ATTR_ENTITY_ID: entity_id}
-    hass.async_create_task(
-        hass.services.async_call(DOMAIN, SERVICE_TURN_ON, data))
+    hass.async_create_task(hass.services.async_call(DOMAIN, SERVICE_TURN_ON, data))
 
 
 def turn_off(hass, entity_id):
@@ -81,8 +88,7 @@ def turn_off(hass, entity_id):
 def async_turn_off(hass, entity_id):
     """Async acknowledge the alert."""
     data = {ATTR_ENTITY_ID: entity_id}
-    hass.async_create_task(
-        hass.services.async_call(DOMAIN, SERVICE_TURN_OFF, data))
+    hass.async_create_task(hass.services.async_call(DOMAIN, SERVICE_TURN_OFF, data))
 
 
 def toggle(hass, entity_id):
@@ -94,8 +100,7 @@ def toggle(hass, entity_id):
 def async_toggle(hass, entity_id):
     """Async toggle acknowledgement of alert."""
     data = {ATTR_ENTITY_ID: entity_id}
-    hass.async_create_task(
-        hass.services.async_call(DOMAIN, SERVICE_TOGGLE, data))
+    hass.async_create_task(hass.services.async_call(DOMAIN, SERVICE_TOGGLE, data))
 
 
 @asyncio.coroutine
@@ -121,23 +126,33 @@ def async_setup(hass, config):
 
     # Setup alerts
     for entity_id, alert in alerts.items():
-        entity = Alert(hass, entity_id,
-                       alert[CONF_NAME], alert.get(CONF_DONE_MESSAGE),
-                       alert[CONF_ENTITY_ID], alert[CONF_STATE],
-                       alert[CONF_REPEAT], alert[CONF_SKIP_FIRST],
-                       alert[CONF_NOTIFIERS], alert[CONF_CAN_ACK])
+        entity = Alert(
+            hass,
+            entity_id,
+            alert[CONF_NAME],
+            alert.get(CONF_DONE_MESSAGE),
+            alert[CONF_ENTITY_ID],
+            alert[CONF_STATE],
+            alert[CONF_REPEAT],
+            alert[CONF_SKIP_FIRST],
+            alert[CONF_NOTIFIERS],
+            alert[CONF_CAN_ACK],
+        )
         all_alerts[entity.entity_id] = entity
 
     # Setup service calls
     hass.services.async_register(
-        DOMAIN, SERVICE_TURN_OFF, async_handle_alert_service,
-        schema=ALERT_SERVICE_SCHEMA)
+        DOMAIN,
+        SERVICE_TURN_OFF,
+        async_handle_alert_service,
+        schema=ALERT_SERVICE_SCHEMA,
+    )
     hass.services.async_register(
-        DOMAIN, SERVICE_TURN_ON, async_handle_alert_service,
-        schema=ALERT_SERVICE_SCHEMA)
+        DOMAIN, SERVICE_TURN_ON, async_handle_alert_service, schema=ALERT_SERVICE_SCHEMA
+    )
     hass.services.async_register(
-        DOMAIN, SERVICE_TOGGLE, async_handle_alert_service,
-        schema=ALERT_SERVICE_SCHEMA)
+        DOMAIN, SERVICE_TOGGLE, async_handle_alert_service, schema=ALERT_SERVICE_SCHEMA
+    )
 
     tasks = [alert.async_update_ha_state() for alert in all_alerts.values()]
     if tasks:
@@ -149,8 +164,19 @@ def async_setup(hass, config):
 class Alert(ToggleEntity):
     """Representation of an alert."""
 
-    def __init__(self, hass, entity_id, name, done_message, watched_entity_id,
-                 state, repeat, skip_first, notifiers, can_ack):
+    def __init__(
+        self,
+        hass,
+        entity_id,
+        name,
+        done_message,
+        watched_entity_id,
+        state,
+        repeat,
+        skip_first,
+        notifiers,
+        can_ack,
+    ):
         """Initialize the alert."""
         self.hass = hass
         self._name = name
@@ -170,7 +196,8 @@ class Alert(ToggleEntity):
         self.entity_id = ENTITY_ID_FORMAT.format(entity_id)
 
         event.async_track_state_change(
-            hass, watched_entity_id, self.watched_entity_change)
+            hass, watched_entity_id, self.watched_entity_change
+        )
 
     @property
     def name(self):
@@ -236,8 +263,9 @@ class Alert(ToggleEntity):
         """Schedule a notification."""
         delay = self._delay[self._next_delay]
         next_msg = datetime.now() + delay
-        self._cancel = \
-            event.async_track_point_in_time(self.hass, self._notify, next_msg)
+        self._cancel = event.async_track_point_in_time(
+            self.hass, self._notify, next_msg
+        )
         self._next_delay = min(self._next_delay + 1, len(self._delay) - 1)
 
     @asyncio.coroutine
@@ -251,7 +279,8 @@ class Alert(ToggleEntity):
             self._send_done_message = True
             for target in self._notifiers:
                 yield from self.hass.services.async_call(
-                    'notify', target, {'message': self._name})
+                    "notify", target, {"message": self._name}
+                )
         yield from self._schedule_notify()
 
     @asyncio.coroutine
@@ -261,7 +290,8 @@ class Alert(ToggleEntity):
         self._send_done_message = False
         for target in self._notifiers:
             yield from self.hass.services.async_call(
-                'notify', target, {'message': self._done_message})
+                "notify", target, {"message": self._done_message}
+            )
 
     @asyncio.coroutine
     def async_turn_on(self, **kwargs):

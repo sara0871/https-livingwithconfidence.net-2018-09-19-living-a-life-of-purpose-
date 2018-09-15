@@ -12,13 +12,14 @@ def has_location(state: State) -> bool:
 
     Async friendly.
     """
-    return (isinstance(state, State) and
-            isinstance(state.attributes.get(ATTR_LATITUDE), float) and
-            isinstance(state.attributes.get(ATTR_LONGITUDE), float))
+    return (
+        isinstance(state, State)
+        and isinstance(state.attributes.get(ATTR_LATITUDE), float)
+        and isinstance(state.attributes.get(ATTR_LONGITUDE), float)
+    )
 
 
-def closest(latitude: float, longitude: float,
-            states: Sequence[State]) -> State:
+def closest(latitude: float, longitude: float, states: Sequence[State]) -> State:
     """Return closest state to point.
 
     Async friendly.
@@ -31,6 +32,9 @@ def closest(latitude: float, longitude: float,
     return min(
         with_location,
         key=lambda state: loc_util.distance(
-            latitude, longitude, state.attributes.get(ATTR_LATITUDE),
-            state.attributes.get(ATTR_LONGITUDE))
+            latitude,
+            longitude,
+            state.attributes.get(ATTR_LATITUDE),
+            state.attributes.get(ATTR_LONGITUDE),
+        ),
     )

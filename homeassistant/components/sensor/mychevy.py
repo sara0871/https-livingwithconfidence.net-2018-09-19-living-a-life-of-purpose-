@@ -8,8 +8,14 @@ import asyncio
 import logging
 
 from homeassistant.components.mychevy import (
-    EVSensorConfig, DOMAIN as MYCHEVY_DOMAIN, MYCHEVY_ERROR, MYCHEVY_SUCCESS,
-    NOTIFICATION_ID, NOTIFICATION_TITLE, UPDATE_TOPIC, ERROR_TOPIC
+    EVSensorConfig,
+    DOMAIN as MYCHEVY_DOMAIN,
+    MYCHEVY_ERROR,
+    MYCHEVY_SUCCESS,
+    NOTIFICATION_ID,
+    NOTIFICATION_TITLE,
+    UPDATE_TOPIC,
+    ERROR_TOPIC,
 )
 from homeassistant.components.sensor import ENTITY_ID_FORMAT
 from homeassistant.core import callback
@@ -21,11 +27,10 @@ BATTERY_SENSOR = "batteryLevel"
 
 SENSORS = [
     EVSensorConfig("Mileage", "totalMiles", "miles", "mdi:speedometer"),
-    EVSensorConfig("Electric Range", "electricRange", "miles",
-                   "mdi:speedometer"),
+    EVSensorConfig("Electric Range", "electricRange", "miles", "mdi:speedometer"),
     EVSensorConfig("Charged By", "estimatedFullChargeBy"),
     EVSensorConfig("Charge Mode", "chargeMode"),
-    EVSensorConfig("Battery Level", BATTERY_SENSOR, "%", "mdi:battery")
+    EVSensorConfig("Battery Level", BATTERY_SENSOR, "%", "mdi:battery"),
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,10 +64,10 @@ class MyChevyStatus(Entity):
     def async_added_to_hass(self):
         """Register callbacks."""
         self.hass.helpers.dispatcher.async_dispatcher_connect(
-            UPDATE_TOPIC, self.success)
+            UPDATE_TOPIC, self.success
+        )
 
-        self.hass.helpers.dispatcher.async_dispatcher_connect(
-            ERROR_TOPIC, self.error)
+        self.hass.helpers.dispatcher.async_dispatcher_connect(ERROR_TOPIC, self.error)
 
     @callback
     def success(self):
@@ -80,7 +85,8 @@ class MyChevyStatus(Entity):
                 "Error:<br/>Connection to mychevy website failed. "
                 "This probably means the mychevy to OnStar link is down.",
                 title=NOTIFICATION_TITLE,
-                notification_id=NOTIFICATION_ID)
+                notification_id=NOTIFICATION_ID,
+            )
             self._state = MYCHEVY_ERROR
         self.async_schedule_update_ha_state()
 
@@ -125,15 +131,17 @@ class EVSensor(Entity):
         self._car_vid = car_vid
 
         self.entity_id = ENTITY_ID_FORMAT.format(
-            '{}_{}_{}'.format(MYCHEVY_DOMAIN,
-                              slugify(self._car.name),
-                              slugify(self._name)))
+            "{}_{}_{}".format(
+                MYCHEVY_DOMAIN, slugify(self._car.name), slugify(self._name)
+            )
+        )
 
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Register callbacks."""
         self.hass.helpers.dispatcher.async_dispatcher_connect(
-            UPDATE_TOPIC, self.async_update_callback)
+            UPDATE_TOPIC, self.async_update_callback
+        )
 
     @property
     def _car(self):

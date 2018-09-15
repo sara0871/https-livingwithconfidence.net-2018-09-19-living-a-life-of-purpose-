@@ -11,28 +11,34 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    ATTR_ATTRIBUTION, CONF_NAME, CONF_PASSWORD, CONF_USERNAME)
+    ATTR_ATTRIBUTION,
+    CONF_NAME,
+    CONF_PASSWORD,
+    CONF_USERNAME,
+)
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['postnl_api==1.0.2']
+REQUIREMENTS = ["postnl_api==1.0.2"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTRIBUTION = 'Information provided by PostNL'
+ATTRIBUTION = "Information provided by PostNL"
 
-DEFAULT_NAME = 'postnl'
+DEFAULT_NAME = "postnl"
 
-ICON = 'mdi:package-variant-closed'
+ICON = "mdi:package-variant-closed"
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=30)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -76,7 +82,7 @@ class PostNLSensor(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity, if any."""
-        return 'packages'
+        return "packages"
 
     @property
     def device_state_attributes(self):
@@ -95,15 +101,12 @@ class PostNLSensor(Entity):
         status_counts = {}
 
         for shipment in shipments:
-            status = shipment['status']['formatted']['short']
-            status = self._api.parse_datetime(status, '%d-%m-%Y', '%H:%M')
+            status = shipment["status"]["formatted"]["short"]
+            status = self._api.parse_datetime(status, "%d-%m-%Y", "%H:%M")
 
-            name = shipment['settings']['title']
+            name = shipment["settings"]["title"]
             status_counts[name] = status
 
-        self._attributes = {
-            ATTR_ATTRIBUTION: ATTRIBUTION,
-            **status_counts
-        }
+        self._attributes = {ATTR_ATTRIBUTION: ATTRIBUTION, **status_counts}
 
         self._state = len(status_counts)

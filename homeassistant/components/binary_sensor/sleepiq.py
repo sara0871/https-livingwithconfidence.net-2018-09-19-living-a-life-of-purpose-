@@ -7,7 +7,7 @@ https://home-assistant.io/components/binary_sensor.sleepiq/
 from homeassistant.components import sleepiq
 from homeassistant.components.binary_sensor import BinarySensorDevice
 
-DEPENDENCIES = ['sleepiq']
+DEPENDENCIES = ["sleepiq"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):

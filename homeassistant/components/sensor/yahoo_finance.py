@@ -14,28 +14,31 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['yahoo-finance==1.4.0']
+REQUIREMENTS = ["yahoo-finance==1.4.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_CHANGE = 'Change'
-ATTR_OPEN = 'open'
-ATTR_PREV_CLOSE = 'prev_close'
+ATTR_CHANGE = "Change"
+ATTR_OPEN = "open"
+ATTR_PREV_CLOSE = "prev_close"
 
 CONF_ATTRIBUTION = "Stock market information provided by Yahoo! Inc."
-CONF_SYMBOLS = 'symbols'
+CONF_SYMBOLS = "symbols"
 
-DEFAULT_NAME = 'Yahoo Stock'
-DEFAULT_SYMBOL = 'YHOO'
+DEFAULT_NAME = "Yahoo Stock"
+DEFAULT_SYMBOL = "YHOO"
 
-ICON = 'mdi:currency-usd'
+ICON = "mdi:currency-usd"
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_SYMBOLS, default=[DEFAULT_SYMBOL]):
-        vol.All(cv.ensure_list, [cv.string]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_SYMBOLS, default=[DEFAULT_SYMBOL]): vol.All(
+            cv.ensure_list, [cv.string]
+        )
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):

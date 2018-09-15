@@ -10,48 +10,59 @@ import voluptuous as vol
 
 from homeassistant.const import CONF_NAME, CONF_TYPE
 from homeassistant.components.light import (
-    Light, ATTR_BRIGHTNESS, ATTR_HS_COLOR, ATTR_TRANSITION,
-    SUPPORT_BRIGHTNESS, SUPPORT_COLOR, SUPPORT_TRANSITION, PLATFORM_SCHEMA)
+    Light,
+    ATTR_BRIGHTNESS,
+    ATTR_HS_COLOR,
+    ATTR_TRANSITION,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR,
+    SUPPORT_TRANSITION,
+    PLATFORM_SCHEMA,
+)
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.color as color_util
 
-REQUIREMENTS = ['pwmled==1.3.0']
+REQUIREMENTS = ["pwmled==1.3.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_LEDS = 'leds'
-CONF_DRIVER = 'driver'
-CONF_PINS = 'pins'
-CONF_FREQUENCY = 'frequency'
-CONF_ADDRESS = 'address'
+CONF_LEDS = "leds"
+CONF_DRIVER = "driver"
+CONF_PINS = "pins"
+CONF_FREQUENCY = "frequency"
+CONF_ADDRESS = "address"
 
-CONF_DRIVER_GPIO = 'gpio'
-CONF_DRIVER_PCA9685 = 'pca9685'
+CONF_DRIVER_GPIO = "gpio"
+CONF_DRIVER_PCA9685 = "pca9685"
 CONF_DRIVER_TYPES = [CONF_DRIVER_GPIO, CONF_DRIVER_PCA9685]
 
-CONF_LED_TYPE_SIMPLE = 'simple'
-CONF_LED_TYPE_RGB = 'rgb'
-CONF_LED_TYPE_RGBW = 'rgbw'
+CONF_LED_TYPE_SIMPLE = "simple"
+CONF_LED_TYPE_RGB = "rgb"
+CONF_LED_TYPE_RGBW = "rgbw"
 CONF_LED_TYPES = [CONF_LED_TYPE_SIMPLE, CONF_LED_TYPE_RGB, CONF_LED_TYPE_RGBW]
 
 DEFAULT_COLOR = [0, 0]
 
-SUPPORT_SIMPLE_LED = (SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION)
-SUPPORT_RGB_LED = (SUPPORT_BRIGHTNESS | SUPPORT_COLOR | SUPPORT_TRANSITION)
+SUPPORT_SIMPLE_LED = SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION
+SUPPORT_RGB_LED = SUPPORT_BRIGHTNESS | SUPPORT_COLOR | SUPPORT_TRANSITION
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_LEDS): vol.All(cv.ensure_list, [
-        {
-            vol.Required(CONF_NAME): cv.string,
-            vol.Required(CONF_DRIVER): vol.In(CONF_DRIVER_TYPES),
-            vol.Required(CONF_PINS): vol.All(cv.ensure_list,
-                                             [cv.positive_int]),
-            vol.Required(CONF_TYPE): vol.In(CONF_LED_TYPES),
-            vol.Optional(CONF_FREQUENCY): cv.positive_int,
-            vol.Optional(CONF_ADDRESS): cv.byte
-        }
-    ])
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_LEDS): vol.All(
+            cv.ensure_list,
+            [
+                {
+                    vol.Required(CONF_NAME): cv.string,
+                    vol.Required(CONF_DRIVER): vol.In(CONF_DRIVER_TYPES),
+                    vol.Required(CONF_PINS): vol.All(cv.ensure_list, [cv.positive_int]),
+                    vol.Required(CONF_TYPE): vol.In(CONF_LED_TYPES),
+                    vol.Optional(CONF_FREQUENCY): cv.positive_int,
+                    vol.Optional(CONF_ADDRESS): cv.byte,
+                }
+            ],
+        )
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -68,12 +79,12 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         pins = led_conf[CONF_PINS]
         opt_args = {}
         if CONF_FREQUENCY in led_conf:
-            opt_args['freq'] = led_conf[CONF_FREQUENCY]
+            opt_args["freq"] = led_conf[CONF_FREQUENCY]
         if driver_type == CONF_DRIVER_GPIO:
             driver = GpioDriver(pins, **opt_args)
         elif driver_type == CONF_DRIVER_PCA9685:
             if CONF_ADDRESS in led_conf:
-                opt_args['address'] = led_conf[CONF_ADDRESS]
+                opt_args["address"] = led_conf[CONF_ADDRESS]
             driver = Pca9685Driver(pins, **opt_args)
         else:
             _LOGGER.error("Invalid driver type")
@@ -140,10 +151,12 @@ class PwmSimpleLed(Light):
             self._led.transition(
                 transition_time,
                 is_on=True,
-                brightness=_from_hass_brightness(self._brightness))
+                brightness=_from_hass_brightness(self._brightness),
+            )
         else:
-            self._led.set(is_on=True,
-                          brightness=_from_hass_brightness(self._brightness))
+            self._led.set(
+                is_on=True, brightness=_from_hass_brightness(self._brightness)
+            )
 
         self._is_on = True
         self.schedule_update_ha_state()
@@ -192,11 +205,14 @@ class PwmRgbLed(PwmSimpleLed):
                 transition_time,
                 is_on=True,
                 brightness=_from_hass_brightness(self._brightness),
-                color=_from_hass_color(self._color))
+                color=_from_hass_color(self._color),
+            )
         else:
-            self._led.set(is_on=True,
-                          brightness=_from_hass_brightness(self._brightness),
-                          color=_from_hass_color(self._color))
+            self._led.set(
+                is_on=True,
+                brightness=_from_hass_brightness(self._brightness),
+                color=_from_hass_color(self._color),
+            )
 
         self._is_on = True
         self.schedule_update_ha_state()
@@ -210,5 +226,6 @@ def _from_hass_brightness(brightness):
 def _from_hass_color(color):
     """Convert Home Assistant RGB list to Color tuple."""
     from pwmled import Color
+
     rgb = color_util.color_hs_to_RGB(*color)
     return Color(*tuple(rgb))

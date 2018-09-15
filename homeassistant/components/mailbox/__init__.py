@@ -23,12 +23,12 @@ from homeassistant.setup import async_prepare_setup_platform
 
 _LOGGER = logging.getLogger(__name__)
 
-CONTENT_TYPE_MPEG = 'audio/mpeg'
+CONTENT_TYPE_MPEG = "audio/mpeg"
 
-DEPENDENCIES = ['http']
-DOMAIN = 'mailbox'
+DEPENDENCIES = ["http"]
+DOMAIN = "mailbox"
 
-EVENT = 'mailbox_updated'
+EVENT = "mailbox_updated"
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
@@ -38,7 +38,8 @@ def async_setup(hass, config):
     """Track states and offer events for mailboxes."""
     mailboxes = []
     yield from hass.components.frontend.async_register_built_in_panel(
-        'mailbox', 'mailbox', 'mdi:mailbox')
+        "mailbox", "mailbox", "mdi:mailbox"
+    )
     hass.http.register_view(MailboxPlatformsView(mailboxes))
     hass.http.register_view(MailboxMessageView(mailboxes))
     hass.http.register_view(MailboxMediaView(mailboxes))
@@ -52,8 +53,7 @@ def async_setup(hass, config):
         if discovery_info is None:
             discovery_info = {}
 
-        platform = yield from async_prepare_setup_platform(
-            hass, config, DOMAIN, p_type)
+        platform = yield from async_prepare_setup_platform(hass, config, DOMAIN, p_type)
 
         if platform is None:
             _LOGGER.error("Unknown mailbox platform specified")
@@ -62,32 +62,36 @@ def async_setup(hass, config):
         _LOGGER.info("Setting up %s.%s", DOMAIN, p_type)
         mailbox = None
         try:
-            if hasattr(platform, 'async_get_handler'):
-                mailbox = yield from \
-                    platform.async_get_handler(hass, p_config, discovery_info)
-            elif hasattr(platform, 'get_handler'):
+            if hasattr(platform, "async_get_handler"):
+                mailbox = yield from platform.async_get_handler(
+                    hass, p_config, discovery_info
+                )
+            elif hasattr(platform, "get_handler"):
                 mailbox = yield from hass.async_add_job(
-                    platform.get_handler, hass, p_config, discovery_info)
+                    platform.get_handler, hass, p_config, discovery_info
+                )
             else:
                 raise HomeAssistantError("Invalid mailbox platform.")
 
             if mailbox is None:
-                _LOGGER.error(
-                    "Failed to initialize mailbox platform %s", p_type)
+                _LOGGER.error("Failed to initialize mailbox platform %s", p_type)
                 return
 
         except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception('Error setting up platform %s', p_type)
+            _LOGGER.exception("Error setting up platform %s", p_type)
             return
 
         mailboxes.append(mailbox)
         mailbox_entity = MailboxEntity(hass, mailbox)
         component = EntityComponent(
-            logging.getLogger(__name__), DOMAIN, hass, SCAN_INTERVAL)
+            logging.getLogger(__name__), DOMAIN, hass, SCAN_INTERVAL
+        )
         yield from component.async_add_entities([mailbox_entity])
 
-    setup_tasks = [async_setup_platform(p_type, p_config) for p_type, p_config
-                   in config_per_platform(config, DOMAIN)]
+    setup_tasks = [
+        async_setup_platform(p_type, p_config)
+        for p_type, p_config in config_per_platform(config, DOMAIN)
+    ]
 
     if setup_tasks:
         yield from asyncio.wait(setup_tasks, loop=hass.loop)
@@ -240,7 +244,7 @@ class MailboxMediaView(MailboxView):
         """Retrieve media."""
         mailbox = self.get_mailbox(platform)
 
-        hass = request.app['hass']
+        hass = request.app["hass"]
         with suppress(asyncio.CancelledError, asyncio.TimeoutError):
             with async_timeout.timeout(10, loop=hass.loop):
                 try:
@@ -250,7 +254,6 @@ class MailboxMediaView(MailboxView):
                     _LOGGER.error(error_msg)
                     return web.Response(status=500)
             if stream:
-                return web.Response(body=stream,
-                                    content_type=mailbox.media_type)
+                return web.Response(body=stream, content_type=mailbox.media_type)
 
         return web.Response(status=500)

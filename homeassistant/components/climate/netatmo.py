@@ -10,17 +10,23 @@ import voluptuous as vol
 
 from homeassistant.const import TEMP_CELSIUS, ATTR_TEMPERATURE
 from homeassistant.components.climate import (
-    STATE_HEAT, STATE_IDLE, ClimateDevice, PLATFORM_SCHEMA,
-    SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE)
+    STATE_HEAT,
+    STATE_IDLE,
+    ClimateDevice,
+    PLATFORM_SCHEMA,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_AWAY_MODE,
+)
 from homeassistant.util import Throttle
 import homeassistant.helpers.config_validation as cv
 
-DEPENDENCIES = ['netatmo']
+DEPENDENCIES = ["netatmo"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_RELAY = 'relay'
-CONF_THERMOSTAT = 'thermostat'
+CONF_RELAY = "relay"
+CONF_THERMOSTAT = "thermostat"
 
 DEFAULT_AWAY_TEMPERATURE = 14
 # # The default offset is 2 hours (when you use the thermostat itself)
@@ -29,14 +35,14 @@ DEFAULT_TIME_OFFSET = 7200
 # # NetAtmo Data is uploaded to server every hour
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_RELAY): cv.string,
-    vol.Optional(CONF_THERMOSTAT, default=[]):
-        vol.All(cv.ensure_list, [cv.string]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_RELAY): cv.string,
+        vol.Optional(CONF_THERMOSTAT, default=[]): vol.All(cv.ensure_list, [cv.string]),
+    }
+)
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE |
-                 SUPPORT_AWAY_MODE)
+SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | SUPPORT_AWAY_MODE
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -45,12 +51,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     device = config.get(CONF_RELAY)
 
     import pyatmo
+
     try:
         data = ThermostatData(netatmo.NETATMO_AUTH, device)
         for module_name in data.get_module_names():
             if CONF_THERMOSTAT in config:
-                if config[CONF_THERMOSTAT] != [] and \
-                   module_name not in config[CONF_THERMOSTAT]:
+                if (
+                    config[CONF_THERMOSTAT] != []
+                    and module_name not in config[CONF_THERMOSTAT]
+                ):
                     continue
             add_entities([NetatmoThermostat(data, module_name)], True)
     except pyatmo.NoDevice:
@@ -127,8 +136,7 @@ class NetatmoThermostat(ClimateDevice):
         if temperature is None:
             return
         mode = "manual"
-        self._data.thermostatdata.setthermpoint(
-            mode, temperature, DEFAULT_TIME_OFFSET)
+        self._data.thermostatdata.setthermpoint(mode, temperature, DEFAULT_TIME_OFFSET)
         self._target_temperature = temperature
         self._away = False
 
@@ -137,7 +145,7 @@ class NetatmoThermostat(ClimateDevice):
         """Get the latest data from NetAtmo API and updates the states."""
         self._data.update()
         self._target_temperature = self._data.thermostatdata.setpoint_temp
-        self._away = self._data.setpoint_mode == 'away'
+        self._away = self._data.setpoint_mode == "away"
 
 
 class ThermostatData:
@@ -159,16 +167,17 @@ class ThermostatData:
         if not self.device:
             for device in self.thermostatdata.modules:
                 for module in self.thermostatdata.modules[device].values():
-                    self.module_names.append(module['module_name'])
+                    self.module_names.append(module["module_name"])
         else:
             for module in self.thermostatdata.modules[self.device].values():
-                self.module_names.append(module['module_name'])
+                self.module_names.append(module["module_name"])
         return self.module_names
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Call the NetAtmo API to update the data."""
         import pyatmo
+
         self.thermostatdata = pyatmo.ThermostatData(self.auth)
         self.target_temperature = self.thermostatdata.setpoint_temp
         self.setpoint_mode = self.thermostatdata.setpoint_mode

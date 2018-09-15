@@ -10,17 +10,20 @@ import voluptuous as vol
 
 from homeassistant.const import STATE_OFF
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA)
+from homeassistant.components.switch import SwitchDevice, PLATFORM_SCHEMA
 from homeassistant.components.upcloud import (
-    UpCloudServerEntity, CONF_SERVERS, DATA_UPCLOUD)
+    UpCloudServerEntity,
+    CONF_SERVERS,
+    DATA_UPCLOUD,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['upcloud']
+DEPENDENCIES = ["upcloud"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_SERVERS): vol.All(cv.ensure_list, [cv.string]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_SERVERS): vol.All(cv.ensure_list, [cv.string])}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):

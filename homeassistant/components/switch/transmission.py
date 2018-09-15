@@ -10,25 +10,33 @@ import voluptuous as vol
 
 from homeassistant.components.switch import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_HOST, CONF_NAME, CONF_PORT, CONF_PASSWORD, CONF_USERNAME, STATE_OFF,
-    STATE_ON)
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    STATE_OFF,
+    STATE_ON,
+)
 from homeassistant.helpers.entity import ToggleEntity
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['transmissionrpc==0.11']
+REQUIREMENTS = ["transmissionrpc==0.11"]
 
 _LOGGING = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'Transmission Turtle Mode'
+DEFAULT_NAME = "Transmission Turtle Mode"
 DEFAULT_PORT = 9091
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-    vol.Optional(CONF_USERNAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+        vol.Optional(CONF_USERNAME): cv.string,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -44,12 +52,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     try:
         transmission_api = transmissionrpc.Client(
-            host, port=port, user=username, password=password)
+            host, port=port, user=username, password=password
+        )
         transmission_api.session_stats()
     except TransmissionError as error:
         _LOGGING.error(
             "Connection to Transmission API failed on %s:%s with message %s",
-            host, port, error.original
+            host,
+            port,
+            error.original,
         )
         return False
 

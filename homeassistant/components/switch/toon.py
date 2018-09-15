@@ -43,17 +43,17 @@ class EnecoSmartPlug(SwitchDevice):
     @property
     def current_power_w(self):
         """Return the current power usage in W."""
-        return self.toon_data_store.get_data('current_power', self.name)
+        return self.toon_data_store.get_data("current_power", self.name)
 
     @property
     def today_energy_kwh(self):
         """Return the today total energy usage in kWh."""
-        return self.toon_data_store.get_data('today_energy', self.name)
+        return self.toon_data_store.get_data("today_energy", self.name)
 
     @property
     def is_on(self):
         """Return true if switch is on. Standby is on."""
-        return self.toon_data_store.get_data('current_state', self.name)
+        return self.toon_data_store.get_data("current_state", self.name)
 
     @property
     def available(self):

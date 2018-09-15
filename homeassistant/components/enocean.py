@@ -11,19 +11,17 @@ import voluptuous as vol
 from homeassistant.const import CONF_DEVICE
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['enocean==0.40']
+REQUIREMENTS = ["enocean==0.40"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'enocean'
+DOMAIN = "enocean"
 
 ENOCEAN_DONGLE = None
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_DEVICE): cv.string,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: vol.Schema({vol.Required(CONF_DEVICE): cv.string})}, extra=vol.ALLOW_EXTRA
+)
 
 
 def setup(hass, config):
@@ -43,8 +41,8 @@ class EnOceanDongle:
     def __init__(self, hass, ser):
         """Initialize the EnOcean dongle."""
         from enocean.communicators.serialcommunicator import SerialCommunicator
-        self.__communicator = SerialCommunicator(
-            port=ser, callback=self.callback)
+
+        self.__communicator = SerialCommunicator(port=ser, callback=self.callback)
         self.__communicator.start()
         self.__devices = []
 
@@ -61,7 +59,7 @@ class EnOceanDongle:
         """Combine list of integer values to one big integer."""
         output = 0x00
         for i, j in enumerate(reversed(data)):
-            output |= (j << i * 8)
+            output |= j << i * 8
         return output
 
     def callback(self, temp):
@@ -71,6 +69,7 @@ class EnOceanDongle:
         is an incoming packet.
         """
         from enocean.protocol.packet import RadioPacket
+
         if isinstance(temp, RadioPacket):
             _LOGGER.debug("Received radio packet: %s", temp)
             rxtype = None
@@ -106,8 +105,11 @@ class EnOceanDongle:
                     if temp.sender_int == self._combine_hex(device.dev_id):
                         if value > 10:
                             device.value_changed(1)
-                if rxtype == "switch_status" and device.stype == "switch" and \
-                        channel == device.channel:
+                if (
+                    rxtype == "switch_status"
+                    and device.stype == "switch"
+                    and channel == device.channel
+                ):
                     if temp.sender_int == self._combine_hex(device.dev_id):
                         device.value_changed(value)
                 if rxtype == "dimmerstatus" and device.stype == "dimmer":
@@ -115,7 +117,7 @@ class EnOceanDongle:
                         device.value_changed(value)
 
 
-class EnOceanDevice():
+class EnOceanDevice:
     """Parent class for all devices associated with the EnOcean component."""
 
     def __init__(self):
@@ -128,5 +130,6 @@ class EnOceanDevice():
     def send_command(self, data, optional, packet_type):
         """Send a command via the EnOcean dongle."""
         from enocean.protocol.packet import Packet
+
         packet = Packet(packet_type, data=data, optional=optional)
         ENOCEAN_DONGLE.send_command(packet)

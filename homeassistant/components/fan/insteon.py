@@ -7,21 +7,20 @@ https://home-assistant.io/components/fan.insteon/
 import asyncio
 import logging
 
-from homeassistant.components.fan import (SPEED_OFF,
-                                          SPEED_LOW,
-                                          SPEED_MEDIUM,
-                                          SPEED_HIGH,
-                                          FanEntity,
-                                          SUPPORT_SET_SPEED)
+from homeassistant.components.fan import (
+    SPEED_OFF,
+    SPEED_LOW,
+    SPEED_MEDIUM,
+    SPEED_HIGH,
+    FanEntity,
+    SUPPORT_SET_SPEED,
+)
 from homeassistant.const import STATE_OFF
 from homeassistant.components.insteon import InsteonEntity
 
-DEPENDENCIES = ['insteon']
+DEPENDENCIES = ["insteon"]
 
-SPEED_TO_HEX = {SPEED_OFF: 0x00,
-                SPEED_LOW: 0x3f,
-                SPEED_MEDIUM: 0xbe,
-                SPEED_HIGH: 0xff}
+SPEED_TO_HEX = {SPEED_OFF: 0x00, SPEED_LOW: 0x3f, SPEED_MEDIUM: 0xbe, SPEED_HIGH: 0xff}
 
 FAN_SPEEDS = [STATE_OFF, SPEED_LOW, SPEED_MEDIUM, SPEED_HIGH]
 
@@ -29,17 +28,19 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the INSTEON device class for the hass platform."""
-    insteon_modem = hass.data['insteon'].get('modem')
+    insteon_modem = hass.data["insteon"].get("modem")
 
-    address = discovery_info['address']
+    address = discovery_info["address"]
     device = insteon_modem.devices[address]
-    state_key = discovery_info['state_key']
+    state_key = discovery_info["state_key"]
 
-    _LOGGER.debug('Adding device %s entity %s to Fan platform',
-                  device.address.hex, device.states[state_key].name)
+    _LOGGER.debug(
+        "Adding device %s entity %s to Fan platform",
+        device.address.hex,
+        device.states[state_key].name,
+    )
 
     new_entity = InsteonFan(device, state_key)
 

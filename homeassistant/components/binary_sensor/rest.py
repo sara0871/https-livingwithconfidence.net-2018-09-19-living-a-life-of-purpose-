@@ -10,35 +10,51 @@ import voluptuous as vol
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from homeassistant.components.binary_sensor import (
-    BinarySensorDevice, DEVICE_CLASSES_SCHEMA, PLATFORM_SCHEMA)
+    BinarySensorDevice,
+    DEVICE_CLASSES_SCHEMA,
+    PLATFORM_SCHEMA,
+)
 from homeassistant.components.sensor.rest import RestData
 from homeassistant.const import (
-    CONF_PAYLOAD, CONF_NAME, CONF_VALUE_TEMPLATE, CONF_METHOD, CONF_RESOURCE,
-    CONF_VERIFY_SSL, CONF_USERNAME, CONF_PASSWORD,
-    CONF_HEADERS, CONF_AUTHENTICATION, HTTP_BASIC_AUTHENTICATION,
-    HTTP_DIGEST_AUTHENTICATION, CONF_DEVICE_CLASS)
+    CONF_PAYLOAD,
+    CONF_NAME,
+    CONF_VALUE_TEMPLATE,
+    CONF_METHOD,
+    CONF_RESOURCE,
+    CONF_VERIFY_SSL,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_HEADERS,
+    CONF_AUTHENTICATION,
+    HTTP_BASIC_AUTHENTICATION,
+    HTTP_DIGEST_AUTHENTICATION,
+    CONF_DEVICE_CLASS,
+)
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_METHOD = 'GET'
-DEFAULT_NAME = 'REST Binary Sensor'
+DEFAULT_METHOD = "GET"
+DEFAULT_NAME = "REST Binary Sensor"
 DEFAULT_VERIFY_SSL = True
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_RESOURCE): cv.url,
-    vol.Optional(CONF_AUTHENTICATION):
-        vol.In([HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION]),
-    vol.Optional(CONF_HEADERS): {cv.string: cv.string},
-    vol.Optional(CONF_METHOD, default=DEFAULT_METHOD): vol.In(['POST', 'GET']),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_PAYLOAD): cv.string,
-    vol.Optional(CONF_DEVICE_CLASS): DEVICE_CLASSES_SCHEMA,
-    vol.Optional(CONF_USERNAME): cv.string,
-    vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
-    vol.Optional(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_RESOURCE): cv.url,
+        vol.Optional(CONF_AUTHENTICATION): vol.In(
+            [HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION]
+        ),
+        vol.Optional(CONF_HEADERS): {cv.string: cv.string},
+        vol.Optional(CONF_METHOD, default=DEFAULT_METHOD): vol.In(["POST", "GET"]),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_PAYLOAD): cv.string,
+        vol.Optional(CONF_DEVICE_CLASS): DEVICE_CLASSES_SCHEMA,
+        vol.Optional(CONF_USERNAME): cv.string,
+        vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
+        vol.Optional(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -71,8 +87,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.error("Unable to fetch REST data from %s", resource)
         return False
 
-    add_entities([RestBinarySensor(
-        hass, rest, name, device_class, value_template)], True)
+    add_entities(
+        [RestBinarySensor(hass, rest, name, device_class, value_template)], True
+    )
 
 
 class RestBinarySensor(BinarySensorDevice):
@@ -112,14 +129,16 @@ class RestBinarySensor(BinarySensorDevice):
         response = self.rest.data
 
         if self._value_template is not None:
-            response = self._value_template.\
-                async_render_with_possible_json_value(self.rest.data, False)
+            response = self._value_template.async_render_with_possible_json_value(
+                self.rest.data, False
+            )
 
         try:
             return bool(int(response))
         except ValueError:
-            return {'true': True, 'on': True, 'open': True,
-                    'yes': True}.get(response.lower(), False)
+            return {"true": True, "on": True, "open": True, "yes": True}.get(
+                response.lower(), False
+            )
 
     def update(self):
         """Get the latest data from REST API and updates the state."""

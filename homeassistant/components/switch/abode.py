@@ -6,12 +6,15 @@ https://home-assistant.io/components/switch.abode/
 """
 import logging
 
-from homeassistant.components.abode import (AbodeDevice, AbodeAutomation,
-                                            DOMAIN as ABODE_DOMAIN)
+from homeassistant.components.abode import (
+    AbodeDevice,
+    AbodeAutomation,
+    DOMAIN as ABODE_DOMAIN,
+)
 from homeassistant.components.switch import SwitchDevice
 
 
-DEPENDENCIES = ['abode']
+DEPENDENCIES = ["abode"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,13 +36,13 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         devices.append(AbodeSwitch(data, device))
 
     # Get all Abode automations that can be enabled/disabled
-    for automation in data.abode.get_automations(
-            generic_type=CONST.TYPE_AUTOMATION):
+    for automation in data.abode.get_automations(generic_type=CONST.TYPE_AUTOMATION):
         if data.is_automation_excluded(automation):
             continue
 
-        devices.append(AbodeAutomationSwitch(
-            data, automation, TIMELINE.AUTOMATION_EDIT_GROUP))
+        devices.append(
+            AbodeAutomationSwitch(data, automation, TIMELINE.AUTOMATION_EDIT_GROUP)
+        )
 
     data.devices.extend(devices)
 

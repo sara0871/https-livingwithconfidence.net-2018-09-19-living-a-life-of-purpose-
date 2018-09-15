@@ -8,23 +8,22 @@ https://home-assistant.io/components/climate.spider/
 import logging
 
 from homeassistant.components.climate import (
-    ATTR_TEMPERATURE, STATE_COOL, STATE_HEAT, STATE_IDLE,
-    SUPPORT_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE, ClimateDevice)
+    ATTR_TEMPERATURE,
+    STATE_COOL,
+    STATE_HEAT,
+    STATE_IDLE,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    ClimateDevice,
+)
 from homeassistant.components.spider import DOMAIN as SPIDER_DOMAIN
 from homeassistant.const import TEMP_CELSIUS
 
-DEPENDENCIES = ['spider']
+DEPENDENCIES = ["spider"]
 
-OPERATION_LIST = [
-    STATE_HEAT,
-    STATE_COOL,
-]
+OPERATION_LIST = [STATE_HEAT, STATE_COOL]
 
-HA_STATE_TO_SPIDER = {
-    STATE_COOL: 'Cool',
-    STATE_HEAT: 'Heat',
-    STATE_IDLE: 'Idle'
-}
+HA_STATE_TO_SPIDER = {STATE_COOL: "Cool", STATE_HEAT: "Heat", STATE_IDLE: "Idle"}
 
 SPIDER_STATE_TO_HA = {value: key for key, value in HA_STATE_TO_SPIDER.items()}
 
@@ -36,8 +35,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if discovery_info is None:
         return
 
-    devices = [SpiderThermostat(hass.data[SPIDER_DOMAIN]['controller'], device)
-               for device in hass.data[SPIDER_DOMAIN]['thermostats']]
+    devices = [
+        SpiderThermostat(hass.data[SPIDER_DOMAIN]["controller"], device)
+        for device in hass.data[SPIDER_DOMAIN]["thermostats"]
+    ]
     add_entities(devices, True)
 
 
@@ -119,8 +120,7 @@ class SpiderThermostat(ClimateDevice):
 
     def set_operation_mode(self, operation_mode):
         """Set new target operation mode."""
-        self.thermostat.set_operation_mode(
-            HA_STATE_TO_SPIDER.get(operation_mode))
+        self.thermostat.set_operation_mode(HA_STATE_TO_SPIDER.get(operation_mode))
 
     def update(self):
         """Get the latest data."""

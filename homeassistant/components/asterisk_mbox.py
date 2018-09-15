@@ -13,24 +13,31 @@ from homeassistant.core import callback
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import (
-    async_dispatcher_connect, async_dispatcher_send)
+    async_dispatcher_connect,
+    async_dispatcher_send,
+)
 
-REQUIREMENTS = ['asterisk_mbox==0.5.0']
+REQUIREMENTS = ["asterisk_mbox==0.5.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'asterisk_mbox'
+DOMAIN = "asterisk_mbox"
 
-SIGNAL_MESSAGE_REQUEST = 'asterisk_mbox.message_request'
-SIGNAL_MESSAGE_UPDATE = 'asterisk_mbox.message_updated'
+SIGNAL_MESSAGE_REQUEST = "asterisk_mbox.message_request"
+SIGNAL_MESSAGE_UPDATE = "asterisk_mbox.message_updated"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-        vol.Required(CONF_PORT): int,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_HOST): cv.string,
+                vol.Required(CONF_PASSWORD): cv.string,
+                vol.Required(CONF_PORT): int,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 def setup(hass, config):
@@ -43,7 +50,7 @@ def setup(hass, config):
 
     hass.data[DOMAIN] = AsteriskData(hass, host, port, password)
 
-    discovery.load_platform(hass, 'mailbox', DOMAIN, {}, config)
+    discovery.load_platform(hass, "mailbox", DOMAIN, {}, config)
 
     return True
 
@@ -60,7 +67,8 @@ class AsteriskData:
         self.messages = []
 
         async_dispatcher_connect(
-            self.hass, SIGNAL_MESSAGE_REQUEST, self._request_messages)
+            self.hass, SIGNAL_MESSAGE_REQUEST, self._request_messages
+        )
 
     @callback
     def handle_data(self, command, msg):
@@ -70,9 +78,9 @@ class AsteriskData:
         if command == CMD_MESSAGE_LIST:
             _LOGGER.debug("AsteriskVM sent updated message list")
             self.messages = sorted(
-                msg, key=lambda item: item['info']['origtime'], reverse=True)
-            async_dispatcher_send(
-                self.hass, SIGNAL_MESSAGE_UPDATE, self.messages)
+                msg, key=lambda item: item["info"]["origtime"], reverse=True
+            )
+            async_dispatcher_send(self.hass, SIGNAL_MESSAGE_UPDATE, self.messages)
 
     @callback
     def _request_messages(self):

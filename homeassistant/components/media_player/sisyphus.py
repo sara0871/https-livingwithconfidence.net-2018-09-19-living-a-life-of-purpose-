@@ -7,28 +7,44 @@ https://home-assistant.io/components/media_player.sisyphus/
 import logging
 
 from homeassistant.components.media_player import (
-    SUPPORT_NEXT_TRACK, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_PREVIOUS_TRACK,
-    SUPPORT_SHUFFLE_SET, SUPPORT_TURN_OFF, SUPPORT_TURN_ON,
-    SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, MediaPlayerDevice)
+    SUPPORT_NEXT_TRACK,
+    SUPPORT_PAUSE,
+    SUPPORT_PLAY,
+    SUPPORT_PREVIOUS_TRACK,
+    SUPPORT_SHUFFLE_SET,
+    SUPPORT_TURN_OFF,
+    SUPPORT_TURN_ON,
+    SUPPORT_VOLUME_MUTE,
+    SUPPORT_VOLUME_SET,
+    MediaPlayerDevice,
+)
 from homeassistant.components.sisyphus import DATA_SISYPHUS
 from homeassistant.const import (
-    CONF_HOST, CONF_NAME, STATE_IDLE, STATE_OFF, STATE_PAUSED, STATE_PLAYING)
+    CONF_HOST,
+    CONF_NAME,
+    STATE_IDLE,
+    STATE_OFF,
+    STATE_PAUSED,
+    STATE_PLAYING,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['sisyphus']
+DEPENDENCIES = ["sisyphus"]
 
-MEDIA_TYPE_TRACK = 'sisyphus_track'
+MEDIA_TYPE_TRACK = "sisyphus_track"
 
-SUPPORTED_FEATURES = SUPPORT_VOLUME_MUTE \
-    | SUPPORT_VOLUME_SET \
-    | SUPPORT_TURN_OFF \
-    | SUPPORT_TURN_ON \
-    | SUPPORT_PAUSE \
-    | SUPPORT_SHUFFLE_SET \
-    | SUPPORT_PREVIOUS_TRACK \
-    | SUPPORT_NEXT_TRACK \
+SUPPORTED_FEATURES = (
+    SUPPORT_VOLUME_MUTE
+    | SUPPORT_VOLUME_SET
+    | SUPPORT_TURN_OFF
+    | SUPPORT_TURN_ON
+    | SUPPORT_PAUSE
+    | SUPPORT_SHUFFLE_SET
+    | SUPPORT_PREVIOUS_TRACK
+    | SUPPORT_NEXT_TRACK
     | SUPPORT_PLAY
+)
 
 
 # pylint: disable=unused-argument
@@ -36,8 +52,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up a media player entity for a Sisyphus table."""
     name = discovery_info[CONF_NAME]
     host = discovery_info[CONF_HOST]
-    add_entities(
-        [SisyphusPlayer(name, host, hass.data[DATA_SISYPHUS][name])], True)
+    add_entities([SisyphusPlayer(name, host, hass.data[DATA_SISYPHUS][name])], True)
 
 
 class SisyphusPlayer(MediaPlayerDevice):
@@ -51,8 +66,7 @@ class SisyphusPlayer(MediaPlayerDevice):
 
     async def async_added_to_hass(self):
         """Add listeners after this object has been initialized."""
-        self._table.add_listener(
-            lambda: self.async_schedule_update_ha_state(False))
+        self._table.add_listener(lambda: self.async_schedule_update_ha_state(False))
 
     @property
     def name(self):
@@ -91,16 +105,12 @@ class SisyphusPlayer(MediaPlayerDevice):
     @property
     def media_playlist(self):
         """Return the name of the current playlist."""
-        return self._table.active_playlist.name \
-            if self._table.active_playlist \
-            else None
+        return self._table.active_playlist.name if self._table.active_playlist else None
 
     @property
     def media_title(self):
         """Return the title of the current track."""
-        return self._table.active_track.name \
-            if self._table.active_track \
-            else None
+        return self._table.active_track.name if self._table.active_track else None
 
     @property
     def media_content_type(self):
@@ -110,9 +120,7 @@ class SisyphusPlayer(MediaPlayerDevice):
     @property
     def media_content_id(self):
         """Return the track ID of the current track."""
-        return self._table.active_track.id \
-            if self._table.active_track \
-            else None
+        return self._table.active_track.id if self._table.active_track else None
 
     @property
     def supported_features(self):
@@ -123,9 +131,9 @@ class SisyphusPlayer(MediaPlayerDevice):
     def media_image_url(self):
         """Return the URL for a thumbnail image of the current track."""
         from sisyphus_control import Track
+
         if self._table.active_track:
-            return self._table.active_track.get_thumbnail_url(
-                Track.ThumbnailSize.LARGE)
+            return self._table.active_track.get_thumbnail_url(Track.ThumbnailSize.LARGE)
 
         return super.media_image_url()
 
@@ -162,14 +170,16 @@ class SisyphusPlayer(MediaPlayerDevice):
         cur_track_index = self._get_current_track_index()
 
         await self._table.active_playlist.play(
-            self._table.active_playlist.tracks[cur_track_index + 1])
+            self._table.active_playlist.tracks[cur_track_index + 1]
+        )
 
     async def async_media_previous_track(self):
         """Skip to previous track."""
         cur_track_index = self._get_current_track_index()
 
         await self._table.active_playlist.play(
-            self._table.active_playlist.tracks[cur_track_index - 1])
+            self._table.active_playlist.tracks[cur_track_index - 1]
+        )
 
     def _get_current_track_index(self):
         for index, track in enumerate(self._table.active_playlist.tracks):

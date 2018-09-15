@@ -12,36 +12,46 @@ import voluptuous as vol
 
 from homeassistant.components import remote
 from homeassistant.components.remote import (
-    ATTR_ACTIVITY, ATTR_DELAY_SECS, ATTR_DEVICE, ATTR_NUM_REPEATS,
-    DEFAULT_DELAY_SECS, DOMAIN, PLATFORM_SCHEMA)
+    ATTR_ACTIVITY,
+    ATTR_DELAY_SECS,
+    ATTR_DEVICE,
+    ATTR_NUM_REPEATS,
+    DEFAULT_DELAY_SECS,
+    DOMAIN,
+    PLATFORM_SCHEMA,
+)
 from homeassistant.const import (
-    ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_PORT, EVENT_HOMEASSISTANT_STOP)
+    ATTR_ENTITY_ID,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    EVENT_HOMEASSISTANT_STOP,
+)
 import homeassistant.helpers.config_validation as cv
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.util import slugify
 
-REQUIREMENTS = ['pyharmony==1.0.20']
+REQUIREMENTS = ["pyharmony==1.0.20"]
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_PORT = 5222
 DEVICES = []
-CONF_DEVICE_CACHE = 'harmony_device_cache'
+CONF_DEVICE_CACHE = "harmony_device_cache"
 
-SERVICE_SYNC = 'harmony_sync'
+SERVICE_SYNC = "harmony_sync"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(ATTR_ACTIVITY): cv.string,
-    vol.Required(CONF_NAME): cv.string,
-    vol.Optional(ATTR_DELAY_SECS, default=DEFAULT_DELAY_SECS):
-        vol.Coerce(float),
-    vol.Optional(CONF_HOST): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(ATTR_ACTIVITY): cv.string,
+        vol.Required(CONF_NAME): cv.string,
+        vol.Optional(ATTR_DELAY_SECS, default=DEFAULT_DELAY_SECS): vol.Coerce(float),
+        vol.Optional(CONF_HOST): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    }
+)
 
-HARMONY_SYNC_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-})
+HARMONY_SYNC_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -54,9 +64,14 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     if discovery_info:
         # Find the discovered device in the list of user configurations
-        override = next((c for c in hass.data[CONF_DEVICE_CACHE]
-                         if c.get(CONF_NAME) == discovery_info.get(CONF_NAME)),
-                        False)
+        override = next(
+            (
+                c
+                for c in hass.data[CONF_DEVICE_CACHE]
+                if c.get(CONF_NAME) == discovery_info.get(CONF_NAME)
+            ),
+            False,
+        )
 
         port = DEFAULT_PORT
         delay_secs = DEFAULT_DELAY_SECS
@@ -65,21 +80,14 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             delay_secs = override.get(ATTR_DELAY_SECS)
             port = override.get(CONF_PORT, DEFAULT_PORT)
 
-        host = (
-            discovery_info.get(CONF_NAME),
-            discovery_info.get(CONF_HOST),
-            port)
+        host = (discovery_info.get(CONF_NAME), discovery_info.get(CONF_HOST), port)
 
         # Ignore hub name when checking if this hub is known - ip and port only
         if host[1:] in ((h.host, h.port) for h in DEVICES):
             _LOGGER.debug("Discovered host already known: %s", host)
             return
     elif CONF_HOST in config:
-        host = (
-            config.get(CONF_NAME),
-            config.get(CONF_HOST),
-            config.get(CONF_PORT),
-        )
+        host = (config.get(CONF_NAME), config.get(CONF_HOST), config.get(CONF_PORT))
         activity = config.get(ATTR_ACTIVITY)
         delay_secs = config.get(ATTR_DELAY_SECS)
     else:
@@ -87,14 +95,21 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         return
 
     name, address, port = host
-    _LOGGER.info("Loading Harmony Platform: %s at %s:%s, startup activity: %s",
-                 name, address, port, activity)
+    _LOGGER.info(
+        "Loading Harmony Platform: %s at %s:%s, startup activity: %s",
+        name,
+        address,
+        port,
+        activity,
+    )
 
     harmony_conf_file = hass.config.path(
-        '{}{}{}'.format('harmony_', slugify(name), '.conf'))
+        "{}{}{}".format("harmony_", slugify(name), ".conf")
+    )
     try:
         device = HarmonyRemote(
-            name, address, port, activity, harmony_conf_file, delay_secs)
+            name, address, port, activity, harmony_conf_file, delay_secs
+        )
         DEVICES.append(device)
         add_entities([device])
         register_services(hass)
@@ -105,17 +120,16 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 def register_services(hass):
     """Register all services for harmony devices."""
     hass.services.register(
-        DOMAIN, SERVICE_SYNC, _sync_service,
-        schema=HARMONY_SYNC_SCHEMA)
+        DOMAIN, SERVICE_SYNC, _sync_service, schema=HARMONY_SYNC_SCHEMA
+    )
 
 
 def _apply_service(service, service_func, *service_func_args):
     """Handle services to apply."""
-    entity_ids = service.data.get('entity_id')
+    entity_ids = service.data.get("entity_id")
 
     if entity_ids:
-        _devices = [device for device in DEVICES
-                    if device.entity_id in entity_ids]
+        _devices = [device for device in DEVICES if device.entity_id in entity_ids]
     else:
         _devices = DEVICES
 
@@ -147,8 +161,7 @@ class HarmonyRemote(remote.RemoteDevice):
         self._config_path = out_path
         self._config = self._client.get_config()
         if not Path(self._config_path).is_file():
-            _LOGGER.debug("Writing harmony configuration to file: %s",
-                          out_path)
+            _LOGGER.debug("Writing harmony configuration to file: %s", out_path)
             pyharmony.ha_write_config_file(self._config, self._config_path)
         self._delay_secs = delay_secs
 
@@ -156,8 +169,8 @@ class HarmonyRemote(remote.RemoteDevice):
     def async_added_to_hass(self):
         """Complete the initialization."""
         self.hass.bus.async_listen_once(
-            EVENT_HOMEASSISTANT_STOP,
-            lambda event: self._client.disconnect(wait=True))
+            EVENT_HOMEASSISTANT_STOP, lambda event: self._client.disconnect(wait=True)
+        )
 
         # Poll for initial state
         self.new_activity(self._client.get_current_activity())
@@ -175,25 +188,27 @@ class HarmonyRemote(remote.RemoteDevice):
     @property
     def device_state_attributes(self):
         """Add platform specific attributes."""
-        return {'current_activity': self._current_activity}
+        return {"current_activity": self._current_activity}
 
     @property
     def is_on(self):
         """Return False if PowerOff is the current activity, otherwise True."""
-        return self._current_activity not in [None, 'PowerOff']
+        return self._current_activity not in [None, "PowerOff"]
 
     def new_activity(self, activity_id):
         """Call for updating the current activity."""
         import pyharmony
+
         activity_name = pyharmony.activity_name(self._config, activity_id)
         _LOGGER.debug("%s activity reported as: %s", self._name, activity_name)
         self._current_activity = activity_name
-        self._state = bool(self._current_activity != 'PowerOff')
+        self._state = bool(self._current_activity != "PowerOff")
         self.schedule_update_ha_state()
 
     def turn_on(self, **kwargs):
         """Start an activity from the Harmony device."""
         import pyharmony
+
         activity = kwargs.get(ATTR_ACTIVITY, self._default_activity)
 
         if activity:
@@ -226,6 +241,7 @@ class HarmonyRemote(remote.RemoteDevice):
     def sync(self):
         """Sync the Harmony device with the web service."""
         import pyharmony
+
         _LOGGER.debug("Syncing hub with Harmony servers")
         self._client.sync()
         self._config = self._client.get_config()

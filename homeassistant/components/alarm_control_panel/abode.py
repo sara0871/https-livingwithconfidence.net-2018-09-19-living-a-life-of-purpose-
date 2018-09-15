@@ -10,14 +10,17 @@ from homeassistant.components.abode import CONF_ATTRIBUTION, AbodeDevice
 from homeassistant.components.abode import DOMAIN as ABODE_DOMAIN
 from homeassistant.components.alarm_control_panel import AlarmControlPanel
 from homeassistant.const import (
-    ATTR_ATTRIBUTION, STATE_ALARM_ARMED_AWAY, STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_DISARMED)
+    ATTR_ATTRIBUTION,
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_DISARMED,
+)
 
-DEPENDENCIES = ['abode']
+DEPENDENCIES = ["abode"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ICON = 'mdi:security'
+ICON = "mdi:security"
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -79,7 +82,7 @@ class AbodeAlarm(AbodeDevice, AlarmControlPanel):
         """Return the state attributes."""
         return {
             ATTR_ATTRIBUTION: CONF_ATTRIBUTION,
-            'device_id': self._device.device_id,
-            'battery_backup': self._device.battery,
-            'cellular_backup': self._device.is_cellular,
+            "device_id": self._device.device_id,
+            "battery_backup": self._device.battery,
+            "cellular_backup": self._device.is_cellular,
         }

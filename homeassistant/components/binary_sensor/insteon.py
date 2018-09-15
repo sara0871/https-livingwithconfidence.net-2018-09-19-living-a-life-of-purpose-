@@ -10,31 +10,35 @@ import logging
 from homeassistant.components.binary_sensor import BinarySensorDevice
 from homeassistant.components.insteon import InsteonEntity
 
-DEPENDENCIES = ['insteon']
+DEPENDENCIES = ["insteon"]
 
 _LOGGER = logging.getLogger(__name__)
 
-SENSOR_TYPES = {'openClosedSensor': 'opening',
-                'motionSensor': 'motion',
-                'doorSensor': 'door',
-                'wetLeakSensor': 'moisture',
-                'lightSensor': 'light',
-                'batterySensor': 'battery'}
+SENSOR_TYPES = {
+    "openClosedSensor": "opening",
+    "motionSensor": "motion",
+    "doorSensor": "door",
+    "wetLeakSensor": "moisture",
+    "lightSensor": "light",
+    "batterySensor": "battery",
+}
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the INSTEON device class for the hass platform."""
-    insteon_modem = hass.data['insteon'].get('modem')
+    insteon_modem = hass.data["insteon"].get("modem")
 
-    address = discovery_info['address']
+    address = discovery_info["address"]
     device = insteon_modem.devices[address]
-    state_key = discovery_info['state_key']
+    state_key = discovery_info["state_key"]
     name = device.states[state_key].name
-    if name != 'dryLeakSensor':
-        _LOGGER.debug('Adding device %s entity %s to Binary Sensor platform',
-                      device.address.hex, device.states[state_key].name)
+    if name != "dryLeakSensor":
+        _LOGGER.debug(
+            "Adding device %s entity %s to Binary Sensor platform",
+            device.address.hex,
+            device.states[state_key].name,
+        )
 
         new_entity = InsteonBinarySensor(device, state_key)
 
@@ -59,7 +63,7 @@ class InsteonBinarySensor(InsteonEntity, BinarySensorDevice):
         """Return the boolean response if the node is on."""
         on_val = bool(self._insteon_device_state.value)
 
-        if self._insteon_device_state.name == 'lightSensor':
+        if self._insteon_device_state.name == "lightSensor":
             return not on_val
 
         return on_val

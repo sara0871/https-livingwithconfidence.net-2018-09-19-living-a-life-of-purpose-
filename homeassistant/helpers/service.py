@@ -14,29 +14,32 @@ from homeassistant.util.yaml import load_yaml
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util.async_ import run_coroutine_threadsafe
 
-CONF_SERVICE = 'service'
-CONF_SERVICE_TEMPLATE = 'service_template'
-CONF_SERVICE_ENTITY_ID = 'entity_id'
-CONF_SERVICE_DATA = 'data'
-CONF_SERVICE_DATA_TEMPLATE = 'data_template'
+CONF_SERVICE = "service"
+CONF_SERVICE_TEMPLATE = "service_template"
+CONF_SERVICE_ENTITY_ID = "entity_id"
+CONF_SERVICE_DATA = "data"
+CONF_SERVICE_DATA_TEMPLATE = "data_template"
 
 _LOGGER = logging.getLogger(__name__)
 
-SERVICE_DESCRIPTION_CACHE = 'service_description_cache'
+SERVICE_DESCRIPTION_CACHE = "service_description_cache"
 
 
 @bind_hass
-def call_from_config(hass, config, blocking=False, variables=None,
-                     validate_config=True):
+def call_from_config(
+    hass, config, blocking=False, variables=None, validate_config=True
+):
     """Call a service based on a config hash."""
     run_coroutine_threadsafe(
-        async_call_from_config(hass, config, blocking, variables,
-                               validate_config), hass.loop).result()
+        async_call_from_config(hass, config, blocking, variables, validate_config),
+        hass.loop,
+    ).result()
 
 
 @bind_hass
-async def async_call_from_config(hass, config, blocking=False, variables=None,
-                                 validate_config=True, context=None):
+async def async_call_from_config(
+    hass, config, blocking=False, variables=None, validate_config=True, context=None
+):
     """Call a service based on a config hash."""
     if validate_config:
         try:
@@ -50,34 +53,34 @@ async def async_call_from_config(hass, config, blocking=False, variables=None,
     else:
         try:
             config[CONF_SERVICE_TEMPLATE].hass = hass
-            domain_service = config[CONF_SERVICE_TEMPLATE].async_render(
-                variables)
+            domain_service = config[CONF_SERVICE_TEMPLATE].async_render(variables)
             domain_service = cv.service(domain_service)
         except TemplateError as ex:
-            _LOGGER.error('Error rendering service name template: %s', ex)
+            _LOGGER.error("Error rendering service name template: %s", ex)
             return
         except vol.Invalid as ex:
-            _LOGGER.error('Template rendered invalid service: %s',
-                          domain_service)
+            _LOGGER.error("Template rendered invalid service: %s", domain_service)
             return
 
-    domain, service_name = domain_service.split('.', 1)
+    domain, service_name = domain_service.split(".", 1)
     service_data = dict(config.get(CONF_SERVICE_DATA, {}))
 
     if CONF_SERVICE_DATA_TEMPLATE in config:
         try:
             template.attach(hass, config[CONF_SERVICE_DATA_TEMPLATE])
-            service_data.update(template.render_complex(
-                config[CONF_SERVICE_DATA_TEMPLATE], variables))
+            service_data.update(
+                template.render_complex(config[CONF_SERVICE_DATA_TEMPLATE], variables)
+            )
         except TemplateError as ex:
-            _LOGGER.error('Error rendering data template: %s', ex)
+            _LOGGER.error("Error rendering data template: %s", ex)
             return
 
     if CONF_SERVICE_ENTITY_ID in config:
         service_data[ATTR_ENTITY_ID] = config[CONF_SERVICE_ENTITY_ID]
 
     await hass.services.async_call(
-        domain, service_name, service_data, blocking=blocking, context=context)
+        domain, service_name, service_data, blocking=blocking, context=context
+    )
 
 
 @bind_hass
@@ -101,8 +104,7 @@ def extract_entity_ids(hass, service_call, expand_group=True):
         if isinstance(service_ent_id, str):
             return group.expand_entity_ids([service_ent_id])
 
-        return [ent_id for ent_id in
-                group.expand_entity_ids(service_ent_id)]
+        return [ent_id for ent_id in group.expand_entity_ids(service_ent_id)]
 
     if isinstance(service_ent_id, str):
         return [service_ent_id]
@@ -117,16 +119,17 @@ async def async_get_all_descriptions(hass):
         hass.data[SERVICE_DESCRIPTION_CACHE] = {}
     description_cache = hass.data[SERVICE_DESCRIPTION_CACHE]
 
-    format_cache_key = '{}.{}'.format
+    format_cache_key = "{}.{}".format
 
     def domain_yaml_file(domain):
         """Return the services.yaml location for a domain."""
         if domain == ha.DOMAIN:
             from homeassistant import components
+
             component_path = path.dirname(components.__file__)
         else:
             component_path = path.dirname(get_component(hass, domain).__file__)
-        return path.join(component_path, 'services.yaml')
+        return path.join(component_path, "services.yaml")
 
     def load_services_files(yaml_files):
         """Load and parse services.yaml files."""
@@ -172,8 +175,8 @@ async def async_get_all_descriptions(hass):
                 yaml_description = yaml_services.get(service, {})
 
                 description = description_cache[cache_key] = {
-                    'description': yaml_description.get('description', ''),
-                    'fields': yaml_description.get('fields', {})
+                    "description": yaml_description.get("description", ""),
+                    "fields": yaml_description.get("fields", {}),
                 }
 
             descriptions[domain][service] = description
@@ -190,20 +193,25 @@ async def entity_service_call(hass, platforms, func, call):
     tasks = []
     all_entities = ATTR_ENTITY_ID not in call.data
     if not all_entities:
-        entity_ids = set(
-            extract_entity_ids(hass, call, True))
+        entity_ids = set(extract_entity_ids(hass, call, True))
 
     if isinstance(func, str):
-        data = {key: val for key, val in call.data.items()
-                if key != ATTR_ENTITY_ID}
+        data = {key: val for key, val in call.data.items() if key != ATTR_ENTITY_ID}
     else:
         data = call
 
     tasks = [
-        _handle_service_platform_call(func, data, [
-            entity for entity in platform.entities.values()
-            if all_entities or entity.entity_id in entity_ids
-        ], call.context) for platform in platforms
+        _handle_service_platform_call(
+            func,
+            data,
+            [
+                entity
+                for entity in platform.entities.values()
+                if all_entities or entity.entity_id in entity_ids
+            ],
+            call.context,
+        )
+        for platform in platforms
     ]
 
     if tasks:

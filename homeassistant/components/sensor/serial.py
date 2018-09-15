@@ -12,32 +12,31 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import (
-    CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP)
+from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['pyserial-asyncio==0.4']
+REQUIREMENTS = ["pyserial-asyncio==0.4"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_SERIAL_PORT = 'serial_port'
-CONF_BAUDRATE = 'baudrate'
+CONF_SERIAL_PORT = "serial_port"
+CONF_BAUDRATE = "baudrate"
 
 DEFAULT_NAME = "Serial Sensor"
 DEFAULT_BAUDRATE = 9600
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_SERIAL_PORT): cv.string,
-    vol.Optional(CONF_BAUDRATE, default=DEFAULT_BAUDRATE):
-        cv.positive_int,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_SERIAL_PORT): cv.string,
+        vol.Optional(CONF_BAUDRATE, default=DEFAULT_BAUDRATE): cv.positive_int,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Serial sensor platform."""
     name = config.get(CONF_NAME)
     port = config.get(CONF_SERIAL_PORT)
@@ -49,8 +48,7 @@ def async_setup_platform(hass, config, async_add_entities,
 
     sensor = SerialSensor(name, port, baudrate, value_template)
 
-    hass.bus.async_listen_once(
-        EVENT_HOMEASSISTANT_STOP, sensor.stop_serial_read())
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, sensor.stop_serial_read())
     async_add_entities([sensor], True)
 
 
@@ -71,17 +69,20 @@ class SerialSensor(Entity):
     def async_added_to_hass(self):
         """Handle when an entity is about to be added to Home Assistant."""
         self._serial_loop_task = self.hass.loop.create_task(
-            self.serial_read(self._port, self._baudrate))
+            self.serial_read(self._port, self._baudrate)
+        )
 
     @asyncio.coroutine
     def serial_read(self, device, rate, **kwargs):
         """Read the data from the port."""
         import serial_asyncio
+
         reader, _ = yield from serial_asyncio.open_serial_connection(
-            url=device, baudrate=rate, **kwargs)
+            url=device, baudrate=rate, **kwargs
+        )
         while True:
             line = yield from reader.readline()
-            line = line.decode('utf-8').strip()
+            line = line.decode("utf-8").strip()
 
             try:
                 data = json.loads(line)
@@ -91,8 +92,7 @@ class SerialSensor(Entity):
                 pass
 
             if self._template is not None:
-                line = self._template.async_render_with_possible_json_value(
-                    line)
+                line = self._template.async_render_with_possible_json_value(line)
 
             _LOGGER.debug("Received: %s", line)
             self._state = line

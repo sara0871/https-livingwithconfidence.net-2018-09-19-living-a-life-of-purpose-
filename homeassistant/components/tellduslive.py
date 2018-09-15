@@ -10,9 +10,12 @@ import logging
 import voluptuous as vol
 
 from homeassistant.const import (
-    ATTR_BATTERY_LEVEL, DEVICE_DEFAULT_NAME,
-    CONF_TOKEN, CONF_HOST,
-    EVENT_HOMEASSISTANT_START)
+    ATTR_BATTERY_LEVEL,
+    DEVICE_DEFAULT_NAME,
+    CONF_TOKEN,
+    CONF_HOST,
+    EVENT_HOMEASSISTANT_START,
+)
 from homeassistant.helpers import discovery
 from homeassistant.components.discovery import SERVICE_TELLDUSLIVE
 import homeassistant.helpers.config_validation as cv
@@ -21,36 +24,42 @@ from homeassistant.helpers.event import track_point_in_utc_time
 from homeassistant.util.dt import utcnow
 from homeassistant.util.json import load_json, save_json
 
-APPLICATION_NAME = 'Home Assistant'
+APPLICATION_NAME = "Home Assistant"
 
-DOMAIN = 'tellduslive'
+DOMAIN = "tellduslive"
 
-REQUIREMENTS = ['tellduslive==0.10.4']
+REQUIREMENTS = ["tellduslive==0.10.4"]
 
 _LOGGER = logging.getLogger(__name__)
 
-TELLLDUS_CONFIG_FILE = 'tellduslive.conf'
-KEY_CONFIG = 'tellduslive_config'
+TELLLDUS_CONFIG_FILE = "tellduslive.conf"
+KEY_CONFIG = "tellduslive_config"
 
-CONF_TOKEN_SECRET = 'token_secret'
-CONF_UPDATE_INTERVAL = 'update_interval'
+CONF_TOKEN_SECRET = "token_secret"
+CONF_UPDATE_INTERVAL = "update_interval"
 
-PUBLIC_KEY = 'THUPUNECH5YEQA3RE6UYUPRUZ2DUGUGA'
-NOT_SO_PRIVATE_KEY = 'PHES7U2RADREWAFEBUSTUBAWRASWUTUS'
+PUBLIC_KEY = "THUPUNECH5YEQA3RE6UYUPRUZ2DUGUGA"
+NOT_SO_PRIVATE_KEY = "PHES7U2RADREWAFEBUSTUBAWRASWUTUS"
 
 MIN_UPDATE_INTERVAL = timedelta(seconds=5)
 DEFAULT_UPDATE_INTERVAL = timedelta(minutes=1)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Optional(CONF_HOST): cv.string,
-        vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): (
-            vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL)))
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Optional(CONF_HOST): cv.string,
+                vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): (
+                    vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL))
+                ),
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
-ATTR_LAST_UPDATED = 'time_last_updated'
+ATTR_LAST_UPDATED = "time_last_updated"
 
 CONFIG_INSTRUCTIONS = """
 To link your TelldusLive account:
@@ -70,6 +79,7 @@ To link your TelldusLive account:
 def setup(hass, config, session=None):
     """Set up the Telldus Live component."""
     from tellduslive import Session, supports_local_api
+
     config_filename = hass.config.path(TELLLDUS_CONFIG_FILE)
     conf = load_json(config_filename)
 
@@ -83,21 +93,24 @@ def setup(hass, config, session=None):
         if hass.data[KEY_CONFIG].get(data_key):
             return
 
-        _LOGGER.info('Configuring TelldusLive %s',
-                     'local client: {}'.format(host) if host else
-                     'cloud service')
+        _LOGGER.info(
+            "Configuring TelldusLive %s",
+            "local client: {}".format(host) if host else "cloud service",
+        )
 
-        session = Session(public_key=PUBLIC_KEY,
-                          private_key=NOT_SO_PRIVATE_KEY,
-                          host=host,
-                          application=APPLICATION_NAME)
+        session = Session(
+            public_key=PUBLIC_KEY,
+            private_key=NOT_SO_PRIVATE_KEY,
+            host=host,
+            application=APPLICATION_NAME,
+        )
 
         auth_url = session.authorize_url
         if not auth_url:
-            _LOGGER.warning('Failed to retrieve authorization URL')
+            _LOGGER.warning("Failed to retrieve authorization URL")
             return
 
-        _LOGGER.debug('Got authorization URL %s', auth_url)
+        _LOGGER.debug("Got authorization URL %s", auth_url)
 
         def configuration_callback(callback_data):
             """Handle the submitted configuration."""
@@ -105,15 +118,20 @@ def setup(hass, config, session=None):
             res = setup(hass, config, session)
             if not res:
                 configurator.notify_errors(
-                    hass.data[KEY_CONFIG].get(data_key),
-                    'Unable to connect.')
+                    hass.data[KEY_CONFIG].get(data_key), "Unable to connect."
+                )
                 return
 
             conf.update(
-                {host: {CONF_HOST: host,
-                        CONF_TOKEN: session.access_token}} if host else
-                {DOMAIN: {CONF_TOKEN: session.access_token,
-                          CONF_TOKEN_SECRET: session.access_token_secret}})
+                {host: {CONF_HOST: host, CONF_TOKEN: session.access_token}}
+                if host
+                else {
+                    DOMAIN: {
+                        CONF_TOKEN: session.access_token,
+                        CONF_TOKEN_SECRET: session.access_token_secret,
+                    }
+                }
+            )
             save_json(config_filename, conf)
             # Close all open configurators: for now, we only support one
             # tellstick device, and configuration via either cloud service
@@ -121,40 +139,37 @@ def setup(hass, config, session=None):
             for instance in hass.data[KEY_CONFIG].values():
                 configurator.request_done(instance)
 
-        hass.data[KEY_CONFIG][data_key] = \
-            configurator.request_config(
-                'TelldusLive ({})'.format(
-                    'LocalAPI' if host
-                    else 'Cloud service'),
-                configuration_callback,
-                description=CONFIG_INSTRUCTIONS.format(
-                    app_name=APPLICATION_NAME,
-                    auth_url=auth_url),
-                submit_caption='Confirm',
-                entity_picture='/static/images/logo_tellduslive.png',
-            )
+        hass.data[KEY_CONFIG][data_key] = configurator.request_config(
+            "TelldusLive ({})".format("LocalAPI" if host else "Cloud service"),
+            configuration_callback,
+            description=CONFIG_INSTRUCTIONS.format(
+                app_name=APPLICATION_NAME, auth_url=auth_url
+            ),
+            submit_caption="Confirm",
+            entity_picture="/static/images/logo_tellduslive.png",
+        )
 
     def tellstick_discovered(service, info):
         """Run when a Tellstick is discovered."""
-        _LOGGER.info('Discovered tellstick device')
+        _LOGGER.info("Discovered tellstick device")
 
         if DOMAIN in hass.data:
-            _LOGGER.debug('Tellstick already configured')
+            _LOGGER.debug("Tellstick already configured")
             return
 
         host, device = info[:2]
 
         if not supports_local_api(device):
-            _LOGGER.debug('Tellstick does not support local API')
+            _LOGGER.debug("Tellstick does not support local API")
             # Configure the cloud service
             hass.async_add_job(request_configuration)
             return
 
-        _LOGGER.debug('Tellstick does support local API')
+        _LOGGER.debug("Tellstick does support local API")
 
         # Ignore any known devices
         if conf and host in conf:
-            _LOGGER.debug('Discovered already known device: %s', host)
+            _LOGGER.debug("Discovered already known device: %s", host)
             return
 
         # Offer configuration of both live and local API
@@ -164,34 +179,39 @@ def setup(hass, config, session=None):
     discovery.listen(hass, SERVICE_TELLDUSLIVE, tellstick_discovered)
 
     if session:
-        _LOGGER.debug('Continuing setup configured by configurator')
+        _LOGGER.debug("Continuing setup configured by configurator")
     elif conf and CONF_HOST in next(iter(conf.values())):
         #  For now, only one local device is supported
-        _LOGGER.debug('Using Local API pre-configured by configurator')
+        _LOGGER.debug("Using Local API pre-configured by configurator")
         session = Session(**next(iter(conf.values())))
     elif DOMAIN in conf:
-        _LOGGER.debug('Using TelldusLive cloud service '
-                      'pre-configured by configurator')
-        session = Session(PUBLIC_KEY, NOT_SO_PRIVATE_KEY,
-                          application=APPLICATION_NAME, **conf[DOMAIN])
+        _LOGGER.debug(
+            "Using TelldusLive cloud service " "pre-configured by configurator"
+        )
+        session = Session(
+            PUBLIC_KEY, NOT_SO_PRIVATE_KEY, application=APPLICATION_NAME, **conf[DOMAIN]
+        )
     elif config.get(DOMAIN):
-        _LOGGER.info('Found entry in configuration.yaml. '
-                     'Requesting TelldusLive cloud service configuration')
+        _LOGGER.info(
+            "Found entry in configuration.yaml. "
+            "Requesting TelldusLive cloud service configuration"
+        )
         request_configuration()
 
         if CONF_HOST in config.get(DOMAIN, {}):
-            _LOGGER.info('Found TelldusLive host entry in configuration.yaml. '
-                         'Requesting Telldus Local API configuration')
+            _LOGGER.info(
+                "Found TelldusLive host entry in configuration.yaml. "
+                "Requesting Telldus Local API configuration"
+            )
             request_configuration(config.get(DOMAIN).get(CONF_HOST))
 
         return True
     else:
-        _LOGGER.info('Tellstick discovered, awaiting discovery callback')
+        _LOGGER.info("Tellstick discovered, awaiting discovery callback")
         return True
 
     if not session.is_authorized:
-        _LOGGER.error(
-            'Authentication Error')
+        _LOGGER.error("Authentication Error")
         return False
 
     client = TelldusLiveClient(hass, config, session)
@@ -217,43 +237,44 @@ class TelldusLiveClient:
         self._config = config
 
         self._interval = config.get(DOMAIN, {}).get(
-            CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
-        _LOGGER.debug('Update interval %s', self._interval)
+            CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL
+        )
+        _LOGGER.debug("Update interval %s", self._interval)
         self._client = session
 
     def update(self, *args):
         """Periodically poll the servers for current state."""
-        _LOGGER.debug('Updating')
+        _LOGGER.debug("Updating")
         try:
             self._sync()
         finally:
-            track_point_in_utc_time(
-                self._hass, self.update, utcnow() + self._interval)
+            track_point_in_utc_time(self._hass, self.update, utcnow() + self._interval)
 
     def _sync(self):
         """Update local list of devices."""
         if not self._client.update():
-            _LOGGER.warning('Failed request')
+            _LOGGER.warning("Failed request")
 
         def identify_device(device):
             """Find out what type of HA component to create."""
-            from tellduslive import (DIM, UP, TURNON)
+            from tellduslive import DIM, UP, TURNON
+
             if device.methods & DIM:
-                return 'light'
+                return "light"
             if device.methods & UP:
-                return 'cover'
+                return "cover"
             if device.methods & TURNON:
-                return 'switch'
+                return "switch"
             if device.methods == 0:
-                return 'binary_sensor'
-            _LOGGER.warning(
-                "Unidentified device type (methods: %d)", device.methods)
-            return 'switch'
+                return "binary_sensor"
+            _LOGGER.warning("Unidentified device type (methods: %d)", device.methods)
+            return "switch"
 
         def discover(device_id, component):
             """Discover the component."""
             discovery.load_platform(
-                self._hass, component, DOMAIN, [device_id], self._config)
+                self._hass, component, DOMAIN, [device_id], self._config
+            )
 
         known_ids = {entity.device_id for entity in self.entities}
         for device in self._client.devices:
@@ -261,11 +282,9 @@ class TelldusLiveClient:
                 continue
             if device.is_sensor:
                 for item in device.items:
-                    discover((device.device_id, item.name, item.scale),
-                             'sensor')
+                    discover((device.device_id, item.name, item.scale), "sensor")
             else:
-                discover(device.device_id,
-                         identify_device(device))
+                discover(device.device_id, identify_device(device))
 
         for entity in self.entities:
             entity.changed()
@@ -288,7 +307,7 @@ class TelldusLiveEntity(Entity):
         self._client = hass.data[DOMAIN]
         self._client.entities.append(self)
         self._name = self.device.name
-        _LOGGER.debug('Created device %s', self)
+        _LOGGER.debug("Created device %s", self)
 
     def changed(self):
         """Return the property of the device might have changed."""
@@ -344,9 +363,8 @@ class TelldusLiveEntity(Entity):
     @property
     def _battery_level(self):
         """Return the battery level of a device."""
-        from tellduslive import (BATTERY_LOW,
-                                 BATTERY_UNKNOWN,
-                                 BATTERY_OK)
+        from tellduslive import BATTERY_LOW, BATTERY_UNKNOWN, BATTERY_OK
+
         if self.device.battery == BATTERY_LOW:
             return 1
         if self.device.battery == BATTERY_UNKNOWN:
@@ -358,5 +376,8 @@ class TelldusLiveEntity(Entity):
     @property
     def _last_updated(self):
         """Return the last update of a device."""
-        return str(datetime.fromtimestamp(self.device.lastUpdated)) \
-            if self.device.lastUpdated else None
+        return (
+            str(datetime.fromtimestamp(self.device.lastUpdated))
+            if self.device.lastUpdated
+            else None
+        )

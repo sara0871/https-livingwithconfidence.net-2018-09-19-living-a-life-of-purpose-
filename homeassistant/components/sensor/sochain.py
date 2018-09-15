@@ -12,34 +12,36 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import (CONF_NAME, ATTR_ATTRIBUTION)
+from homeassistant.const import CONF_NAME, ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-REQUIREMENTS = ['python-sochain-api==0.0.2']
+REQUIREMENTS = ["python-sochain-api==0.0.2"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_ADDRESS = 'address'
-CONF_NETWORK = 'network'
+CONF_ADDRESS = "address"
+CONF_NETWORK = "network"
 CONF_ATTRIBUTION = "Data provided by chain.so"
 
-DEFAULT_NAME = 'Crypto Balance'
+DEFAULT_NAME = "Crypto Balance"
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ADDRESS): cv.string,
-    vol.Required(CONF_NETWORK): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_ADDRESS): cv.string,
+        vol.Required(CONF_NETWORK): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the sochain sensors."""
     from pysochain import ChainSo
+
     address = config.get(CONF_ADDRESS)
     network = config.get(CONF_NETWORK)
     name = config.get(CONF_NAME)
@@ -67,8 +69,11 @@ class SochainSensor(Entity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.chainso.data.get("confirmed_balance") \
-            if self.chainso is not None else None
+        return (
+            self.chainso.data.get("confirmed_balance")
+            if self.chainso is not None
+            else None
+        )
 
     @property
     def unit_of_measurement(self):
@@ -78,9 +83,7 @@ class SochainSensor(Entity):
     @property
     def device_state_attributes(self):
         """Return the state attributes of the sensor."""
-        return {
-            ATTR_ATTRIBUTION: CONF_ATTRIBUTION,
-        }
+        return {ATTR_ATTRIBUTION: CONF_ATTRIBUTION}
 
     @asyncio.coroutine
     def async_update(self):

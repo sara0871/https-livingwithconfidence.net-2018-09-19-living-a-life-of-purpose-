@@ -12,43 +12,54 @@ from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.components.sensor.rest import RestData
 from homeassistant.const import (
-    CONF_NAME, CONF_RESOURCE, CONF_UNIT_OF_MEASUREMENT, STATE_UNKNOWN,
-    CONF_VALUE_TEMPLATE, CONF_VERIFY_SSL, CONF_USERNAME,
-    CONF_PASSWORD, CONF_AUTHENTICATION, HTTP_BASIC_AUTHENTICATION,
-    HTTP_DIGEST_AUTHENTICATION)
+    CONF_NAME,
+    CONF_RESOURCE,
+    CONF_UNIT_OF_MEASUREMENT,
+    STATE_UNKNOWN,
+    CONF_VALUE_TEMPLATE,
+    CONF_VERIFY_SSL,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_AUTHENTICATION,
+    HTTP_BASIC_AUTHENTICATION,
+    HTTP_DIGEST_AUTHENTICATION,
+)
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['beautifulsoup4==4.6.3']
+REQUIREMENTS = ["beautifulsoup4==4.6.3"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_ATTR = 'attribute'
-CONF_SELECT = 'select'
+CONF_ATTR = "attribute"
+CONF_SELECT = "select"
 
-DEFAULT_NAME = 'Web scrape'
+DEFAULT_NAME = "Web scrape"
 DEFAULT_VERIFY_SSL = True
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_RESOURCE): cv.string,
-    vol.Required(CONF_SELECT): cv.string,
-    vol.Optional(CONF_ATTR): cv.string,
-    vol.Optional(CONF_AUTHENTICATION):
-        vol.In([HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION]),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
-    vol.Optional(CONF_USERNAME): cv.string,
-    vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
-    vol.Optional(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_RESOURCE): cv.string,
+        vol.Required(CONF_SELECT): cv.string,
+        vol.Optional(CONF_ATTR): cv.string,
+        vol.Optional(CONF_AUTHENTICATION): vol.In(
+            [HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION]
+        ),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
+        vol.Optional(CONF_USERNAME): cv.string,
+        vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
+        vol.Optional(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Web scrape sensor."""
     name = config.get(CONF_NAME)
     resource = config.get(CONF_RESOURCE)
-    method = 'GET'
+    method = "GET"
     payload = headers = None
     verify_ssl = config.get(CONF_VERIFY_SSL)
     select = config.get(CONF_SELECT)
@@ -74,8 +85,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.error("Unable to fetch data from %s", resource)
         return False
 
-    add_entities([
-        ScrapeSensor(rest, name, select, attr, value_template, unit)], True)
+    add_entities([ScrapeSensor(rest, name, select, attr, value_template, unit)], True)
 
 
 class ScrapeSensor(Entity):
@@ -112,7 +122,7 @@ class ScrapeSensor(Entity):
 
         from bs4 import BeautifulSoup
 
-        raw_data = BeautifulSoup(self.rest.data, 'html.parser')
+        raw_data = BeautifulSoup(self.rest.data, "html.parser")
         _LOGGER.debug(raw_data)
         if self._attr is not None:
             value = raw_data.select(self._select)[0][self._attr]
@@ -122,6 +132,7 @@ class ScrapeSensor(Entity):
 
         if self._value_template is not None:
             self._state = self._value_template.render_with_possible_json_value(
-                value, STATE_UNKNOWN)
+                value, STATE_UNKNOWN
+            )
         else:
             self._state = value

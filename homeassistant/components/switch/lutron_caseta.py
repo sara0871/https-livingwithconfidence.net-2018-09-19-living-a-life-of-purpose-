@@ -8,17 +8,18 @@ import asyncio
 import logging
 
 from homeassistant.components.lutron_caseta import (
-    LUTRON_CASETA_SMARTBRIDGE, LutronCasetaDevice)
+    LUTRON_CASETA_SMARTBRIDGE,
+    LutronCasetaDevice,
+)
 from homeassistant.components.switch import SwitchDevice, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['lutron_caseta']
+DEPENDENCIES = ["lutron_caseta"]
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up Lutron switch."""
     devs = []
     bridge = hass.data[LUTRON_CASETA_SMARTBRIDGE]

@@ -15,7 +15,11 @@ import async_timeout
 import voluptuous as vol
 
 from homeassistant.const import (
-    EVENT_HOMEASSISTANT_START, CONF_REGION, CONF_MODE, CONF_NAME)
+    EVENT_HOMEASSISTANT_START,
+    CONF_REGION,
+    CONF_MODE,
+    CONF_NAME,
+)
 from homeassistant.helpers import entityfilter, config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import dt as dt_util
@@ -26,63 +30,73 @@ from homeassistant.components.google_assistant import const as ga_c
 from . import http_api, iot
 from .const import CONFIG_DIR, DOMAIN, SERVERS
 
-REQUIREMENTS = ['warrant==0.6.1']
+REQUIREMENTS = ["warrant==0.6.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_ALEXA = 'alexa'
-CONF_ALIASES = 'aliases'
-CONF_COGNITO_CLIENT_ID = 'cognito_client_id'
-CONF_ENTITY_CONFIG = 'entity_config'
-CONF_FILTER = 'filter'
-CONF_GOOGLE_ACTIONS = 'google_actions'
-CONF_RELAYER = 'relayer'
-CONF_USER_POOL_ID = 'user_pool_id'
-CONF_GOOGLE_ACTIONS_SYNC_URL = 'google_actions_sync_url'
+CONF_ALEXA = "alexa"
+CONF_ALIASES = "aliases"
+CONF_COGNITO_CLIENT_ID = "cognito_client_id"
+CONF_ENTITY_CONFIG = "entity_config"
+CONF_FILTER = "filter"
+CONF_GOOGLE_ACTIONS = "google_actions"
+CONF_RELAYER = "relayer"
+CONF_USER_POOL_ID = "user_pool_id"
+CONF_GOOGLE_ACTIONS_SYNC_URL = "google_actions_sync_url"
 
-DEFAULT_MODE = 'production'
-DEPENDENCIES = ['http']
+DEFAULT_MODE = "production"
+DEPENDENCIES = ["http"]
 
-MODE_DEV = 'development'
+MODE_DEV = "development"
 
-ALEXA_ENTITY_SCHEMA = vol.Schema({
-    vol.Optional(alexa_sh.CONF_DESCRIPTION): cv.string,
-    vol.Optional(alexa_sh.CONF_DISPLAY_CATEGORIES): cv.string,
-    vol.Optional(alexa_sh.CONF_NAME): cv.string,
-})
+ALEXA_ENTITY_SCHEMA = vol.Schema(
+    {
+        vol.Optional(alexa_sh.CONF_DESCRIPTION): cv.string,
+        vol.Optional(alexa_sh.CONF_DISPLAY_CATEGORIES): cv.string,
+        vol.Optional(alexa_sh.CONF_NAME): cv.string,
+    }
+)
 
-GOOGLE_ENTITY_SCHEMA = vol.Schema({
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_ALIASES): vol.All(cv.ensure_list, [cv.string]),
-    vol.Optional(ga_c.CONF_ROOM_HINT): cv.string,
-})
+GOOGLE_ENTITY_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_NAME): cv.string,
+        vol.Optional(CONF_ALIASES): vol.All(cv.ensure_list, [cv.string]),
+        vol.Optional(ga_c.CONF_ROOM_HINT): cv.string,
+    }
+)
 
-ASSISTANT_SCHEMA = vol.Schema({
-    vol.Optional(CONF_FILTER, default={}): entityfilter.FILTER_SCHEMA,
-})
+ASSISTANT_SCHEMA = vol.Schema(
+    {vol.Optional(CONF_FILTER, default={}): entityfilter.FILTER_SCHEMA}
+)
 
-ALEXA_SCHEMA = ASSISTANT_SCHEMA.extend({
-    vol.Optional(CONF_ENTITY_CONFIG): {cv.entity_id: ALEXA_ENTITY_SCHEMA}
-})
+ALEXA_SCHEMA = ASSISTANT_SCHEMA.extend(
+    {vol.Optional(CONF_ENTITY_CONFIG): {cv.entity_id: ALEXA_ENTITY_SCHEMA}}
+)
 
-GACTIONS_SCHEMA = ASSISTANT_SCHEMA.extend({
-    vol.Optional(CONF_ENTITY_CONFIG): {cv.entity_id: GOOGLE_ENTITY_SCHEMA}
-})
+GACTIONS_SCHEMA = ASSISTANT_SCHEMA.extend(
+    {vol.Optional(CONF_ENTITY_CONFIG): {cv.entity_id: GOOGLE_ENTITY_SCHEMA}}
+)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Optional(CONF_MODE, default=DEFAULT_MODE):
-            vol.In([MODE_DEV] + list(SERVERS)),
-        # Change to optional when we include real servers
-        vol.Optional(CONF_COGNITO_CLIENT_ID): str,
-        vol.Optional(CONF_USER_POOL_ID): str,
-        vol.Optional(CONF_REGION): str,
-        vol.Optional(CONF_RELAYER): str,
-        vol.Optional(CONF_GOOGLE_ACTIONS_SYNC_URL): str,
-        vol.Optional(CONF_ALEXA): ALEXA_SCHEMA,
-        vol.Optional(CONF_GOOGLE_ACTIONS): GACTIONS_SCHEMA,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Optional(CONF_MODE, default=DEFAULT_MODE): vol.In(
+                    [MODE_DEV] + list(SERVERS)
+                ),
+                # Change to optional when we include real servers
+                vol.Optional(CONF_COGNITO_CLIENT_ID): str,
+                vol.Optional(CONF_USER_POOL_ID): str,
+                vol.Optional(CONF_REGION): str,
+                vol.Optional(CONF_RELAYER): str,
+                vol.Optional(CONF_GOOGLE_ACTIONS_SYNC_URL): str,
+                vol.Optional(CONF_ALEXA): ALEXA_SCHEMA,
+                vol.Optional(CONF_GOOGLE_ACTIONS): GACTIONS_SCHEMA,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 @asyncio.coroutine
@@ -112,9 +126,18 @@ def async_setup(hass, config):
 class Cloud:
     """Store the configuration of the cloud connection."""
 
-    def __init__(self, hass, mode, alexa, google_actions,
-                 cognito_client_id=None, user_pool_id=None, region=None,
-                 relayer=None, google_actions_sync_url=None):
+    def __init__(
+        self,
+        hass,
+        mode,
+        alexa,
+        google_actions,
+        cognito_client_id=None,
+        user_pool_id=None,
+        region=None,
+        relayer=None,
+        google_actions_sync_url=None,
+    ):
         """Create an instance of Cloud."""
         self.hass = hass
         self.mode = mode
@@ -137,11 +160,11 @@ class Cloud:
         else:
             info = SERVERS[mode]
 
-            self.cognito_client_id = info['cognito_client_id']
-            self.user_pool_id = info['user_pool_id']
-            self.region = info['region']
-            self.relayer = info['relayer']
-            self.google_actions_sync_url = info['google_actions_sync_url']
+            self.cognito_client_id = info["cognito_client_id"]
+            self.user_pool_id = info["user_pool_id"]
+            self.region = info["region"]
+            self.relayer = info["relayer"]
+            self.google_actions_sync_url = info["google_actions_sync_url"]
 
     @property
     def is_logged_in(self):
@@ -157,8 +180,8 @@ class Cloud:
     def expiration_date(self):
         """Return the subscription expiration as a UTC datetime object."""
         return datetime.combine(
-            dt_util.parse_date(self.claims['custom:sub-exp']),
-            datetime.min.time()).replace(tzinfo=dt_util.UTC)
+            dt_util.parse_date(self.claims["custom:sub-exp"]), datetime.min.time()
+        ).replace(tzinfo=dt_util.UTC)
 
     @property
     def claims(self):
@@ -168,7 +191,7 @@ class Cloud:
     @property
     def user_info_path(self):
         """Get path to the stored auth."""
-        return self.path('{}_auth.json'.format(self.mode))
+        return self.path("{}_auth.json".format(self.mode))
 
     @property
     def gactions_config(self):
@@ -178,11 +201,11 @@ class Cloud:
 
             def should_expose(entity):
                 """If an entity should be exposed."""
-                return conf['filter'](entity.entity_id)
+                return conf["filter"](entity.entity_id)
 
             self._gactions_config = ga_h.Config(
                 should_expose=should_expose,
-                agent_user_id=self.claims['cognito:username'],
+                agent_user_id=self.claims["cognito:username"],
                 entity_config=conf.get(CONF_ENTITY_CONFIG),
             )
 
@@ -205,17 +228,21 @@ class Cloud:
         self.refresh_token = None
         self._gactions_config = None
 
-        yield from self.hass.async_add_job(
-            lambda: os.remove(self.user_info_path))
+        yield from self.hass.async_add_job(lambda: os.remove(self.user_info_path))
 
     def write_user_info(self):
         """Write user info to a file."""
-        with open(self.user_info_path, 'wt') as file:
-            file.write(json.dumps({
-                'id_token': self.id_token,
-                'access_token': self.access_token,
-                'refresh_token': self.refresh_token,
-            }, indent=4))
+        with open(self.user_info_path, "wt") as file:
+            file.write(
+                json.dumps(
+                    {
+                        "id_token": self.id_token,
+                        "access_token": self.access_token,
+                        "refresh_token": self.refresh_token,
+                    },
+                    indent=4,
+                )
+            )
 
     @asyncio.coroutine
     def async_start(self, _):
@@ -238,7 +265,7 @@ class Cloud:
             if not os.path.isfile(user_info):
                 return None
 
-            with open(user_info, 'rt') as file:
+            with open(user_info, "rt") as file:
                 return json.loads(file.read())
 
         info = yield from self.hass.async_add_job(load_config)
@@ -248,15 +275,15 @@ class Cloud:
 
         # Validate tokens
         try:
-            for token in 'id_token', 'access_token':
+            for token in "id_token", "access_token":
                 self._decode_claims(info[token])
         except ValueError as err:  # Raised when token is invalid
             _LOGGER.warning("Found invalid token %s: %s", token, err)
             return
 
-        self.id_token = info['id_token']
-        self.access_token = info['access_token']
-        self.refresh_token = info['refresh_token']
+        self.id_token = info["id_token"]
+        self.access_token = info["access_token"]
+        self.refresh_token = info["refresh_token"]
 
         self.hass.add_job(self.iot.connect())
 
@@ -264,8 +291,10 @@ class Cloud:
     def _fetch_jwt_keyset(self):
         """Fetch the JWT keyset for the Cognito instance."""
         session = async_get_clientsession(self.hass)
-        url = ("https://cognito-idp.us-east-1.amazonaws.com/"
-               "{}/.well-known/jwks.json".format(self.user_pool_id))
+        url = (
+            "https://cognito-idp.us-east-1.amazonaws.com/"
+            "{}/.well-known/jwks.json".format(self.user_pool_id)
+        )
 
         try:
             with async_timeout.timeout(10, loop=self.hass.loop):
@@ -281,29 +310,31 @@ class Cloud:
     def _decode_claims(self, token):
         """Decode the claims in a token."""
         from jose import jwt, exceptions as jose_exceptions
+
         try:
             header = jwt.get_unverified_header(token)
         except jose_exceptions.JWTError as err:
             raise ValueError(str(err)) from None
-        kid = header.get('kid')
+        kid = header.get("kid")
 
         if kid is None:
             raise ValueError("No kid in header")
 
         # Locate the key for this kid
         key = None
-        for key_dict in self.jwt_keyset['keys']:
-            if key_dict['kid'] == kid:
+        for key_dict in self.jwt_keyset["keys"]:
+            if key_dict["kid"] == kid:
                 key = key_dict
                 break
         if not key:
-            raise ValueError(
-                "Unable to locate kid ({}) in keyset".format(kid))
+            raise ValueError("Unable to locate kid ({}) in keyset".format(kid))
 
         try:
             return jwt.decode(
-                token, key, audience=self.cognito_client_id, options={
-                    'verify_exp': False,
-                })
+                token,
+                key,
+                audience=self.cognito_client_id,
+                options={"verify_exp": False},
+            )
         except jose_exceptions.JWTError as err:
             raise ValueError(str(err)) from None

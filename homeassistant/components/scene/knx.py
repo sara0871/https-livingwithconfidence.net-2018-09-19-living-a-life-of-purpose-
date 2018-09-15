@@ -12,22 +12,23 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 
-CONF_ADDRESS = 'address'
-CONF_SCENE_NUMBER = 'scene_number'
+CONF_ADDRESS = "address"
+CONF_SCENE_NUMBER = "scene_number"
 
-DEFAULT_NAME = 'KNX SCENE'
-DEPENDENCIES = ['knx']
+DEFAULT_NAME = "KNX SCENE"
+DEPENDENCIES = ["knx"]
 
-PLATFORM_SCHEMA = vol.Schema({
-    vol.Required(CONF_PLATFORM): 'knx',
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Required(CONF_ADDRESS): cv.string,
-    vol.Required(CONF_SCENE_NUMBER): cv.positive_int,
-})
+PLATFORM_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_PLATFORM): "knx",
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Required(CONF_ADDRESS): cv.string,
+        vol.Required(CONF_SCENE_NUMBER): cv.positive_int,
+    }
+)
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the scenes for KNX platform."""
     if discovery_info is not None:
         async_add_entities_discovery(hass, discovery_info, async_add_entities)
@@ -49,11 +50,13 @@ def async_add_entities_discovery(hass, discovery_info, async_add_entities):
 def async_add_entities_config(hass, config, async_add_entities):
     """Set up scene for KNX platform configured within platform."""
     import xknx
+
     scene = xknx.devices.Scene(
         hass.data[DATA_KNX].xknx,
         name=config.get(CONF_NAME),
         group_address=config.get(CONF_ADDRESS),
-        scene_number=config.get(CONF_SCENE_NUMBER))
+        scene_number=config.get(CONF_SCENE_NUMBER),
+    )
     hass.data[DATA_KNX].xknx.devices.add(scene)
     async_add_entities([KNXScene(scene)])
 

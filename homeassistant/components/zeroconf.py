@@ -10,21 +10,19 @@ import socket
 import voluptuous as vol
 
 from homeassistant import util
-from homeassistant.const import (EVENT_HOMEASSISTANT_STOP, __version__)
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP, __version__
 
-REQUIREMENTS = ['zeroconf==0.20.0']
+REQUIREMENTS = ["zeroconf==0.20.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['api']
-DOMAIN = 'zeroconf'
+DEPENDENCIES = ["api"]
+DOMAIN = "zeroconf"
 
 
-ZEROCONF_TYPE = '_home-assistant._tcp.local.'
+ZEROCONF_TYPE = "_home-assistant._tcp.local."
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({}),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 
 
 def setup(hass, config):
@@ -33,13 +31,13 @@ def setup(hass, config):
 
     zeroconf = Zeroconf()
 
-    zeroconf_name = '{}.{}'.format(hass.config.location_name, ZEROCONF_TYPE)
+    zeroconf_name = "{}.{}".format(hass.config.location_name, ZEROCONF_TYPE)
 
     requires_api_password = hass.config.api.api_password is not None
     params = {
-        'version': __version__,
-        'base_url': hass.config.api.base_url,
-        'requires_api_password': requires_api_password,
+        "version": __version__,
+        "base_url": hass.config.api.base_url,
+        "requires_api_password": requires_api_password,
     }
 
     host_ip = util.get_local_ip()
@@ -49,8 +47,9 @@ def setup(hass, config):
     except socket.error:
         host_ip_pton = socket.inet_pton(socket.AF_INET6, host_ip)
 
-    info = ServiceInfo(ZEROCONF_TYPE, zeroconf_name, host_ip_pton,
-                       hass.http.server_port, 0, 0, params)
+    info = ServiceInfo(
+        ZEROCONF_TYPE, zeroconf_name, host_ip_pton, hass.http.server_port, 0, 0, params
+    )
 
     zeroconf.register_service(info)
 

@@ -12,26 +12,34 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    EVENT_HOMEASSISTANT_STOP, CONF_HOST, CONF_PASSWORD, CONF_SCAN_INTERVAL,
-    CONF_SSL)
+    EVENT_HOMEASSISTANT_STOP,
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_SCAN_INTERVAL,
+    CONF_SSL,
+)
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['pysma==0.2']
+REQUIREMENTS = ["pysma==0.2"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_GROUP = 'group'
-CONF_SENSORS = 'sensors'
-CONF_CUSTOM = 'custom'
+CONF_GROUP = "group"
+CONF_SENSORS = "sensors"
+CONF_CUSTOM = "custom"
 
-GROUP_INSTALLER = 'installer'
-GROUP_USER = 'user'
+GROUP_INSTALLER = "installer"
+GROUP_USER = "user"
 GROUPS = [GROUP_USER, GROUP_INSTALLER]
-SENSOR_OPTIONS = ['current_consumption', 'current_power', 'total_consumption',
-                  'total_yield']
+SENSOR_OPTIONS = [
+    "current_consumption",
+    "current_power",
+    "total_consumption",
+    "total_yield",
+]
 
 
 def _check_sensor_schema(conf):
@@ -48,39 +56,53 @@ def _check_sensor_schema(conf):
     return conf
 
 
-PLATFORM_SCHEMA = vol.All(PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): str,
-    vol.Optional(CONF_SSL, default=False): cv.boolean,
-    vol.Required(CONF_PASSWORD): str,
-    vol.Optional(CONF_GROUP, default=GROUPS[0]): vol.In(GROUPS),
-    vol.Required(CONF_SENSORS): vol.Schema({cv.slug: cv.ensure_list}),
-    vol.Optional(CONF_CUSTOM, default={}): vol.Schema({
-        cv.slug: {
-            vol.Required('key'): vol.All(str, vol.Length(min=13, max=13)),
-            vol.Required('unit'): str,
-            vol.Optional('factor', default=1): vol.Coerce(float),
-        }})
-}, extra=vol.PREVENT_EXTRA), _check_sensor_schema)
+PLATFORM_SCHEMA = vol.All(
+    PLATFORM_SCHEMA.extend(
+        {
+            vol.Required(CONF_HOST): str,
+            vol.Optional(CONF_SSL, default=False): cv.boolean,
+            vol.Required(CONF_PASSWORD): str,
+            vol.Optional(CONF_GROUP, default=GROUPS[0]): vol.In(GROUPS),
+            vol.Required(CONF_SENSORS): vol.Schema({cv.slug: cv.ensure_list}),
+            vol.Optional(CONF_CUSTOM, default={}): vol.Schema(
+                {
+                    cv.slug: {
+                        vol.Required("key"): vol.All(str, vol.Length(min=13, max=13)),
+                        vol.Required("unit"): str,
+                        vol.Optional("factor", default=1): vol.Coerce(float),
+                    }
+                }
+            ),
+        },
+        extra=vol.PREVENT_EXTRA,
+    ),
+    _check_sensor_schema,
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up SMA WebConnect sensor."""
     import pysma
 
     # Sensor_defs from the library
-    sensor_defs = dict(zip(SENSOR_OPTIONS, [
-        (pysma.KEY_CURRENT_CONSUMPTION_W, 'W', 1),
-        (pysma.KEY_CURRENT_POWER_W, 'W', 1),
-        (pysma.KEY_TOTAL_CONSUMPTION_KWH, 'kWh', 1000),
-        (pysma.KEY_TOTAL_YIELD_KWH, 'kWh', 1000)]))
+    sensor_defs = dict(
+        zip(
+            SENSOR_OPTIONS,
+            [
+                (pysma.KEY_CURRENT_CONSUMPTION_W, "W", 1),
+                (pysma.KEY_CURRENT_POWER_W, "W", 1),
+                (pysma.KEY_TOTAL_CONSUMPTION_KWH, "kWh", 1000),
+                (pysma.KEY_TOTAL_YIELD_KWH, "kWh", 1000),
+            ],
+        )
+    )
 
     # Sensor_defs from the custom config
     for name, prop in config[CONF_CUSTOM].items():
         if name in sensor_defs:
             _LOGGER.warning("Custom sensor %s replace built-in sensor", name)
-        sensor_defs[name] = (prop['key'], prop['unit'], prop['factor'])
+        sensor_defs[name] = (prop["key"], prop["unit"], prop["factor"])
 
     # Prepare all HASS sensor entities
     hass_sensors = []
@@ -91,18 +113,19 @@ def async_setup_platform(hass, config, async_add_entities,
         used_sensors.extend(attr)
 
     # Remove sensor_defs not in use
-    sensor_defs = {name: val for name, val in sensor_defs.items()
-                   if name in used_sensors}
+    sensor_defs = {
+        name: val for name, val in sensor_defs.items() if name in used_sensors
+    }
 
     async_add_entities(hass_sensors)
 
     # Init the SMA interface
     session = async_get_clientsession(hass)
-    grp = {GROUP_INSTALLER: pysma.GROUP_INSTALLER,
-           GROUP_USER: pysma.GROUP_USER}[config[CONF_GROUP]]
+    grp = {GROUP_INSTALLER: pysma.GROUP_INSTALLER, GROUP_USER: pysma.GROUP_USER}[
+        config[CONF_GROUP]
+    ]
 
-    url = "http{}://{}".format(
-        "s" if config[CONF_SSL] else "", config[CONF_HOST])
+    url = "http{}://{}".format("s" if config[CONF_SSL] else "", config[CONF_HOST])
 
     sma = pysma.SMA(session, url, config[CONF_PASSWORD], group=grp)
 
@@ -189,7 +212,7 @@ class SMAsensor(Entity):
         update = False
 
         for key, val in self._attr.items():
-            newval = '{} {}'.format(key_values[key], self._sensor_defs[key][1])
+            newval = "{} {}".format(key_values[key], self._sensor_defs[key][1])
             if val != newval:
                 update = True
                 self._attr[key] = newval

@@ -5,16 +5,18 @@ For more details about this platform, please refer to the documentation
 https://home-assistant.io/components/demo/
 """
 from homeassistant.components.lock import LockDevice, SUPPORT_OPEN
-from homeassistant.const import (STATE_LOCKED, STATE_UNLOCKED)
+from homeassistant.const import STATE_LOCKED, STATE_UNLOCKED
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Demo lock platform."""
-    add_entities([
-        DemoLock('Front Door', STATE_LOCKED),
-        DemoLock('Kitchen Door', STATE_UNLOCKED),
-        DemoLock('Openable Lock', STATE_LOCKED, True)
-    ])
+    add_entities(
+        [
+            DemoLock("Front Door", STATE_LOCKED),
+            DemoLock("Kitchen Door", STATE_UNLOCKED),
+            DemoLock("Openable Lock", STATE_LOCKED, True),
+        ]
+    )
 
 
 class DemoLock(LockDevice):

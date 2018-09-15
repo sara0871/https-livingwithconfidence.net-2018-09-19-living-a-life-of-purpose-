@@ -14,8 +14,7 @@ from homeassistant.exceptions import HomeAssistantError
 from . import AuthProvider, AUTH_PROVIDER_SCHEMA, AUTH_PROVIDERS, LoginFlow
 from ..models import Credentials, UserMeta
 
-CONFIG_SCHEMA = AUTH_PROVIDER_SCHEMA.extend({
-}, extra=vol.PREVENT_EXTRA)
+CONFIG_SCHEMA = AUTH_PROVIDER_SCHEMA.extend({}, extra=vol.PREVENT_EXTRA)
 
 
 class InvalidAuthError(HomeAssistantError):
@@ -26,14 +25,14 @@ class InvalidUserError(HomeAssistantError):
     """Raised when try to login as invalid user."""
 
 
-@AUTH_PROVIDERS.register('trusted_networks')
+@AUTH_PROVIDERS.register("trusted_networks")
 class TrustedNetworksAuthProvider(AuthProvider):
     """Trusted Networks auth provider.
 
     Allow passwordless access from trusted network.
     """
 
-    DEFAULT_TITLE = 'Trusted Networks'
+    DEFAULT_TITLE = "Trusted Networks"
 
     @property
     def support_mfa(self) -> bool:
@@ -44,27 +43,29 @@ class TrustedNetworksAuthProvider(AuthProvider):
         """Return a flow to login."""
         assert context is not None
         users = await self.store.async_get_users()
-        available_users = {user.id: user.name
-                           for user in users
-                           if not user.system_generated and user.is_active}
+        available_users = {
+            user.id: user.name
+            for user in users
+            if not user.system_generated and user.is_active
+        }
 
         return TrustedNetworksLoginFlow(
-            self, cast(str, context.get('ip_address')), available_users)
+            self, cast(str, context.get("ip_address")), available_users
+        )
 
     async def async_get_or_create_credentials(
-            self, flow_result: Dict[str, str]) -> Credentials:
+        self, flow_result: Dict[str, str]
+    ) -> Credentials:
         """Get credentials based on the flow result."""
-        user_id = flow_result['user']
+        user_id = flow_result["user"]
 
         users = await self.store.async_get_users()
         for user in users:
-            if (not user.system_generated and
-                    user.is_active and
-                    user.id == user_id):
+            if not user.system_generated and user.is_active and user.id == user_id:
                 for credential in await self.async_credentials():
-                    if credential.data['user_id'] == user_id:
+                    if credential.data["user_id"] == user_id:
                         return credential
-                cred = self.async_create_credentials({'user_id': user_id})
+                cred = self.async_create_credentials({"user_id": user_id})
                 await self.store.async_link_user(user, cred)
                 return cred
 
@@ -72,7 +73,8 @@ class TrustedNetworksAuthProvider(AuthProvider):
         raise InvalidUserError
 
     async def async_user_meta_for_credentials(
-            self, credentials: Credentials) -> UserMeta:
+        self, credentials: Credentials
+    ) -> UserMeta:
         """Return extra user metadata for credentials.
 
         Trusted network auth provider should never create new user.
@@ -86,44 +88,48 @@ class TrustedNetworksAuthProvider(AuthProvider):
         Raise InvalidAuthError if not.
         Raise InvalidAuthError if trusted_networks is not configured.
         """
-        hass_http = getattr(self.hass, 'http', None)  # type: HomeAssistantHTTP
+        hass_http = getattr(self.hass, "http", None)  # type: HomeAssistantHTTP
 
         if not hass_http or not hass_http.trusted_networks:
-            raise InvalidAuthError('trusted_networks is not configured')
+            raise InvalidAuthError("trusted_networks is not configured")
 
-        if not any(ip_address in trusted_network for trusted_network
-                   in hass_http.trusted_networks):
-            raise InvalidAuthError('Not in trusted_networks')
+        if not any(
+            ip_address in trusted_network
+            for trusted_network in hass_http.trusted_networks
+        ):
+            raise InvalidAuthError("Not in trusted_networks")
 
 
 class TrustedNetworksLoginFlow(LoginFlow):
     """Handler for the login flow."""
 
-    def __init__(self, auth_provider: TrustedNetworksAuthProvider,
-                 ip_address: str, available_users: Dict[str, Optional[str]]) \
-            -> None:
+    def __init__(
+        self,
+        auth_provider: TrustedNetworksAuthProvider,
+        ip_address: str,
+        available_users: Dict[str, Optional[str]],
+    ) -> None:
         """Initialize the login flow."""
         super().__init__(auth_provider)
         self._available_users = available_users
         self._ip_address = ip_address
 
     async def async_step_init(
-            self, user_input: Optional[Dict[str, str]] = None) \
-            -> Dict[str, Any]:
+        self, user_input: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Handle the step of the form."""
         try:
-            cast(TrustedNetworksAuthProvider, self._auth_provider)\
-                .async_validate_access(self._ip_address)
+            cast(
+                TrustedNetworksAuthProvider, self._auth_provider
+            ).async_validate_access(self._ip_address)
 
         except InvalidAuthError:
-            return self.async_abort(
-                reason='not_whitelisted'
-            )
+            return self.async_abort(reason="not_whitelisted")
 
         if user_input is not None:
             return await self.async_finish(user_input)
 
         return self.async_show_form(
-            step_id='init',
-            data_schema=vol.Schema({'user': vol.In(self._available_users)}),
+            step_id="init",
+            data_schema=vol.Schema({"user": vol.In(self._available_users)}),
         )

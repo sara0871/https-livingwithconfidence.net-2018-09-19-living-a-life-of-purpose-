@@ -14,30 +14,33 @@ from homeassistant.const import CONF_HOST
 from homeassistant.helpers import discovery
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['pylutron-caseta==0.5.0']
+REQUIREMENTS = ["pylutron-caseta==0.5.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-LUTRON_CASETA_SMARTBRIDGE = 'lutron_smartbridge'
+LUTRON_CASETA_SMARTBRIDGE = "lutron_smartbridge"
 
-DOMAIN = 'lutron_caseta'
+DOMAIN = "lutron_caseta"
 
-CONF_KEYFILE = 'keyfile'
-CONF_CERTFILE = 'certfile'
-CONF_CA_CERTS = 'ca_certs'
+CONF_KEYFILE = "keyfile"
+CONF_CERTFILE = "certfile"
+CONF_CA_CERTS = "ca_certs"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_KEYFILE): cv.string,
-        vol.Required(CONF_CERTFILE): cv.string,
-        vol.Required(CONF_CA_CERTS): cv.string
-    })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_HOST): cv.string,
+                vol.Required(CONF_KEYFILE): cv.string,
+                vol.Required(CONF_CERTFILE): cv.string,
+                vol.Required(CONF_CA_CERTS): cv.string,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
-LUTRON_CASETA_COMPONENTS = [
-    'light', 'switch', 'cover', 'scene'
-]
+LUTRON_CASETA_COMPONENTS = ["light", "switch", "cover", "scene"]
 
 
 @asyncio.coroutine
@@ -49,22 +52,26 @@ def async_setup(hass, base_config):
     keyfile = hass.config.path(config[CONF_KEYFILE])
     certfile = hass.config.path(config[CONF_CERTFILE])
     ca_certs = hass.config.path(config[CONF_CA_CERTS])
-    bridge = Smartbridge.create_tls(hostname=config[CONF_HOST],
-                                    keyfile=keyfile,
-                                    certfile=certfile,
-                                    ca_certs=ca_certs)
+    bridge = Smartbridge.create_tls(
+        hostname=config[CONF_HOST],
+        keyfile=keyfile,
+        certfile=certfile,
+        ca_certs=ca_certs,
+    )
     hass.data[LUTRON_CASETA_SMARTBRIDGE] = bridge
     yield from bridge.connect()
     if not hass.data[LUTRON_CASETA_SMARTBRIDGE].is_connected():
-        _LOGGER.error("Unable to connect to Lutron smartbridge at %s",
-                      config[CONF_HOST])
+        _LOGGER.error(
+            "Unable to connect to Lutron smartbridge at %s", config[CONF_HOST]
+        )
         return False
 
     _LOGGER.info("Connected to Lutron smartbridge at %s", config[CONF_HOST])
 
     for component in LUTRON_CASETA_COMPONENTS:
-        hass.async_create_task(discovery.async_load_platform(
-            hass, component, DOMAIN, {}, config))
+        hass.async_create_task(
+            discovery.async_load_platform(hass, component, DOMAIN, {}, config)
+        )
 
     return True
 
@@ -88,8 +95,9 @@ class LutronCasetaDevice(Entity):
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Register callbacks."""
-        self._smartbridge.add_subscriber(self._device_id,
-                                         self.async_schedule_update_ha_state)
+        self._smartbridge.add_subscriber(
+            self._device_id, self.async_schedule_update_ha_state
+        )
 
     @property
     def name(self):
@@ -99,10 +107,7 @@ class LutronCasetaDevice(Entity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
-        attr = {
-            'Device ID': self._device_id,
-            'Zone ID': self._device_zone,
-        }
+        attr = {"Device ID": self._device_id, "Zone ID": self._device_zone}
         return attr
 
     @property

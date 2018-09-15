@@ -7,21 +7,22 @@ https://home-assistant.io/components/switch.homematicip_cloud/
 import logging
 
 from homeassistant.components.homematicip_cloud import (
-    HMIPC_HAPID, HomematicipGenericDevice)
+    HMIPC_HAPID,
+    HomematicipGenericDevice,
+)
 from homeassistant.components.homematicip_cloud import DOMAIN as HMIPC_DOMAIN
 from homeassistant.components.switch import SwitchDevice
 
-DEPENDENCIES = ['homematicip_cloud']
+DEPENDENCIES = ["homematicip_cloud"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_POWER_CONSUMPTION = 'power_consumption'
-ATTR_ENERGIE_COUNTER = 'energie_counter'
-ATTR_PROFILE_MODE = 'profile_mode'
+ATTR_POWER_CONSUMPTION = "power_consumption"
+ATTR_ENERGIE_COUNTER = "energie_counter"
+ATTR_PROFILE_MODE = "profile_mode"
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the HomematicIP Cloud switch devices."""
     pass
 
@@ -29,7 +30,10 @@ async def async_setup_platform(
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the HomematicIP switch from a config entry."""
     from homematicip.device import (
-        PlugableSwitch, PlugableSwitchMeasuring, BrandSwitchMeasuring)
+        PlugableSwitch,
+        PlugableSwitchMeasuring,
+        BrandSwitchMeasuring,
+    )
 
     home = hass.data[HMIPC_DOMAIN][config_entry.data[HMIPC_HAPID]].home
     devices = []

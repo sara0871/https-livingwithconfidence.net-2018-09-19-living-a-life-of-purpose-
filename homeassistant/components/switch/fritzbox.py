@@ -10,19 +10,21 @@ import requests
 
 from homeassistant.components.fritzbox import DOMAIN as FRITZBOX_DOMAIN
 from homeassistant.components.fritzbox import (
-    ATTR_STATE_DEVICE_LOCKED, ATTR_STATE_LOCKED)
+    ATTR_STATE_DEVICE_LOCKED,
+    ATTR_STATE_LOCKED,
+)
 from homeassistant.components.switch import SwitchDevice
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 
-DEPENDENCIES = ['fritzbox']
+DEPENDENCIES = ["fritzbox"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_TOTAL_CONSUMPTION = 'total_consumption'
-ATTR_TOTAL_CONSUMPTION_UNIT = 'total_consumption_unit'
-ATTR_TOTAL_CONSUMPTION_UNIT_VALUE = 'kWh'
+ATTR_TOTAL_CONSUMPTION = "total_consumption"
+ATTR_TOTAL_CONSUMPTION_UNIT = "total_consumption_unit"
+ATTR_TOTAL_CONSUMPTION_UNIT_VALUE = "kWh"
 
-ATTR_TEMPERATURE_UNIT = 'temperature_unit'
+ATTR_TEMPERATURE_UNIT = "temperature_unit"
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -87,15 +89,16 @@ class FritzboxSwitch(SwitchDevice):
 
         if self._device.has_powermeter:
             attrs[ATTR_TOTAL_CONSUMPTION] = "{:.3f}".format(
-                (self._device.energy or 0.0) / 1000)
-            attrs[ATTR_TOTAL_CONSUMPTION_UNIT] = \
-                ATTR_TOTAL_CONSUMPTION_UNIT_VALUE
+                (self._device.energy or 0.0) / 1000
+            )
+            attrs[ATTR_TOTAL_CONSUMPTION_UNIT] = ATTR_TOTAL_CONSUMPTION_UNIT_VALUE
         if self._device.has_temperature_sensor:
-            attrs[ATTR_TEMPERATURE] = \
-                str(self.hass.config.units.temperature(
-                    self._device.temperature, TEMP_CELSIUS))
-            attrs[ATTR_TEMPERATURE_UNIT] = \
-                self.hass.config.units.temperature_unit
+            attrs[ATTR_TEMPERATURE] = str(
+                self.hass.config.units.temperature(
+                    self._device.temperature, TEMP_CELSIUS
+                )
+            )
+            attrs[ATTR_TEMPERATURE_UNIT] = self.hass.config.units.temperature_unit
         return attrs
 
     @property

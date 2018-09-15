@@ -12,28 +12,34 @@ import requests
 import voluptuous as vol
 
 from homeassistant.components.notify import (
-    ATTR_TITLE, PLATFORM_SCHEMA, ATTR_TITLE_DEFAULT, BaseNotificationService)
+    ATTR_TITLE,
+    PLATFORM_SCHEMA,
+    ATTR_TITLE_DEFAULT,
+    BaseNotificationService,
+)
 from homeassistant.const import CONF_API_KEY, CONTENT_TYPE_JSON
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
-_RESOURCE = 'https://api.instapush.im/v1/'
+_RESOURCE = "https://api.instapush.im/v1/"
 
-CONF_APP_SECRET = 'app_secret'
-CONF_EVENT = 'event'
-CONF_TRACKER = 'tracker'
+CONF_APP_SECRET = "app_secret"
+CONF_EVENT = "event"
+CONF_TRACKER = "tracker"
 
 DEFAULT_TIMEOUT = 10
 
-HTTP_HEADER_APPID = 'x-instapush-appid'
-HTTP_HEADER_APPSECRET = 'x-instapush-appsecret'
+HTTP_HEADER_APPID = "x-instapush-appid"
+HTTP_HEADER_APPSECRET = "x-instapush-appsecret"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_API_KEY): cv.string,
-    vol.Required(CONF_APP_SECRET): cv.string,
-    vol.Required(CONF_EVENT): cv.string,
-    vol.Required(CONF_TRACKER): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_API_KEY): cv.string,
+        vol.Required(CONF_APP_SECRET): cv.string,
+        vol.Required(CONF_EVENT): cv.string,
+        vol.Required(CONF_TRACKER): cv.string,
+    }
+)
 
 
 def get_service(hass, config, discovery_info=None):
@@ -45,23 +51,28 @@ def get_service(hass, config, discovery_info=None):
 
     try:
         response = requests.get(
-            '{}{}'.format(_RESOURCE, 'events/list'), headers=headers,
-            timeout=DEFAULT_TIMEOUT).json()
+            "{}{}".format(_RESOURCE, "events/list"),
+            headers=headers,
+            timeout=DEFAULT_TIMEOUT,
+        ).json()
     except ValueError:
         _LOGGER.error("Unexpected answer from Instapush API")
         return None
 
-    if 'error' in response:
-        _LOGGER.error(response['msg'])
+    if "error" in response:
+        _LOGGER.error(response["msg"])
         return None
 
-    if not [app for app in response if app['title'] == config[CONF_EVENT]]:
+    if not [app for app in response if app["title"] == config[CONF_EVENT]]:
         _LOGGER.error("No app match your given value")
         return None
 
     return InstapushNotificationService(
-        config.get(CONF_API_KEY), config.get(CONF_APP_SECRET),
-        config.get(CONF_EVENT), config.get(CONF_TRACKER))
+        config.get(CONF_API_KEY),
+        config.get(CONF_APP_SECRET),
+        config.get(CONF_EVENT),
+        config.get(CONF_TRACKER),
+    )
 
 
 class InstapushNotificationService(BaseNotificationService):
@@ -83,14 +94,18 @@ class InstapushNotificationService(BaseNotificationService):
         """Send a message to a user."""
         title = kwargs.get(ATTR_TITLE, ATTR_TITLE_DEFAULT)
         data = {
-            'event': self._event,
-            'trackers': {self._tracker: '{} : {}'.format(title, message)}
+            "event": self._event,
+            "trackers": {self._tracker: "{} : {}".format(title, message)},
         }
 
         response = requests.post(
-            '{}{}'.format(_RESOURCE, 'post'), data=json.dumps(data),
-            headers=self._headers, timeout=DEFAULT_TIMEOUT)
+            "{}{}".format(_RESOURCE, "post"),
+            data=json.dumps(data),
+            headers=self._headers,
+            timeout=DEFAULT_TIMEOUT,
+        )
 
-        if response.json()['status'] == 401:
-            _LOGGER.error(response.json()['msg'],
-                          "Please check your Instapush settings")
+        if response.json()["status"] == 401:
+            _LOGGER.error(
+                response.json()["msg"], "Please check your Instapush settings"
+            )

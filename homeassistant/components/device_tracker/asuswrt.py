@@ -14,68 +14,80 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.device_tracker import (
-    DOMAIN, PLATFORM_SCHEMA, DeviceScanner)
+    DOMAIN,
+    PLATFORM_SCHEMA,
+    DeviceScanner,
+)
 from homeassistant.const import (
-    CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_PORT, CONF_MODE,
-    CONF_PROTOCOL)
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    CONF_PORT,
+    CONF_MODE,
+    CONF_PROTOCOL,
+)
 
-REQUIREMENTS = ['pexpect==4.6.0']
+REQUIREMENTS = ["pexpect==4.6.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_PUB_KEY = 'pub_key'
-CONF_SSH_KEY = 'ssh_key'
-CONF_REQUIRE_IP = 'require_ip'
+CONF_PUB_KEY = "pub_key"
+CONF_SSH_KEY = "ssh_key"
+CONF_REQUIRE_IP = "require_ip"
 DEFAULT_SSH_PORT = 22
-SECRET_GROUP = 'Password or SSH Key'
+SECRET_GROUP = "Password or SSH Key"
 
 PLATFORM_SCHEMA = vol.All(
     cv.has_at_least_one_key(CONF_PASSWORD, CONF_PUB_KEY, CONF_SSH_KEY),
-    PLATFORM_SCHEMA.extend({
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Optional(CONF_PROTOCOL, default='ssh'): vol.In(['ssh', 'telnet']),
-        vol.Optional(CONF_MODE, default='router'): vol.In(['router', 'ap']),
-        vol.Optional(CONF_PORT, default=DEFAULT_SSH_PORT): cv.port,
-        vol.Optional(CONF_REQUIRE_IP, default=True): cv.boolean,
-        vol.Exclusive(CONF_PASSWORD, SECRET_GROUP): cv.string,
-        vol.Exclusive(CONF_SSH_KEY, SECRET_GROUP): cv.isfile,
-        vol.Exclusive(CONF_PUB_KEY, SECRET_GROUP): cv.isfile
-    }))
+    PLATFORM_SCHEMA.extend(
+        {
+            vol.Required(CONF_HOST): cv.string,
+            vol.Required(CONF_USERNAME): cv.string,
+            vol.Optional(CONF_PROTOCOL, default="ssh"): vol.In(["ssh", "telnet"]),
+            vol.Optional(CONF_MODE, default="router"): vol.In(["router", "ap"]),
+            vol.Optional(CONF_PORT, default=DEFAULT_SSH_PORT): cv.port,
+            vol.Optional(CONF_REQUIRE_IP, default=True): cv.boolean,
+            vol.Exclusive(CONF_PASSWORD, SECRET_GROUP): cv.string,
+            vol.Exclusive(CONF_SSH_KEY, SECRET_GROUP): cv.isfile,
+            vol.Exclusive(CONF_PUB_KEY, SECRET_GROUP): cv.isfile,
+        }
+    ),
+)
 
 
-_LEASES_CMD = 'cat /var/lib/misc/dnsmasq.leases'
+_LEASES_CMD = "cat /var/lib/misc/dnsmasq.leases"
 _LEASES_REGEX = re.compile(
-    r'\w+\s' +
-    r'(?P<mac>(([0-9a-f]{2}[:-]){5}([0-9a-f]{2})))\s' +
-    r'(?P<ip>([0-9]{1,3}[\.]){3}[0-9]{1,3})\s' +
-    r'(?P<host>([^\s]+))')
+    r"\w+\s"
+    + r"(?P<mac>(([0-9a-f]{2}[:-]){5}([0-9a-f]{2})))\s"
+    + r"(?P<ip>([0-9]{1,3}[\.]){3}[0-9]{1,3})\s"
+    + r"(?P<host>([^\s]+))"
+)
 
 # Command to get both 5GHz and 2.4GHz clients
-_WL_CMD = 'for dev in `nvram get wl_ifnames`; do wl -i $dev assoclist; done'
-_WL_REGEX = re.compile(
-    r'\w+\s' +
-    r'(?P<mac>(([0-9A-F]{2}[:-]){5}([0-9A-F]{2})))')
+_WL_CMD = "for dev in `nvram get wl_ifnames`; do wl -i $dev assoclist; done"
+_WL_REGEX = re.compile(r"\w+\s" + r"(?P<mac>(([0-9A-F]{2}[:-]){5}([0-9A-F]{2})))")
 
-_IP_NEIGH_CMD = 'ip neigh'
+_IP_NEIGH_CMD = "ip neigh"
 _IP_NEIGH_REGEX = re.compile(
-    r'(?P<ip>([0-9]{1,3}[\.]){3}[0-9]{1,3}|'
-    r'([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{0,4}(:[0-9a-fA-F]{1,4}){1,7})\s'
-    r'\w+\s'
-    r'\w+\s'
-    r'(\w+\s(?P<mac>(([0-9a-f]{2}[:-]){5}([0-9a-f]{2}))))?\s'
-    r'\s?(router)?'
-    r'\s?(nud)?'
-    r'(?P<status>(\w+))')
+    r"(?P<ip>([0-9]{1,3}[\.]){3}[0-9]{1,3}|"
+    r"([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{0,4}(:[0-9a-fA-F]{1,4}){1,7})\s"
+    r"\w+\s"
+    r"\w+\s"
+    r"(\w+\s(?P<mac>(([0-9a-f]{2}[:-]){5}([0-9a-f]{2}))))?\s"
+    r"\s?(router)?"
+    r"\s?(nud)?"
+    r"(?P<status>(\w+))"
+)
 
-_ARP_CMD = 'arp -n'
+_ARP_CMD = "arp -n"
 _ARP_REGEX = re.compile(
-    r'.+\s' +
-    r'\((?P<ip>([0-9]{1,3}[\.]){3}[0-9]{1,3})\)\s' +
-    r'.+\s' +
-    r'(?P<mac>(([0-9a-f]{2}[:-]){5}([0-9a-f]{2})))' +
-    r'\s' +
-    r'.*')
+    r".+\s"
+    + r"\((?P<ip>([0-9]{1,3}[\.]){3}[0-9]{1,3})\)\s"
+    + r".+\s"
+    + r"(?P<mac>(([0-9a-f]{2}[:-]){5}([0-9a-f]{2})))"
+    + r"\s"
+    + r".*"
+)
 
 
 def get_scanner(hass, config):
@@ -100,7 +112,7 @@ def _parse_lines(lines, regex):
     return results
 
 
-Device = namedtuple('Device', ['mac', 'ip', 'name'])
+Device = namedtuple("Device", ["mac", "ip", "name"])
 
 
 class AsusWrtDeviceScanner(DeviceScanner):
@@ -111,20 +123,21 @@ class AsusWrtDeviceScanner(DeviceScanner):
         """Initialize the scanner."""
         self.host = config[CONF_HOST]
         self.username = config[CONF_USERNAME]
-        self.password = config.get(CONF_PASSWORD, '')
-        self.ssh_key = config.get('ssh_key', config.get('pub_key', ''))
+        self.password = config.get(CONF_PASSWORD, "")
+        self.ssh_key = config.get("ssh_key", config.get("pub_key", ""))
         self.protocol = config[CONF_PROTOCOL]
         self.mode = config[CONF_MODE]
         self.port = config[CONF_PORT]
         self.require_ip = config[CONF_REQUIRE_IP]
 
-        if self.protocol == 'ssh':
+        if self.protocol == "ssh":
             self.connection = SshConnection(
-                self.host, self.port, self.username, self.password,
-                self.ssh_key)
+                self.host, self.port, self.username, self.password, self.ssh_key
+            )
         else:
             self.connection = TelnetConnection(
-                self.host, self.port, self.username, self.password)
+                self.host, self.port, self.username, self.password
+            )
 
         self.last_results = {}
 
@@ -151,7 +164,7 @@ class AsusWrtDeviceScanner(DeviceScanner):
         if not self.success_init:
             return False
 
-        _LOGGER.info('Checking Devices')
+        _LOGGER.info("Checking Devices")
         data = self.get_asuswrt_data()
         if not data:
             return False
@@ -169,7 +182,7 @@ class AsusWrtDeviceScanner(DeviceScanner):
         devices.update(self._get_wl())
         devices.update(self._get_arp())
         devices.update(self._get_neigh(devices))
-        if not self.mode == 'ap':
+        if not self.mode == "ap":
             devices.update(self._get_leases(devices))
 
         ret_devices = {}
@@ -185,7 +198,7 @@ class AsusWrtDeviceScanner(DeviceScanner):
         result = _parse_lines(lines, _WL_REGEX)
         devices = {}
         for device in result:
-            mac = device['mac'].upper()
+            mac = device["mac"].upper()
             devices[mac] = Device(mac, None, None)
         return devices
 
@@ -193,18 +206,18 @@ class AsusWrtDeviceScanner(DeviceScanner):
         lines = self.connection.run_command(_LEASES_CMD)
         if not lines:
             return {}
-        lines = [line for line in lines if not line.startswith('duid ')]
+        lines = [line for line in lines if not line.startswith("duid ")]
         result = _parse_lines(lines, _LEASES_REGEX)
         devices = {}
         for device in result:
             # For leases where the client doesn't set a hostname, ensure it
             # is blank and not '*', which breaks entity_id down the line.
-            host = device['host']
-            if host == '*':
-                host = ''
-            mac = device['mac'].upper()
+            host = device["host"]
+            if host == "*":
+                host = ""
+            mac = device["mac"].upper()
             if mac in cur_devices:
-                devices[mac] = Device(mac, device['ip'], host)
+                devices[mac] = Device(mac, device["ip"], host)
         return devices
 
     def _get_neigh(self, cur_devices):
@@ -214,14 +227,14 @@ class AsusWrtDeviceScanner(DeviceScanner):
         result = _parse_lines(lines, _IP_NEIGH_REGEX)
         devices = {}
         for device in result:
-            status = device['status']
-            if status is None or status.upper() != 'REACHABLE':
+            status = device["status"]
+            if status is None or status.upper() != "REACHABLE":
                 continue
-            if device['mac'] is not None:
-                mac = device['mac'].upper()
+            if device["mac"] is not None:
+                mac = device["mac"].upper()
                 old_device = cur_devices.get(mac)
                 old_ip = old_device.ip if old_device else None
-                devices[mac] = Device(mac, device.get('ip', old_ip), None)
+                devices[mac] = Device(mac, device.get("ip", old_ip), None)
         return devices
 
     def _get_arp(self):
@@ -231,9 +244,9 @@ class AsusWrtDeviceScanner(DeviceScanner):
         result = _parse_lines(lines, _ARP_REGEX)
         devices = {}
         for device in result:
-            if device['mac'] is not None:
-                mac = device['mac'].upper()
-                devices[mac] = Device(mac, device['ip'], None)
+            if device["mac"] is not None:
+                mac = device["mac"].upper()
+                devices[mac] = Device(mac, device["ip"], None)
         return devices
 
 
@@ -282,8 +295,8 @@ class SshConnection(_Connection):
                 self.connect()
             self._ssh.sendline(command)
             self._ssh.prompt()
-            lines = self._ssh.before.split(b'\n')[1:-1]
-            return [line.decode('utf-8') for line in lines]
+            lines = self._ssh.before.split(b"\n")[1:-1]
+            return [line.decode("utf-8") for line in lines]
         except exceptions.EOF as err:
             _LOGGER.error("Connection refused. %s", self._ssh.before)
             self.disconnect()
@@ -303,11 +316,21 @@ class SshConnection(_Connection):
 
         self._ssh = pxssh.pxssh()
         if self._ssh_key:
-            self._ssh.login(self._host, self._username, quiet=False,
-                            ssh_key=self._ssh_key, port=self._port)
+            self._ssh.login(
+                self._host,
+                self._username,
+                quiet=False,
+                ssh_key=self._ssh_key,
+                port=self._port,
+            )
         else:
-            self._ssh.login(self._host, self._username, quiet=False,
-                            password=self._password, port=self._port)
+            self._ssh.login(
+                self._host,
+                self._username,
+                quiet=False,
+                password=self._password,
+                port=self._port,
+            )
 
         super().connect()
 
@@ -346,10 +369,9 @@ class TelnetConnection(_Connection):
         try:
             if not self.connected:
                 self.connect()
-            self._telnet.write('{}\n'.format(command).encode('ascii'))
-            data = (self._telnet.read_until(self._prompt_string).
-                    split(b'\n')[1:-1])
-            return [line.decode('utf-8') for line in data]
+            self._telnet.write("{}\n".format(command).encode("ascii"))
+            data = self._telnet.read_until(self._prompt_string).split(b"\n")[1:-1]
+            return [line.decode("utf-8") for line in data]
         except EOFError:
             _LOGGER.error("Unexpected response from router")
             self.disconnect()
@@ -370,18 +392,18 @@ class TelnetConnection(_Connection):
     def connect(self):
         """Connect to the ASUS-WRT Telnet server."""
         self._telnet = telnetlib.Telnet(self._host)
-        self._telnet.read_until(b'login: ')
-        self._telnet.write((self._username + '\n').encode('ascii'))
-        self._telnet.read_until(b'Password: ')
-        self._telnet.write((self._password + '\n').encode('ascii'))
-        self._prompt_string = self._telnet.read_until(b'#').split(b'\n')[-1]
+        self._telnet.read_until(b"login: ")
+        self._telnet.write((self._username + "\n").encode("ascii"))
+        self._telnet.read_until(b"Password: ")
+        self._telnet.write((self._password + "\n").encode("ascii"))
+        self._prompt_string = self._telnet.read_until(b"#").split(b"\n")[-1]
 
         super().connect()
 
     def disconnect(self):
         """Disconnect the current Telnet connection."""
         try:
-            self._telnet.write('exit\n'.encode('ascii'))
+            self._telnet.write("exit\n".encode("ascii"))
         except Exception:  # pylint: disable=broad-except
             pass
 

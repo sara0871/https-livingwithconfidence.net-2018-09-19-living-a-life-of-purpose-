@@ -7,9 +7,14 @@ from typing import List
 
 # Based on code at
 # http://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-def print_progress(iteration: int, total: int, prefix: str = '',
-                   suffix: str = '', decimals: int = 2,
-                   bar_length: int = 68) -> None:
+def print_progress(
+    iteration: int,
+    total: int,
+    prefix: str = "",
+    suffix: str = "",
+    decimals: int = 2,
+    bar_length: int = 68,
+) -> None:
     """Print progress bar.
 
     Call in a loop to create terminal progress bar
@@ -23,9 +28,8 @@ def print_progress(iteration: int, total: int, prefix: str = '',
     """
     filled_length = int(round(bar_length * iteration / float(total)))
     percents = round(100.00 * (iteration / float(total)), decimals)
-    line = '#' * filled_length + '-' * (bar_length - filled_length)
-    sys.stdout.write('%s [%s] %s%s %s\r' % (prefix, line,
-                                            percents, '%', suffix))
+    line = "#" * filled_length + "-" * (bar_length - filled_length)
+    sys.stdout.write("%s [%s] %s%s %s\r" % (prefix, line, percents, "%", suffix))
     sys.stdout.flush()
     if iteration == total:
         print("\n")
@@ -35,63 +39,55 @@ def run(script_args: List) -> int:
     """Run the actual script."""
     from influxdb import InfluxDBClient
 
-    parser = argparse.ArgumentParser(
-        description="Migrate legacy influxDB.")
+    parser = argparse.ArgumentParser(description="Migrate legacy influxDB.")
     parser.add_argument(
-        '-d', '--dbname',
-        metavar='dbname',
-        required=True,
-        help="InfluxDB database name")
+        "-d", "--dbname", metavar="dbname", required=True, help="InfluxDB database name"
+    )
     parser.add_argument(
-        '-H', '--host',
-        metavar='host',
-        default='127.0.0.1',
-        help="InfluxDB host address")
+        "-H",
+        "--host",
+        metavar="host",
+        default="127.0.0.1",
+        help="InfluxDB host address",
+    )
     parser.add_argument(
-        '-P', '--port',
-        metavar='port',
-        default=8086,
-        help="InfluxDB host port")
+        "-P", "--port", metavar="port", default=8086, help="InfluxDB host port"
+    )
     parser.add_argument(
-        '-u', '--username',
-        metavar='username',
-        default='root',
-        help="InfluxDB username")
+        "-u", "--username", metavar="username", default="root", help="InfluxDB username"
+    )
     parser.add_argument(
-        '-p', '--password',
-        metavar='password',
-        default='root',
-        help="InfluxDB password")
+        "-p", "--password", metavar="password", default="root", help="InfluxDB password"
+    )
     parser.add_argument(
-        '-s', '--step',
-        metavar='step',
+        "-s",
+        "--step",
+        metavar="step",
         default=1000,
-        help="How many points to migrate at the same time")
+        help="How many points to migrate at the same time",
+    )
     parser.add_argument(
-        '-o', '--override-measurement',
-        metavar='override_measurement',
+        "-o",
+        "--override-measurement",
+        metavar="override_measurement",
         default="",
-        help="Store all your points in the same measurement")
+        help="Store all your points in the same measurement",
+    )
     parser.add_argument(
-        '-D', '--delete',
-        action='store_true',
-        default=False,
-        help="Delete old database")
-    parser.add_argument(
-        '--script',
-        choices=['influxdb_migrator'])
+        "-D", "--delete", action="store_true", default=False, help="Delete old database"
+    )
+    parser.add_argument("--script", choices=["influxdb_migrator"])
 
     args = parser.parse_args()
 
     # Get client for old DB
-    client = InfluxDBClient(args.host, args.port,
-                            args.username, args.password)
+    client = InfluxDBClient(args.host, args.port, args.username, args.password)
     client.switch_database(args.dbname)
     # Get DB list
-    db_list = [db['name'] for db in client.get_list_database()]
+    db_list = [db["name"] for db in client.get_list_database()]
     # Get measurements of the old DB
-    res = client.query('SHOW MEASUREMENTS')
-    measurements = [measurement['name'] for measurement in res.get_points()]
+    res = client.query("SHOW MEASUREMENTS")
+    measurements = [measurement["name"] for measurement in res.get_points()]
     nb_measurements = len(measurements)
     # Move data
     # Get old DB name
@@ -102,8 +98,10 @@ def run(script_args: List) -> int:
     # Copy data to the old DB
     print("Cloning from {} to {}".format(args.dbname, old_dbname))
     for index, measurement in enumerate(measurements):
-        client.query('''SELECT * INTO {}..:MEASUREMENT FROM '''
-                     '"{}" GROUP BY *'.format(old_dbname, measurement))
+        client.query(
+            """SELECT * INTO {}..:MEASUREMENT FROM """
+            '"{}" GROUP BY *'.format(old_dbname, measurement)
+        )
         # Print progress
         print_progress(index + 1, nb_measurements)
 
@@ -113,8 +111,9 @@ def run(script_args: List) -> int:
     client.create_database(args.dbname)
     client.switch_database(old_dbname)
     # Get client for new DB
-    new_client = InfluxDBClient(args.host, args.port, args.username,
-                                args.password, args.dbname)
+    new_client = InfluxDBClient(
+        args.host, args.port, args.username, args.password, args.dbname
+    )
     # Counter of points without time
     point_wt_time = 0
 
@@ -124,10 +123,10 @@ def run(script_args: List) -> int:
 
         # Get tag list
         res = client.query('''SHOW TAG KEYS FROM "{}"'''.format(measurement))
-        tags = [v['tagKey'] for v in res.get_points()]
+        tags = [v["tagKey"] for v in res.get_points()]
         # Get field list
         res = client.query('''SHOW FIELD KEYS FROM "{}"'''.format(measurement))
-        fields = [v['fieldKey'] for v in res.get_points()]
+        fields = [v["fieldKey"] for v in res.get_points()]
         # Get points, convert and send points to the new DB
         offset = 0
         while True:
@@ -135,12 +134,12 @@ def run(script_args: List) -> int:
             # Prepare new points
             new_points = []
             # Get points
-            res = client.query('SELECT * FROM "{}" LIMIT {} OFFSET '
-                               '{}'.format(measurement, args.step, offset))
+            res = client.query(
+                'SELECT * FROM "{}" LIMIT {} OFFSET '
+                "{}".format(measurement, args.step, offset)
+            )
             for point in res.get_points():
-                new_point = {"tags": {},
-                             "fields": {},
-                             "time": None}
+                new_point = {"tags": {}, "fields": {}, "time": None}
                 if args.override_measurement:
                     new_point["measurement"] = args.override_measurement
                 else:

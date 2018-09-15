@@ -17,13 +17,12 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Current Version"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string}
+)
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Version sensor platform."""
     name = config.get(CONF_NAME)
 

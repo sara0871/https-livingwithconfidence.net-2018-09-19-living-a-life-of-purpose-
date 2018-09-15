@@ -8,15 +8,20 @@ import asyncio
 
 from homeassistant.components.switch import SwitchDevice
 from homeassistant.components.android_ip_webcam import (
-    KEY_MAP, ICON_MAP, DATA_IP_WEBCAM, AndroidIPCamEntity, CONF_HOST,
-    CONF_NAME, CONF_SWITCHES)
+    KEY_MAP,
+    ICON_MAP,
+    DATA_IP_WEBCAM,
+    AndroidIPCamEntity,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_SWITCHES,
+)
 
-DEPENDENCIES = ['android_ip_webcam']
+DEPENDENCIES = ["android_ip_webcam"]
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the IP Webcam switch platform."""
     if discovery_info is None:
         return
@@ -43,7 +48,7 @@ class IPWebcamSettingsSwitch(AndroidIPCamEntity, SwitchDevice):
 
         self._setting = setting
         self._mapped_name = KEY_MAP.get(self._setting, self._setting)
-        self._name = '{} {}'.format(name, self._mapped_name)
+        self._name = "{} {}".format(name, self._mapped_name)
         self._state = False
 
     @property
@@ -64,11 +69,11 @@ class IPWebcamSettingsSwitch(AndroidIPCamEntity, SwitchDevice):
     @asyncio.coroutine
     def async_turn_on(self, **kwargs):
         """Turn device on."""
-        if self._setting == 'torch':
+        if self._setting == "torch":
             yield from self._ipcam.torch(activate=True)
-        elif self._setting == 'focus':
+        elif self._setting == "focus":
             yield from self._ipcam.focus(activate=True)
-        elif self._setting == 'video_recording':
+        elif self._setting == "video_recording":
             yield from self._ipcam.record(record=True)
         else:
             yield from self._ipcam.change_setting(self._setting, True)
@@ -78,11 +83,11 @@ class IPWebcamSettingsSwitch(AndroidIPCamEntity, SwitchDevice):
     @asyncio.coroutine
     def async_turn_off(self, **kwargs):
         """Turn device off."""
-        if self._setting == 'torch':
+        if self._setting == "torch":
             yield from self._ipcam.torch(activate=False)
-        elif self._setting == 'focus':
+        elif self._setting == "focus":
             yield from self._ipcam.focus(activate=False)
-        elif self._setting == 'video_recording':
+        elif self._setting == "video_recording":
             yield from self._ipcam.record(record=False)
         else:
             yield from self._ipcam.change_setting(self._setting, False)
@@ -92,4 +97,4 @@ class IPWebcamSettingsSwitch(AndroidIPCamEntity, SwitchDevice):
     @property
     def icon(self):
         """Return the icon for the switch."""
-        return ICON_MAP.get(self._setting, 'mdi:flash')
+        return ICON_MAP.get(self._setting, "mdi:flash")

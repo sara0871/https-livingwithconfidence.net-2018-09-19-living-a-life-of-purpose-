@@ -14,40 +14,38 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['pycups==1.9.73']
+REQUIREMENTS = ["pycups==1.9.73"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_DEVICE_URI = 'device_uri'
-ATTR_PRINTER_INFO = 'printer_info'
-ATTR_PRINTER_IS_SHARED = 'printer_is_shared'
-ATTR_PRINTER_LOCATION = 'printer_location'
-ATTR_PRINTER_MODEL = 'printer_model'
-ATTR_PRINTER_STATE_MESSAGE = 'printer_state_message'
-ATTR_PRINTER_STATE_REASON = 'printer_state_reason'
-ATTR_PRINTER_TYPE = 'printer_type'
-ATTR_PRINTER_URI_SUPPORTED = 'printer_uri_supported'
+ATTR_DEVICE_URI = "device_uri"
+ATTR_PRINTER_INFO = "printer_info"
+ATTR_PRINTER_IS_SHARED = "printer_is_shared"
+ATTR_PRINTER_LOCATION = "printer_location"
+ATTR_PRINTER_MODEL = "printer_model"
+ATTR_PRINTER_STATE_MESSAGE = "printer_state_message"
+ATTR_PRINTER_STATE_REASON = "printer_state_reason"
+ATTR_PRINTER_TYPE = "printer_type"
+ATTR_PRINTER_URI_SUPPORTED = "printer_uri_supported"
 
-CONF_PRINTERS = 'printers'
+CONF_PRINTERS = "printers"
 
-DEFAULT_HOST = '127.0.0.1'
+DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 631
 
-ICON = 'mdi:printer'
+ICON = "mdi:printer"
 
 SCAN_INTERVAL = timedelta(minutes=1)
 
-PRINTER_STATES = {
-    3: 'idle',
-    4: 'printing',
-    5: 'stopped',
-}
+PRINTER_STATES = {3: "idle", 4: "printing", 5: "stopped"}
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_PRINTERS): vol.All(cv.ensure_list, [cv.string]),
-    vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_PRINTERS): vol.All(cv.ensure_list, [cv.string]),
+        vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -93,10 +91,13 @@ class CupsSensor(Entity):
         """Return the state of the sensor."""
         if self._printer is not None:
             try:
-                return next(v for k, v in PRINTER_STATES.items()
-                            if self._printer['printer-state'] == k)
+                return next(
+                    v
+                    for k, v in PRINTER_STATES.items()
+                    if self._printer["printer-state"] == k
+                )
             except StopIteration:
-                return self._printer['printer-state']
+                return self._printer["printer-state"]
 
     @property
     def icon(self):
@@ -108,18 +109,15 @@ class CupsSensor(Entity):
         """Return the state attributes of the sensor."""
         if self._printer is not None:
             return {
-                ATTR_DEVICE_URI: self._printer['device-uri'],
-                ATTR_PRINTER_INFO: self._printer['printer-info'],
-                ATTR_PRINTER_IS_SHARED: self._printer['printer-is-shared'],
-                ATTR_PRINTER_LOCATION: self._printer['printer-location'],
-                ATTR_PRINTER_MODEL: self._printer['printer-make-and-model'],
-                ATTR_PRINTER_STATE_MESSAGE:
-                    self._printer['printer-state-message'],
-                ATTR_PRINTER_STATE_REASON:
-                    self._printer['printer-state-reasons'],
-                ATTR_PRINTER_TYPE: self._printer['printer-type'],
-                ATTR_PRINTER_URI_SUPPORTED:
-                    self._printer['printer-uri-supported'],
+                ATTR_DEVICE_URI: self._printer["device-uri"],
+                ATTR_PRINTER_INFO: self._printer["printer-info"],
+                ATTR_PRINTER_IS_SHARED: self._printer["printer-is-shared"],
+                ATTR_PRINTER_LOCATION: self._printer["printer-location"],
+                ATTR_PRINTER_MODEL: self._printer["printer-make-and-model"],
+                ATTR_PRINTER_STATE_MESSAGE: self._printer["printer-state-message"],
+                ATTR_PRINTER_STATE_REASON: self._printer["printer-state-reasons"],
+                ATTR_PRINTER_TYPE: self._printer["printer-type"],
+                ATTR_PRINTER_URI_SUPPORTED: self._printer["printer-uri-supported"],
             }
 
     def update(self):

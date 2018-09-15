@@ -6,28 +6,41 @@ https://home-assistant.io/components/binary_sensor.ihc/
 import voluptuous as vol
 
 from homeassistant.components.binary_sensor import (
-    BinarySensorDevice, PLATFORM_SCHEMA, DEVICE_CLASSES_SCHEMA)
+    BinarySensorDevice,
+    PLATFORM_SCHEMA,
+    DEVICE_CLASSES_SCHEMA,
+)
 from homeassistant.components.ihc import (
-    validate_name, IHC_DATA, IHC_CONTROLLER, IHC_INFO)
+    validate_name,
+    IHC_DATA,
+    IHC_CONTROLLER,
+    IHC_INFO,
+)
 from homeassistant.components.ihc.const import CONF_INVERTING
 from homeassistant.components.ihc.ihcdevice import IHCDevice
-from homeassistant.const import (
-    CONF_NAME, CONF_TYPE, CONF_ID, CONF_BINARY_SENSORS)
+from homeassistant.const import CONF_NAME, CONF_TYPE, CONF_ID, CONF_BINARY_SENSORS
 import homeassistant.helpers.config_validation as cv
 
-DEPENDENCIES = ['ihc']
+DEPENDENCIES = ["ihc"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_BINARY_SENSORS, default=[]):
-        vol.All(cv.ensure_list, [
-            vol.All({
-                vol.Required(CONF_ID): cv.positive_int,
-                vol.Optional(CONF_NAME): cv.string,
-                vol.Optional(CONF_TYPE): DEVICE_CLASSES_SCHEMA,
-                vol.Optional(CONF_INVERTING, default=False): cv.boolean,
-            }, validate_name)
-        ])
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_BINARY_SENSORS, default=[]): vol.All(
+            cv.ensure_list,
+            [
+                vol.All(
+                    {
+                        vol.Required(CONF_ID): cv.positive_int,
+                        vol.Optional(CONF_NAME): cv.string,
+                        vol.Optional(CONF_TYPE): DEVICE_CLASSES_SCHEMA,
+                        vol.Optional(CONF_INVERTING, default=False): cv.boolean,
+                    },
+                    validate_name,
+                )
+            ],
+        )
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -37,13 +50,18 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     devices = []
     if discovery_info:
         for name, device in discovery_info.items():
-            ihc_id = device['ihc_id']
-            product_cfg = device['product_cfg']
-            product = device['product']
-            sensor = IHCBinarySensor(ihc_controller, name, ihc_id, info,
-                                     product_cfg.get(CONF_TYPE),
-                                     product_cfg[CONF_INVERTING],
-                                     product)
+            ihc_id = device["ihc_id"]
+            product_cfg = device["product_cfg"]
+            product = device["product"]
+            sensor = IHCBinarySensor(
+                ihc_controller,
+                name,
+                ihc_id,
+                info,
+                product_cfg.get(CONF_TYPE),
+                product_cfg[CONF_INVERTING],
+                product,
+            )
             devices.append(sensor)
     else:
         binary_sensors = config[CONF_BINARY_SENSORS]
@@ -52,8 +70,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             name = sensor_cfg[CONF_NAME]
             sensor_type = sensor_cfg.get(CONF_TYPE)
             inverting = sensor_cfg[CONF_INVERTING]
-            sensor = IHCBinarySensor(ihc_controller, name, ihc_id, info,
-                                     sensor_type, inverting)
+            sensor = IHCBinarySensor(
+                ihc_controller, name, ihc_id, info, sensor_type, inverting
+            )
             devices.append(sensor)
 
     add_entities(devices)
@@ -66,9 +85,16 @@ class IHCBinarySensor(IHCDevice, BinarySensorDevice):
     or function block, but it must be a boolean ON/OFF resources.
     """
 
-    def __init__(self, ihc_controller, name, ihc_id: int, info: bool,
-                 sensor_type: str, inverting: bool,
-                 product=None) -> None:
+    def __init__(
+        self,
+        ihc_controller,
+        name,
+        ihc_id: int,
+        info: bool,
+        sensor_type: str,
+        inverting: bool,
+        product=None,
+    ) -> None:
         """Initialize the IHC binary sensor."""
         super().__init__(ihc_controller, name, ihc_id, info, product)
         self._state = None

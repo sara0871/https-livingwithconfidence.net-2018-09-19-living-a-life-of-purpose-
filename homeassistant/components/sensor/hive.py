@@ -8,12 +8,16 @@ from homeassistant.const import TEMP_CELSIUS
 from homeassistant.components.hive import DATA_HIVE
 from homeassistant.helpers.entity import Entity
 
-DEPENDENCIES = ['hive']
+DEPENDENCIES = ["hive"]
 
-FRIENDLY_NAMES = {'Hub_OnlineStatus': 'Hive Hub Status',
-                  'Hive_OutsideTemperature': 'Outside Temperature'}
-DEVICETYPE_ICONS = {'Hub_OnlineStatus': 'mdi:switch',
-                    'Hive_OutsideTemperature': 'mdi:thermometer'}
+FRIENDLY_NAMES = {
+    "Hub_OnlineStatus": "Hive Hub Status",
+    "Hive_OutsideTemperature": "Outside Temperature",
+}
+DEVICETYPE_ICONS = {
+    "Hub_OnlineStatus": "mdi:switch",
+    "Hive_OutsideTemperature": "mdi:thermometer",
+}
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -22,8 +26,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         return
     session = hass.data.get(DATA_HIVE)
 
-    if (discovery_info["HA_DeviceType"] == "Hub_OnlineStatus" or
-            discovery_info["HA_DeviceType"] == "Hive_OutsideTemperature"):
+    if (
+        discovery_info["HA_DeviceType"] == "Hub_OnlineStatus"
+        or discovery_info["HA_DeviceType"] == "Hive_OutsideTemperature"
+    ):
         add_entities([HiveSensorEntity(session, discovery_info)])
 
 
@@ -36,13 +42,12 @@ class HiveSensorEntity(Entity):
         self.device_type = hivedevice["HA_DeviceType"]
         self.node_device_type = hivedevice["Hive_DeviceType"]
         self.session = hivesession
-        self.data_updatesource = '{}.{}'.format(self.device_type,
-                                                self.node_id)
+        self.data_updatesource = "{}.{}".format(self.device_type, self.node_id)
         self.session.entities.append(self)
 
     def handle_update(self, updatesource):
         """Handle the new update request."""
-        if '{}.{}'.format(self.device_type, self.node_id) not in updatesource:
+        if "{}.{}".format(self.device_type, self.node_id) not in updatesource:
             self.schedule_update_ha_state()
 
     @property

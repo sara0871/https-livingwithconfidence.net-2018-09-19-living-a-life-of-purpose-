@@ -13,44 +13,46 @@ import async_timeout
 import voluptuous as vol
 
 from homeassistant.const import (
-    CONF_TIMEOUT, CONF_USERNAME, CONF_PASSWORD, CONF_URL, CONF_PAYLOAD,
-    CONF_METHOD, CONF_HEADERS)
+    CONF_TIMEOUT,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_URL,
+    CONF_PAYLOAD,
+    CONF_METHOD,
+    CONF_HEADERS,
+)
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 
-DOMAIN = 'rest_command'
+DOMAIN = "rest_command"
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT = 10
-DEFAULT_METHOD = 'get'
+DEFAULT_METHOD = "get"
 
-SUPPORT_REST_METHODS = [
-    'get',
-    'post',
-    'put',
-    'delete',
-]
+SUPPORT_REST_METHODS = ["get", "post", "put", "delete"]
 
-CONF_CONTENT_TYPE = 'content_type'
+CONF_CONTENT_TYPE = "content_type"
 
-COMMAND_SCHEMA = vol.Schema({
-    vol.Required(CONF_URL): cv.template,
-    vol.Optional(CONF_METHOD, default=DEFAULT_METHOD):
-        vol.All(vol.Lower, vol.In(SUPPORT_REST_METHODS)),
-    vol.Optional(CONF_HEADERS): vol.Schema({cv.string: cv.string}),
-    vol.Inclusive(CONF_USERNAME, 'authentication'): cv.string,
-    vol.Inclusive(CONF_PASSWORD, 'authentication'): cv.string,
-    vol.Optional(CONF_PAYLOAD): cv.template,
-    vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): vol.Coerce(int),
-    vol.Optional(CONF_CONTENT_TYPE): cv.string
-})
+COMMAND_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_URL): cv.template,
+        vol.Optional(CONF_METHOD, default=DEFAULT_METHOD): vol.All(
+            vol.Lower, vol.In(SUPPORT_REST_METHODS)
+        ),
+        vol.Optional(CONF_HEADERS): vol.Schema({cv.string: cv.string}),
+        vol.Inclusive(CONF_USERNAME, "authentication"): cv.string,
+        vol.Inclusive(CONF_PASSWORD, "authentication"): cv.string,
+        vol.Optional(CONF_PAYLOAD): cv.template,
+        vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): vol.Coerce(int),
+        vol.Optional(CONF_CONTENT_TYPE): cv.string,
+    }
+)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        cv.slug: COMMAND_SCHEMA,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: vol.Schema({cv.slug: COMMAND_SCHEMA})}, extra=vol.ALLOW_EXTRA
+)
 
 
 @asyncio.coroutine
@@ -69,7 +71,7 @@ def async_setup(hass, config):
         auth = None
         if CONF_USERNAME in command_config:
             username = command_config[CONF_USERNAME]
-            password = command_config.get(CONF_PASSWORD, '')
+            password = command_config.get(CONF_PASSWORD, "")
             auth = aiohttp.BasicAuth(username, password=password)
 
         template_payload = None
@@ -93,8 +95,8 @@ def async_setup(hass, config):
             payload = None
             if template_payload:
                 payload = bytes(
-                    template_payload.async_render(variables=service.data),
-                    'utf-8')
+                    template_payload.async_render(variables=service.data), "utf-8"
+                )
 
             try:
                 with async_timeout.timeout(timeout, loop=hass.loop):
@@ -102,14 +104,13 @@ def async_setup(hass, config):
                         template_url.async_render(variables=service.data),
                         data=payload,
                         auth=auth,
-                        headers=headers
+                        headers=headers,
                     )
 
                 if request.status < 400:
                     _LOGGER.info("Success call %s.", request.url)
                 else:
-                    _LOGGER.warning(
-                        "Error %d on call %s.", request.status, request.url)
+                    _LOGGER.warning("Error %d on call %s.", request.status, request.url)
 
             except asyncio.TimeoutError:
                 _LOGGER.warning("Timeout call %s.", request.url)

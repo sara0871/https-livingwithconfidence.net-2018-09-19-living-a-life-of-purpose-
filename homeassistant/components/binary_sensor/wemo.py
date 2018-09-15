@@ -10,7 +10,7 @@ import requests
 from homeassistant.components.binary_sensor import BinarySensorDevice
 from homeassistant.exceptions import PlatformNotReady
 
-DEPENDENCIES = ['wemo']
+DEPENDENCIES = ["wemo"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,14 +20,16 @@ def setup_platform(hass, config, add_entities_callback, discovery_info=None):
     from pywemo import discovery
 
     if discovery_info is not None:
-        location = discovery_info['ssdp_description']
-        mac = discovery_info['mac_address']
+        location = discovery_info["ssdp_description"]
+        mac = discovery_info["mac_address"]
 
         try:
             device = discovery.device_from_description(location, mac)
-        except (requests.exceptions.ConnectionError,
-                requests.exceptions.Timeout) as err:
-            _LOGGER.error('Unable to access %s (%s)', location, err)
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+        ) as err:
+            _LOGGER.error("Unable to access %s (%s)", location, err)
             raise PlatformNotReady
 
         if device:
@@ -52,7 +54,7 @@ class WemoBinarySensor(BinarySensorDevice):
         updated = self.wemo.subscription_update(_type, _params)
         self._update(force_update=(not updated))
 
-        if not hasattr(self, 'hass'):
+        if not hasattr(self, "hass"):
             return
         self.schedule_update_ha_state()
 
@@ -84,5 +86,4 @@ class WemoBinarySensor(BinarySensorDevice):
         try:
             self._state = self.wemo.get_state(force_update)
         except AttributeError as err:
-            _LOGGER.warning(
-                "Could not update status for %s (%s)", self.name, err)
+            _LOGGER.warning("Could not update status for %s (%s)", self.name, err)

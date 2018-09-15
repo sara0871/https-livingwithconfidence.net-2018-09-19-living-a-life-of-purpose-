@@ -10,15 +10,12 @@ import json
 import requests
 import voluptuous as vol
 
-from homeassistant.components.notify import (
-    BaseNotificationService, PLATFORM_SCHEMA)
+from homeassistant.components.notify import BaseNotificationService, PLATFORM_SCHEMA
 from homeassistant.const import CONF_RESOURCE
 import homeassistant.helpers.config_validation as cv
 
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_RESOURCE): cv.url,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({vol.Required(CONF_RESOURCE): cv.url})
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,15 +36,15 @@ class SynologyChatNotificationService(BaseNotificationService):
 
     def send_message(self, message="", **kwargs):
         """Send a message to a user."""
-        data = {
-            'text': message
-        }
+        data = {"text": message}
 
-        to_send = 'payload={}'.format(json.dumps(data))
+        to_send = "payload={}".format(json.dumps(data))
 
         response = requests.post(self._resource, data=to_send, timeout=10)
 
         if response.status_code not in (200, 201):
             _LOGGER.exception(
                 "Error sending message. Response %d: %s:",
-                response.status_code, response.reason)
+                response.status_code,
+                response.reason,
+            )

@@ -7,9 +7,9 @@ https://home-assistant.io/components/sensor.august/
 from datetime import timedelta, datetime
 
 from homeassistant.components.august import DATA_AUGUST
-from homeassistant.components.binary_sensor import (BinarySensorDevice)
+from homeassistant.components.binary_sensor import BinarySensorDevice
 
-DEPENDENCIES = ['august']
+DEPENDENCIES = ["august"]
 
 SCAN_INTERVAL = timedelta(seconds=5)
 
@@ -22,21 +22,21 @@ def _retrieve_online_state(data, doorbell):
 
 def _retrieve_motion_state(data, doorbell):
     from august.activity import ActivityType
-    return _activity_time_based_state(data, doorbell,
-                                      [ActivityType.DOORBELL_MOTION,
-                                       ActivityType.DOORBELL_DING])
+
+    return _activity_time_based_state(
+        data, doorbell, [ActivityType.DOORBELL_MOTION, ActivityType.DOORBELL_DING]
+    )
 
 
 def _retrieve_ding_state(data, doorbell):
     from august.activity import ActivityType
-    return _activity_time_based_state(data, doorbell,
-                                      [ActivityType.DOORBELL_DING])
+
+    return _activity_time_based_state(data, doorbell, [ActivityType.DOORBELL_DING])
 
 
 def _activity_time_based_state(data, doorbell, activity_types):
     """Get the latest state of the sensor."""
-    latest = data.get_latest_device_activity(doorbell.device_id,
-                                             *activity_types)
+    latest = data.get_latest_device_activity(doorbell.device_id, *activity_types)
 
     if latest is not None:
         start = latest.activity_start_time
@@ -47,9 +47,9 @@ def _activity_time_based_state(data, doorbell, activity_types):
 
 # Sensor types: Name, device_class, state_provider
 SENSOR_TYPES = {
-    'doorbell_ding': ['Ding', 'occupancy', _retrieve_ding_state],
-    'doorbell_motion': ['Motion', 'motion', _retrieve_motion_state],
-    'doorbell_online': ['Online', 'connectivity', _retrieve_online_state],
+    "doorbell_ding": ["Ding", "occupancy", _retrieve_ding_state],
+    "doorbell_motion": ["Motion", "motion", _retrieve_motion_state],
+    "doorbell_online": ["Online", "connectivity", _retrieve_online_state],
 }
 
 
@@ -88,8 +88,9 @@ class AugustBinarySensor(BinarySensorDevice):
     @property
     def name(self):
         """Return the name of the binary sensor."""
-        return "{} {}".format(self._doorbell.device_name,
-                              SENSOR_TYPES[self._sensor_type][0])
+        return "{} {}".format(
+            self._doorbell.device_name, SENSOR_TYPES[self._sensor_type][0]
+        )
 
     def update(self):
         """Get the latest state of the sensor."""

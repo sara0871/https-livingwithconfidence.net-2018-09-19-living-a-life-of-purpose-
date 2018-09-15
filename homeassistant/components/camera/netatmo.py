@@ -11,22 +11,23 @@ import voluptuous as vol
 
 from homeassistant.const import CONF_VERIFY_SSL
 from homeassistant.components.netatmo import CameraData
-from homeassistant.components.camera import (Camera, PLATFORM_SCHEMA)
+from homeassistant.components.camera import Camera, PLATFORM_SCHEMA
 from homeassistant.helpers import config_validation as cv
 
-DEPENDENCIES = ['netatmo']
+DEPENDENCIES = ["netatmo"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_HOME = 'home'
-CONF_CAMERAS = 'cameras'
+CONF_HOME = "home"
+CONF_CAMERAS = "cameras"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_VERIFY_SSL, default=True): cv.boolean,
-    vol.Optional(CONF_HOME): cv.string,
-    vol.Optional(CONF_CAMERAS, default=[]):
-        vol.All(cv.ensure_list, [cv.string]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_VERIFY_SSL, default=True): cv.boolean,
+        vol.Optional(CONF_HOME): cv.string,
+        vol.Optional(CONF_CAMERAS, default=[]): vol.All(cv.ensure_list, [cv.string]),
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -35,16 +36,20 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     home = config.get(CONF_HOME)
     verify_ssl = config.get(CONF_VERIFY_SSL, True)
     import pyatmo
+
     try:
         data = CameraData(netatmo.NETATMO_AUTH, home)
         for camera_name in data.get_camera_names():
             camera_type = data.get_camera_type(camera=camera_name, home=home)
             if CONF_CAMERAS in config:
-                if config[CONF_CAMERAS] != [] and \
-                   camera_name not in config[CONF_CAMERAS]:
+                if (
+                    config[CONF_CAMERAS] != []
+                    and camera_name not in config[CONF_CAMERAS]
+                ):
                     continue
-            add_entities([NetatmoCamera(data, camera_name, home,
-                                        camera_type, verify_ssl)])
+            add_entities(
+                [NetatmoCamera(data, camera_name, home, camera_type, verify_ssl)]
+            )
     except pyatmo.NoDevice:
         return None
 
@@ -59,34 +64,40 @@ class NetatmoCamera(Camera):
         self._camera_name = camera_name
         self._verify_ssl = verify_ssl
         if home:
-            self._name = home + ' / ' + camera_name
+            self._name = home + " / " + camera_name
         else:
             self._name = camera_name
         self._vpnurl, self._localurl = self._data.camera_data.cameraUrls(
             camera=camera_name
-            )
+        )
         self._cameratype = camera_type
 
     def camera_image(self):
         """Return a still image response from the camera."""
         try:
             if self._localurl:
-                response = requests.get('{0}/live/snapshot_720.jpg'.format(
-                    self._localurl), timeout=10)
+                response = requests.get(
+                    "{0}/live/snapshot_720.jpg".format(self._localurl), timeout=10
+                )
             elif self._vpnurl:
-                response = requests.get('{0}/live/snapshot_720.jpg'.format(
-                    self._vpnurl), timeout=10, verify=self._verify_ssl)
+                response = requests.get(
+                    "{0}/live/snapshot_720.jpg".format(self._vpnurl),
+                    timeout=10,
+                    verify=self._verify_ssl,
+                )
             else:
                 _LOGGER.error("Welcome VPN URL is None")
                 self._data.update()
-                (self._vpnurl, self._localurl) = \
-                    self._data.camera_data.cameraUrls(camera=self._camera_name)
+                (self._vpnurl, self._localurl) = self._data.camera_data.cameraUrls(
+                    camera=self._camera_name
+                )
                 return None
         except requests.exceptions.RequestException as error:
             _LOGGER.error("Welcome URL changed: %s", error)
             self._data.update()
-            (self._vpnurl, self._localurl) = \
-                self._data.camera_data.cameraUrls(camera=self._camera_name)
+            (self._vpnurl, self._localurl) = self._data.camera_data.cameraUrls(
+                camera=self._camera_name
+            )
             return None
         return response.content
 

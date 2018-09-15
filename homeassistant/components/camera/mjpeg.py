@@ -15,35 +15,44 @@ from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 import voluptuous as vol
 
 from homeassistant.const import (
-    CONF_NAME, CONF_USERNAME, CONF_PASSWORD, CONF_AUTHENTICATION,
-    HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION)
-from homeassistant.components.camera import (PLATFORM_SCHEMA, Camera)
+    CONF_NAME,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_AUTHENTICATION,
+    HTTP_BASIC_AUTHENTICATION,
+    HTTP_DIGEST_AUTHENTICATION,
+)
+from homeassistant.components.camera import PLATFORM_SCHEMA, Camera
 from homeassistant.helpers.aiohttp_client import (
-    async_get_clientsession, async_aiohttp_proxy_web)
+    async_get_clientsession,
+    async_aiohttp_proxy_web,
+)
 from homeassistant.helpers import config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_MJPEG_URL = 'mjpeg_url'
-CONF_STILL_IMAGE_URL = 'still_image_url'
-CONTENT_TYPE_HEADER = 'Content-Type'
+CONF_MJPEG_URL = "mjpeg_url"
+CONF_STILL_IMAGE_URL = "still_image_url"
+CONTENT_TYPE_HEADER = "Content-Type"
 
-DEFAULT_NAME = 'Mjpeg Camera'
+DEFAULT_NAME = "Mjpeg Camera"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_MJPEG_URL): cv.url,
-    vol.Optional(CONF_STILL_IMAGE_URL): cv.url,
-    vol.Optional(CONF_AUTHENTICATION, default=HTTP_BASIC_AUTHENTICATION):
-        vol.In([HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION]),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_USERNAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_MJPEG_URL): cv.url,
+        vol.Optional(CONF_STILL_IMAGE_URL): cv.url,
+        vol.Optional(CONF_AUTHENTICATION, default=HTTP_BASIC_AUTHENTICATION): vol.In(
+            [HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION]
+        ),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_USERNAME): cv.string,
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up a MJPEG IP Camera."""
     if discovery_info:
         config = PLATFORM_SCHEMA(discovery_info)
@@ -52,13 +61,13 @@ def async_setup_platform(hass, config, async_add_entities,
 
 def extract_image_from_mjpeg(stream):
     """Take in a MJPEG stream object, return the jpg from it."""
-    data = b''
+    data = b""
     for chunk in stream:
         data += chunk
-        jpg_start = data.find(b'\xff\xd8')
-        jpg_end = data.find(b'\xff\xd9')
+        jpg_start = data.find(b"\xff\xd8")
+        jpg_end = data.find(b"\xff\xd9")
         if jpg_start != -1 and jpg_end != -1:
-            jpg = data[jpg_start:jpg_end + 2]
+            jpg = data[jpg_start : jpg_end + 2]
             return jpg
 
 
@@ -78,25 +87,25 @@ class MjpegCamera(Camera):
         self._auth = None
         if self._username and self._password:
             if self._authentication == HTTP_BASIC_AUTHENTICATION:
-                self._auth = aiohttp.BasicAuth(
-                    self._username, password=self._password
-                )
+                self._auth = aiohttp.BasicAuth(self._username, password=self._password)
 
     @asyncio.coroutine
     def async_camera_image(self):
         """Return a still image response from the camera."""
         # DigestAuth is not supported
-        if self._authentication == HTTP_DIGEST_AUTHENTICATION or \
-           self._still_image_url is None:
-            image = yield from self.hass.async_add_job(
-                self.camera_image)
+        if (
+            self._authentication == HTTP_DIGEST_AUTHENTICATION
+            or self._still_image_url is None
+        ):
+            image = yield from self.hass.async_add_job(self.camera_image)
             return image
 
         websession = async_get_clientsession(self.hass)
         try:
             with async_timeout.timeout(10, loop=self.hass.loop):
                 response = yield from websession.get(
-                    self._still_image_url, auth=self._auth)
+                    self._still_image_url, auth=self._auth
+                )
 
                 image = yield from response.read()
                 return image
@@ -114,8 +123,7 @@ class MjpegCamera(Camera):
                 auth = HTTPDigestAuth(self._username, self._password)
             else:
                 auth = HTTPBasicAuth(self._username, self._password)
-            req = requests.get(
-                self._mjpeg_url, auth=auth, stream=True, timeout=10)
+            req = requests.get(self._mjpeg_url, auth=auth, stream=True, timeout=10)
         else:
             req = requests.get(self._mjpeg_url, stream=True, timeout=10)
 

@@ -6,13 +6,18 @@ https://home-assistant.io/components/light.homekit_controller/
 """
 import logging
 
-from homeassistant.components.homekit_controller import (
-    HomeKitEntity, KNOWN_ACCESSORIES)
+from homeassistant.components.homekit_controller import HomeKitEntity, KNOWN_ACCESSORIES
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_HS_COLOR, ATTR_COLOR_TEMP, SUPPORT_BRIGHTNESS,
-    SUPPORT_COLOR, SUPPORT_COLOR_TEMP, Light)
+    ATTR_BRIGHTNESS,
+    ATTR_HS_COLOR,
+    ATTR_COLOR_TEMP,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR,
+    SUPPORT_COLOR_TEMP,
+    Light,
+)
 
-DEPENDENCIES = ['homekit_controller']
+DEPENDENCIES = ["homekit_controller"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up Homekit lighting."""
     if discovery_info is not None:
-        accessory = hass.data[KNOWN_ACCESSORIES][discovery_info['serial']]
+        accessory = hass.data[KNOWN_ACCESSORIES][discovery_info["serial"]]
         add_entities([HomeKitLight(accessory, discovery_info)], True)
 
 
@@ -42,27 +47,27 @@ class HomeKitLight(HomeKitEntity, Light):
         import homekit
 
         for characteristic in characteristics:
-            ctype = characteristic['type']
+            ctype = characteristic["type"]
             ctype = homekit.CharacteristicsTypes.get_short(ctype)
             if ctype == "on":
-                self._chars['on'] = characteristic['iid']
-                self._on = characteristic['value']
-            elif ctype == 'brightness':
-                self._chars['brightness'] = characteristic['iid']
+                self._chars["on"] = characteristic["iid"]
+                self._on = characteristic["value"]
+            elif ctype == "brightness":
+                self._chars["brightness"] = characteristic["iid"]
                 self._features |= SUPPORT_BRIGHTNESS
-                self._brightness = characteristic['value']
-            elif ctype == 'color-temperature':
-                self._chars['color_temperature'] = characteristic['iid']
+                self._brightness = characteristic["value"]
+            elif ctype == "color-temperature":
+                self._chars["color_temperature"] = characteristic["iid"]
                 self._features |= SUPPORT_COLOR_TEMP
-                self._color_temperature = characteristic['value']
+                self._color_temperature = characteristic["value"]
             elif ctype == "hue":
-                self._chars['hue'] = characteristic['iid']
+                self._chars["hue"] = characteristic["iid"]
                 self._features |= SUPPORT_COLOR
-                self._hue = characteristic['value']
+                self._hue = characteristic["value"]
             elif ctype == "saturation":
-                self._chars['saturation'] = characteristic['iid']
+                self._chars["saturation"] = characteristic["iid"]
                 self._features |= SUPPORT_COLOR
-                self._saturation = characteristic['value']
+                self._saturation = characteristic["value"]
 
     @property
     def is_on(self):
@@ -103,29 +108,39 @@ class HomeKitLight(HomeKitEntity, Light):
 
         characteristics = []
         if hs_color is not None:
-            characteristics.append({'aid': self._aid,
-                                    'iid': self._chars['hue'],
-                                    'value': hs_color[0]})
-            characteristics.append({'aid': self._aid,
-                                    'iid': self._chars['saturation'],
-                                    'value': hs_color[1]})
+            characteristics.append(
+                {"aid": self._aid, "iid": self._chars["hue"], "value": hs_color[0]}
+            )
+            characteristics.append(
+                {
+                    "aid": self._aid,
+                    "iid": self._chars["saturation"],
+                    "value": hs_color[1],
+                }
+            )
         if brightness is not None:
-            characteristics.append({'aid': self._aid,
-                                    'iid': self._chars['brightness'],
-                                    'value': int(brightness * 100 / 255)})
+            characteristics.append(
+                {
+                    "aid": self._aid,
+                    "iid": self._chars["brightness"],
+                    "value": int(brightness * 100 / 255),
+                }
+            )
 
         if temperature is not None:
-            characteristics.append({'aid': self._aid,
-                                    'iid': self._chars['color-temperature'],
-                                    'value': int(temperature)})
-        characteristics.append({'aid': self._aid,
-                                'iid': self._chars['on'],
-                                'value': True})
+            characteristics.append(
+                {
+                    "aid": self._aid,
+                    "iid": self._chars["color-temperature"],
+                    "value": int(temperature),
+                }
+            )
+        characteristics.append(
+            {"aid": self._aid, "iid": self._chars["on"], "value": True}
+        )
         self.put_characteristics(characteristics)
 
     def turn_off(self, **kwargs):
         """Turn the specified light off."""
-        characteristics = [{'aid': self._aid,
-                            'iid': self._chars['on'],
-                            'value': False}]
+        characteristics = [{"aid": self._aid, "iid": self._chars["on"], "value": False}]
         self.put_characteristics(characteristics)

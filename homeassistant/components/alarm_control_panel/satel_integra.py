@@ -9,24 +9,27 @@ import logging
 
 import homeassistant.components.alarm_control_panel as alarm
 from homeassistant.components.satel_integra import (
-    CONF_ARM_HOME_MODE, DATA_SATEL, SIGNAL_PANEL_MESSAGE)
+    CONF_ARM_HOME_MODE,
+    DATA_SATEL,
+    SIGNAL_PANEL_MESSAGE,
+)
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['satel_integra']
+DEPENDENCIES = ["satel_integra"]
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up for Satel Integra alarm panels."""
     if not discovery_info:
         return
 
     device = SatelIntegraAlarmPanel(
-        "Alarm Panel", discovery_info.get(CONF_ARM_HOME_MODE))
+        "Alarm Panel", discovery_info.get(CONF_ARM_HOME_MODE)
+    )
     async_add_entities([device])
 
 
@@ -43,7 +46,8 @@ class SatelIntegraAlarmPanel(alarm.AlarmControlPanel):
     def async_added_to_hass(self):
         """Register callbacks."""
         async_dispatcher_connect(
-            self.hass, SIGNAL_PANEL_MESSAGE, self._message_callback)
+            self.hass, SIGNAL_PANEL_MESSAGE, self._message_callback
+        )
 
     @callback
     def _message_callback(self, message):
@@ -67,7 +71,7 @@ class SatelIntegraAlarmPanel(alarm.AlarmControlPanel):
     @property
     def code_format(self):
         """Return the regex for code format or None if no code is required."""
-        return 'Number'
+        return "Number"
 
     @property
     def state(self):
@@ -90,5 +94,4 @@ class SatelIntegraAlarmPanel(alarm.AlarmControlPanel):
     def async_alarm_arm_home(self, code=None):
         """Send arm home command."""
         if code:
-            yield from self.hass.data[DATA_SATEL].arm(
-                code, self._arm_home_mode)
+            yield from self.hass.data[DATA_SATEL].arm(code, self._arm_home_mode)

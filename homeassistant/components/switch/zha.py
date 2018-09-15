@@ -11,11 +11,10 @@ from homeassistant.components import zha
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['zha']
+DEPENDENCIES = ["zha"]
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Zigbee Home Automation switches."""
     from zigpy.zcl.clusters.general import OnOff
 
@@ -25,12 +24,16 @@ async def async_setup_platform(hass, config, async_add_entities,
 
     switch = Switch(**discovery_info)
 
-    if discovery_info['new_join']:
-        in_clusters = discovery_info['in_clusters']
+    if discovery_info["new_join"]:
+        in_clusters = discovery_info["in_clusters"]
         cluster = in_clusters[OnOff.cluster_id]
         await zha.configure_reporting(
-            switch.entity_id, cluster, switch.value_attribute,
-            min_report=0, max_report=600, reportable_change=1
+            switch.entity_id,
+            cluster,
+            switch.value_attribute,
+            min_report=0,
+            max_report=600,
+            reportable_change=1,
         )
 
     async_add_entities([switch], update_before_add=True)
@@ -64,6 +67,7 @@ class Switch(zha.Entity, SwitchDevice):
     async def async_turn_on(self, **kwargs):
         """Turn the entity on."""
         from zigpy.exceptions import DeliveryError
+
         try:
             await self._endpoint.on_off.on()
         except DeliveryError as ex:
@@ -75,6 +79,7 @@ class Switch(zha.Entity, SwitchDevice):
     async def async_turn_off(self, **kwargs):
         """Turn the entity off."""
         from zigpy.exceptions import DeliveryError
+
         try:
             await self._endpoint.on_off.off()
         except DeliveryError as ex:
@@ -85,8 +90,10 @@ class Switch(zha.Entity, SwitchDevice):
 
     async def async_update(self):
         """Retrieve latest state."""
-        result = await zha.safe_read(self._endpoint.on_off,
-                                     ['on_off'],
-                                     allow_cache=False,
-                                     only_cache=(not self._initialized))
-        self._state = result.get('on_off', self._state)
+        result = await zha.safe_read(
+            self._endpoint.on_off,
+            ["on_off"],
+            allow_cache=False,
+            only_cache=(not self._initialized),
+        )
+        self._state = result.get("on_off", self._state)

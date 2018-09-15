@@ -12,36 +12,43 @@ import voluptuous as vol
 from homeassistant.components.camera import Camera, PLATFORM_SCHEMA
 from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.const import (
-    CONF_HOST, CONF_NAME, CONF_PATH, CONF_PASSWORD, CONF_PORT, CONF_USERNAME)
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PATH,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_USERNAME,
+)
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_aiohttp_proxy_stream
 from homeassistant.exceptions import PlatformNotReady
 
-REQUIREMENTS = ['aioftp==0.10.1']
-DEPENDENCIES = ['ffmpeg']
+REQUIREMENTS = ["aioftp==0.10.1"]
+DEPENDENCIES = ["ffmpeg"]
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_BRAND = 'YI Home Camera'
-DEFAULT_PASSWORD = ''
-DEFAULT_PATH = '/tmp/sd/record'
+DEFAULT_BRAND = "YI Home Camera"
+DEFAULT_PASSWORD = ""
+DEFAULT_PATH = "/tmp/sd/record"
 DEFAULT_PORT = 21
-DEFAULT_USERNAME = 'root'
+DEFAULT_USERNAME = "root"
 
-CONF_FFMPEG_ARGUMENTS = 'ffmpeg_arguments'
+CONF_FFMPEG_ARGUMENTS = "ffmpeg_arguments"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_NAME): cv.string,
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.string,
-    vol.Optional(CONF_PATH, default=DEFAULT_PATH): cv.string,
-    vol.Optional(CONF_USERNAME, default=DEFAULT_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_FFMPEG_ARGUMENTS): cv.string
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.string,
+        vol.Optional(CONF_PATH, default=DEFAULT_PATH): cv.string,
+        vol.Optional(CONF_USERNAME, default=DEFAULT_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_FFMPEG_ARGUMENTS): cv.string,
+    }
+)
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up a Yi Camera."""
     async_add_entities([YiCamera(hass, config)], True)
 
@@ -94,7 +101,7 @@ class YiCamera(Camera):
             await ftp.change_directory(self.path)
             dirs = []
             for path, attrs in await ftp.list():
-                if attrs['type'] == 'dir' and '.' not in str(path):
+                if attrs["type"] == "dir" and "." not in str(path):
                     dirs.append(path)
             latest_dir = dirs[-1]
             await ftp.change_directory(latest_dir)
@@ -108,11 +115,17 @@ class YiCamera(Camera):
 
             await ftp.quit()
             self._is_on = True
-            return 'ftp://{0}:{1}@{2}:{3}{4}/{5}/{6}'.format(
-                self.user, self.passwd, self.host, self.port, self.path,
-                latest_dir, videos[-1])
+            return "ftp://{0}:{1}@{2}:{3}{4}/{5}/{6}".format(
+                self.user,
+                self.passwd,
+                self.host,
+                self.port,
+                self.path,
+                latest_dir,
+                videos[-1],
+            )
         except (ConnectionRefusedError, StatusCodeError) as err:
-            _LOGGER.error('Error while fetching video: %s', err)
+            _LOGGER.error("Error while fetching video: %s", err)
             self._is_on = False
             return None
 
@@ -125,10 +138,10 @@ class YiCamera(Camera):
             ffmpeg = ImageFrame(self._manager.binary, loop=self.hass.loop)
             self._last_image = await asyncio.shield(
                 ffmpeg.get_image(
-                    url,
-                    output_format=IMAGE_JPEG,
-                    extra_cmd=self._extra_arguments),
-                loop=self.hass.loop)
+                    url, output_format=IMAGE_JPEG, extra_cmd=self._extra_arguments
+                ),
+                loop=self.hass.loop,
+            )
             self._last_url = url
 
         return self._last_image
@@ -141,10 +154,9 @@ class YiCamera(Camera):
             return
 
         stream = CameraMjpeg(self._manager.binary, loop=self.hass.loop)
-        await stream.open_camera(
-            self._last_url, extra_cmd=self._extra_arguments)
+        await stream.open_camera(self._last_url, extra_cmd=self._extra_arguments)
 
         await async_aiohttp_proxy_stream(
-            self.hass, request, stream,
-            'multipart/x-mixed-replace;boundary=ffserver')
+            self.hass, request, stream, "multipart/x-mixed-replace;boundary=ffserver"
+        )
         await stream.close()

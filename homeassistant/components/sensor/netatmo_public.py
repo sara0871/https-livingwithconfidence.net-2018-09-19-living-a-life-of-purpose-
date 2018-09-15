@@ -10,42 +10,46 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import (CONF_NAME, CONF_TYPE)
+from homeassistant.const import CONF_NAME, CONF_TYPE
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['netatmo']
+DEPENDENCIES = ["netatmo"]
 
-CONF_AREAS = 'areas'
-CONF_LAT_NE = 'lat_ne'
-CONF_LON_NE = 'lon_ne'
-CONF_LAT_SW = 'lat_sw'
-CONF_LON_SW = 'lon_sw'
+CONF_AREAS = "areas"
+CONF_LAT_NE = "lat_ne"
+CONF_LON_NE = "lon_ne"
+CONF_LAT_SW = "lat_sw"
+CONF_LON_SW = "lon_sw"
 
-DEFAULT_NAME = 'Netatmo Public Data'
-DEFAULT_TYPE = 'max'
-SENSOR_TYPES = {'max', 'avg'}
+DEFAULT_NAME = "Netatmo Public Data"
+DEFAULT_TYPE = "max"
+SENSOR_TYPES = {"max", "avg"}
 
 # NetAtmo Data is uploaded to server every 10 minutes
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=600)
 
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_AREAS): vol.All(cv.ensure_list, [
-        {
-            vol.Required(CONF_LAT_NE): cv.latitude,
-            vol.Required(CONF_LAT_SW): cv.latitude,
-            vol.Required(CONF_LON_NE): cv.longitude,
-            vol.Required(CONF_LON_SW): cv.longitude,
-            vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-            vol.Optional(CONF_TYPE, default=DEFAULT_TYPE):
-                vol.In(SENSOR_TYPES)
-        }
-    ]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_AREAS): vol.All(
+            cv.ensure_list,
+            [
+                {
+                    vol.Required(CONF_LAT_NE): cv.latitude,
+                    vol.Required(CONF_LAT_SW): cv.latitude,
+                    vol.Required(CONF_LON_NE): cv.longitude,
+                    vol.Required(CONF_LON_SW): cv.longitude,
+                    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+                    vol.Optional(CONF_TYPE, default=DEFAULT_TYPE): vol.In(SENSOR_TYPES),
+                }
+            ],
+        )
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -55,12 +59,14 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     sensors = []
     areas = config.get(CONF_AREAS)
     for area_conf in areas:
-        data = NetatmoPublicData(netatmo.NETATMO_AUTH,
-                                 lat_ne=area_conf.get(CONF_LAT_NE),
-                                 lon_ne=area_conf.get(CONF_LON_NE),
-                                 lat_sw=area_conf.get(CONF_LAT_SW),
-                                 lon_sw=area_conf.get(CONF_LON_SW),
-                                 calculation=area_conf.get(CONF_TYPE))
+        data = NetatmoPublicData(
+            netatmo.NETATMO_AUTH,
+            lat_ne=area_conf.get(CONF_LAT_NE),
+            lon_ne=area_conf.get(CONF_LON_NE),
+            lat_sw=area_conf.get(CONF_LAT_SW),
+            lon_sw=area_conf.get(CONF_LON_SW),
+            calculation=area_conf.get(CONF_TYPE),
+        )
         sensors.append(NetatmoPublicSensor(area_conf.get(CONF_NAME), data))
     add_entities(sensors)
 
@@ -82,7 +88,7 @@ class NetatmoPublicSensor(Entity):
     @property
     def icon(self):
         """Icon to use in the frontend."""
-        return 'mdi:weather-rainy'
+        return "mdi:weather-rainy"
 
     @property
     def device_class(self):
@@ -97,7 +103,7 @@ class NetatmoPublicSensor(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity."""
-        return 'mm'
+        return "mm"
 
     def update(self):
         """Get the latest data from NetAtmo API and updates the states."""
@@ -122,20 +128,23 @@ class NetatmoPublicData:
     def update(self):
         """Request an update from the Netatmo API."""
         import pyatmo
-        raindata = pyatmo.PublicData(self.auth,
-                                     LAT_NE=self.lat_ne,
-                                     LON_NE=self.lon_ne,
-                                     LAT_SW=self.lat_sw,
-                                     LON_SW=self.lon_sw,
-                                     required_data_type="rain")
+
+        raindata = pyatmo.PublicData(
+            self.auth,
+            LAT_NE=self.lat_ne,
+            LON_NE=self.lon_ne,
+            LAT_SW=self.lat_sw,
+            LON_SW=self.lon_sw,
+            required_data_type="rain",
+        )
 
         if raindata.CountStationInArea() == 0:
-            _LOGGER.warning('No Rain Station available in this area.')
+            _LOGGER.warning("No Rain Station available in this area.")
             return
 
         raindata_live = raindata.getLive()
 
-        if self.calculation == 'avg':
+        if self.calculation == "avg":
             self.data = sum(raindata_live.values()) / len(raindata_live)
         else:
             self.data = max(raindata_live.values())

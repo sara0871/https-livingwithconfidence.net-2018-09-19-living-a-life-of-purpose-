@@ -10,32 +10,36 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.lock import LockDevice, PLATFORM_SCHEMA
 from homeassistant.const import (
-    ATTR_BATTERY_LEVEL, CONF_EMAIL, CONF_PASSWORD,
-    STATE_LOCKED, STATE_UNLOCKED)
+    ATTR_BATTERY_LEVEL,
+    CONF_EMAIL,
+    CONF_PASSWORD,
+    STATE_LOCKED,
+    STATE_UNLOCKED,
+)
 from homeassistant.helpers.typing import ConfigType
 
-REQUIREMENTS = ['pysesame==0.1.0']
+REQUIREMENTS = ["pysesame==0.1.0"]
 
-ATTR_DEVICE_ID = 'device_id'
+ATTR_DEVICE_ID = "device_id"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_EMAIL): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_EMAIL): cv.string, vol.Required(CONF_PASSWORD): cv.string}
+)
 
 
 def setup_platform(
-        hass, config: ConfigType,
-        add_entities: Callable[[list], None], discovery_info=None):
+    hass, config: ConfigType, add_entities: Callable[[list], None], discovery_info=None
+):
     """Set up the Sesame platform."""
     import pysesame
 
     email = config.get(CONF_EMAIL)
     password = config.get(CONF_PASSWORD)
 
-    add_entities([SesameDevice(sesame) for sesame in
-                  pysesame.get_sesames(email, password)],
-                 update_before_add=True)
+    add_entities(
+        [SesameDevice(sesame) for sesame in pysesame.get_sesames(email, password)],
+        update_before_add=True,
+    )
 
 
 class SesameDevice(LockDevice):

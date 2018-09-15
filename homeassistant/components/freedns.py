@@ -12,29 +12,34 @@ import aiohttp
 import async_timeout
 import voluptuous as vol
 
-from homeassistant.const import (CONF_URL, CONF_ACCESS_TOKEN)
+from homeassistant.const import CONF_URL, CONF_ACCESS_TOKEN
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'freedns'
+DOMAIN = "freedns"
 
 DEFAULT_INTERVAL = timedelta(minutes=10)
 
 TIMEOUT = 10
-UPDATE_URL = 'https://freedns.afraid.org/dynamic/update.php'
+UPDATE_URL = "https://freedns.afraid.org/dynamic/update.php"
 
-CONF_UPDATE_INTERVAL = 'update_interval'
+CONF_UPDATE_INTERVAL = "update_interval"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Exclusive(CONF_URL, DOMAIN): cv.string,
-        vol.Exclusive(CONF_ACCESS_TOKEN, DOMAIN): cv.string,
-        vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_INTERVAL): vol.All(
-            cv.time_period, cv.positive_timedelta),
-
-    })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Exclusive(CONF_URL, DOMAIN): cv.string,
+                vol.Exclusive(CONF_ACCESS_TOKEN, DOMAIN): cv.string,
+                vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_INTERVAL): vol.All(
+                    cv.time_period, cv.positive_timedelta
+                ),
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 @asyncio.coroutine
@@ -46,8 +51,7 @@ def async_setup(hass, config):
 
     session = hass.helpers.aiohttp_client.async_get_clientsession()
 
-    result = yield from _update_freedns(
-        hass, session, url, auth_token)
+    result = yield from _update_freedns(hass, session, url, auth_token)
 
     if result is False:
         return False
@@ -58,7 +62,8 @@ def async_setup(hass, config):
         yield from _update_freedns(hass, session, url, auth_token)
 
     hass.helpers.event.async_track_time_interval(
-        update_domain_callback, update_interval)
+        update_domain_callback, update_interval
+    )
 
     return True
 

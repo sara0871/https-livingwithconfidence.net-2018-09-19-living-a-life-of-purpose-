@@ -9,44 +9,56 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.media_player import (
-    DOMAIN, PLATFORM_SCHEMA, SUPPORT_SELECT_SOURCE, SUPPORT_TURN_OFF,
-    SUPPORT_TURN_ON, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET,
-    SUPPORT_VOLUME_STEP, MediaPlayerDevice)
+    DOMAIN,
+    PLATFORM_SCHEMA,
+    SUPPORT_SELECT_SOURCE,
+    SUPPORT_TURN_OFF,
+    SUPPORT_TURN_ON,
+    SUPPORT_VOLUME_MUTE,
+    SUPPORT_VOLUME_SET,
+    SUPPORT_VOLUME_STEP,
+    MediaPlayerDevice,
+)
 from homeassistant.const import ATTR_ENTITY_ID, CONF_NAME, STATE_OFF, STATE_ON
 from homeassistant.exceptions import PlatformNotReady
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['python-songpal==0.0.8']
+REQUIREMENTS = ["python-songpal==0.0.8"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_ENDPOINT = 'endpoint'
+CONF_ENDPOINT = "endpoint"
 
-PARAM_NAME = 'name'
-PARAM_VALUE = 'value'
+PARAM_NAME = "name"
+PARAM_VALUE = "value"
 
-PLATFORM = 'songpal'
+PLATFORM = "songpal"
 
-SET_SOUND_SETTING = 'songpal_set_sound_setting'
+SET_SOUND_SETTING = "songpal_set_sound_setting"
 
-SUPPORT_SONGPAL = SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | \
-                  SUPPORT_VOLUME_MUTE | SUPPORT_SELECT_SOURCE | \
-                  SUPPORT_TURN_ON | SUPPORT_TURN_OFF
+SUPPORT_SONGPAL = (
+    SUPPORT_VOLUME_SET
+    | SUPPORT_VOLUME_STEP
+    | SUPPORT_VOLUME_MUTE
+    | SUPPORT_SELECT_SOURCE
+    | SUPPORT_TURN_ON
+    | SUPPORT_TURN_OFF
+)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Required(CONF_ENDPOINT): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Optional(CONF_NAME): cv.string, vol.Required(CONF_ENDPOINT): cv.string}
+)
 
-SET_SOUND_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_id,
-    vol.Required(PARAM_NAME): cv.string,
-    vol.Required(PARAM_VALUE): cv.string,
-})
+SET_SOUND_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Required(PARAM_NAME): cv.string,
+        vol.Required(PARAM_VALUE): cv.string,
+    }
+)
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Songpal platform."""
     from songpal import SongpalException
 
@@ -77,20 +89,23 @@ async def async_setup_platform(
     async def async_service_handler(service):
         """Service handler."""
         entity_id = service.data.get("entity_id", None)
-        params = {key: value for key, value in service.data.items()
-                  if key != ATTR_ENTITY_ID}
+        params = {
+            key: value for key, value in service.data.items() if key != ATTR_ENTITY_ID
+        }
 
         for device in hass.data[PLATFORM].values():
             if device.entity_id == entity_id or entity_id is None:
-                _LOGGER.debug("Calling %s (entity: %s) with params %s",
-                              service, entity_id, params)
+                _LOGGER.debug(
+                    "Calling %s (entity: %s) with params %s", service, entity_id, params
+                )
 
                 await device.async_set_sound_setting(
-                    params[PARAM_NAME], params[PARAM_VALUE])
+                    params[PARAM_NAME], params[PARAM_VALUE]
+                )
 
     hass.services.async_register(
-        DOMAIN, SET_SOUND_SETTING, async_service_handler,
-        schema=SET_SOUND_SCHEMA)
+        DOMAIN, SET_SOUND_SETTING, async_service_handler, schema=SET_SOUND_SCHEMA
+    )
 
 
 class SongpalDevice(MediaPlayerDevice):
@@ -99,6 +114,7 @@ class SongpalDevice(MediaPlayerDevice):
     def __init__(self, name, endpoint):
         """Init."""
         import songpal
+
         self._name = name
         self.endpoint = endpoint
         self.dev = songpal.Device(self.endpoint)
@@ -143,6 +159,7 @@ class SongpalDevice(MediaPlayerDevice):
     async def async_update(self):
         """Fetch updates from the device."""
         from songpal import SongpalException
+
         try:
             volumes = await self.dev.get_volume_information()
             if not volumes:
@@ -151,8 +168,7 @@ class SongpalDevice(MediaPlayerDevice):
                 return
 
             if len(volumes) > 1:
-                _LOGGER.debug(
-                    "Got %s volume controls, using the first one", volumes)
+                _LOGGER.debug("Got %s volume controls, using the first one", volumes)
 
             volume = volumes[0]
             _LOGGER.debug("Current volume: %s", volume)

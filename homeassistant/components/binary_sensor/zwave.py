@@ -10,10 +10,10 @@ import homeassistant.util.dt as dt_util
 from homeassistant.helpers.event import track_point_in_time
 from homeassistant.components import zwave
 from homeassistant.components.zwave import workaround
-from homeassistant.components.zwave import async_setup_platform  # noqa pylint: disable=unused-import
-from homeassistant.components.binary_sensor import (
-    DOMAIN,
-    BinarySensorDevice)
+from homeassistant.components.zwave import (
+    async_setup_platform
+)  # noqa pylint: disable=unused-import
+from homeassistant.components.binary_sensor import DOMAIN, BinarySensorDevice
 
 _LOGGER = logging.getLogger(__name__)
 DEPENDENCIES = []
@@ -70,24 +70,25 @@ class ZWaveTriggerSensor(ZWaveBinarySensor):
     def update_properties(self):
         """Handle value changes for this entity's node."""
         self._state = self.values.primary.data
-        _LOGGER.debug('off_delay=%s', self.values.off_delay)
+        _LOGGER.debug("off_delay=%s", self.values.off_delay)
         # Set re_arm_sec if off_delay is provided from the sensor
         if self.values.off_delay:
-            _LOGGER.debug('off_delay.data=%s', self.values.off_delay.data)
+            _LOGGER.debug("off_delay.data=%s", self.values.off_delay.data)
             self.re_arm_sec = self.values.off_delay.data * 8
         # only allow this value to be true for re_arm secs
         if not self.hass:
             return
 
         self.invalidate_after = dt_util.utcnow() + datetime.timedelta(
-            seconds=self.re_arm_sec)
+            seconds=self.re_arm_sec
+        )
         track_point_in_time(
-            self.hass, self.async_update_ha_state,
-            self.invalidate_after)
+            self.hass, self.async_update_ha_state, self.invalidate_after
+        )
 
     @property
     def is_on(self):
         """Return true if movement has happened within the rearm time."""
-        return self._state and \
-            (self.invalidate_after is None or
-             self.invalidate_after > dt_util.utcnow())
+        return self._state and (
+            self.invalidate_after is None or self.invalidate_after > dt_util.utcnow()
+        )

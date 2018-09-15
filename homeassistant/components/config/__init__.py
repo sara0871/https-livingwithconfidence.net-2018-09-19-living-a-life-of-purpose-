@@ -6,36 +6,35 @@ import voluptuous as vol
 
 from homeassistant.core import callback
 from homeassistant.const import EVENT_COMPONENT_LOADED, CONF_ID
-from homeassistant.setup import (
-    async_prepare_setup_platform, ATTR_COMPONENT)
+from homeassistant.setup import async_prepare_setup_platform, ATTR_COMPONENT
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.util.yaml import load_yaml, dump
 
-DOMAIN = 'config'
-DEPENDENCIES = ['http']
+DOMAIN = "config"
+DEPENDENCIES = ["http"]
 SECTIONS = (
-    'automation',
-    'config_entries',
-    'core',
-    'customize',
-    'device_registry',
-    'entity_registry',
-    'group',
-    'hassbian',
-    'script',
+    "automation",
+    "config_entries",
+    "core",
+    "customize",
+    "device_registry",
+    "entity_registry",
+    "group",
+    "hassbian",
+    "script",
 )
-ON_DEMAND = ('zwave',)
+ON_DEMAND = ("zwave",)
 
 
 async def async_setup(hass, config):
     """Set up the config component."""
     await hass.components.frontend.async_register_built_in_panel(
-        'config', 'config', 'hass:settings')
+        "config", "config", "hass:settings"
+    )
 
     async def setup_panel(panel_name):
         """Set up a panel."""
-        panel = await async_prepare_setup_platform(
-            hass, config, DOMAIN, panel_name)
+        panel = await async_prepare_setup_platform(hass, config, DOMAIN, panel_name)
 
         if not panel:
             return
@@ -43,7 +42,7 @@ async def async_setup(hass, config):
         success = await panel.async_setup(hass)
 
         if success:
-            key = '{}.{}'.format(DOMAIN, panel_name)
+            key = "{}.{}".format(DOMAIN, panel_name)
             hass.bus.async_fire(EVENT_COMPONENT_LOADED, {ATTR_COMPONENT: key})
             hass.config.components.add(key)
 
@@ -59,8 +58,8 @@ async def async_setup(hass, config):
     tasks = [setup_panel(panel_name) for panel_name in SECTIONS]
 
     if hass.auth.active:
-        tasks.append(setup_panel('auth'))
-        tasks.append(setup_panel('auth_provider_homeassistant'))
+        tasks.append(setup_panel("auth"))
+        tasks.append(setup_panel("auth_provider_homeassistant"))
 
     for panel_name in ON_DEMAND:
         if panel_name in hass.config.components:
@@ -75,11 +74,19 @@ async def async_setup(hass, config):
 class BaseEditConfigView(HomeAssistantView):
     """Configure a Group endpoint."""
 
-    def __init__(self, component, config_type, path, key_schema, data_schema,
-                 *, post_write_hook=None):
+    def __init__(
+        self,
+        component,
+        config_type,
+        path,
+        key_schema,
+        data_schema,
+        *,
+        post_write_hook=None
+    ):
         """Initialize a config view."""
-        self.url = '/api/config/%s/%s/{config_key}' % (component, config_type)
-        self.name = 'api:config:%s:%s' % (component, config_type)
+        self.url = "/api/config/%s/%s/{config_key}" % (component, config_type)
+        self.name = "api:config:%s:%s" % (component, config_type)
         self.path = path
         self.key_schema = key_schema
         self.data_schema = data_schema
@@ -99,12 +106,12 @@ class BaseEditConfigView(HomeAssistantView):
 
     async def get(self, request, config_key):
         """Fetch device specific config."""
-        hass = request.app['hass']
+        hass = request.app["hass"]
         current = await self.read_config(hass)
         value = self._get_value(hass, current, config_key)
 
         if value is None:
-            return self.json_message('Resource not found', 404)
+            return self.json_message("Resource not found", 404)
 
         return self.json(value)
 
@@ -113,21 +120,21 @@ class BaseEditConfigView(HomeAssistantView):
         try:
             data = await request.json()
         except ValueError:
-            return self.json_message('Invalid JSON specified', 400)
+            return self.json_message("Invalid JSON specified", 400)
 
         try:
             self.key_schema(config_key)
         except vol.Invalid as err:
-            return self.json_message('Key malformed: {}'.format(err), 400)
+            return self.json_message("Key malformed: {}".format(err), 400)
 
         try:
             # We just validate, we don't store that data because
             # we don't want to store the defaults.
             self.data_schema(data)
         except vol.Invalid as err:
-            return self.json_message('Message malformed: {}'.format(err), 400)
+            return self.json_message("Message malformed: {}".format(err), 400)
 
-        hass = request.app['hass']
+        hass = request.app["hass"]
         path = hass.config.path(self.path)
 
         current = await self.read_config(hass)
@@ -138,14 +145,11 @@ class BaseEditConfigView(HomeAssistantView):
         if self.post_write_hook is not None:
             hass.async_add_job(self.post_write_hook(hass))
 
-        return self.json({
-            'result': 'ok',
-        })
+        return self.json({"result": "ok"})
 
     async def read_config(self, hass):
         """Read the config."""
-        current = await hass.async_add_job(
-            _read, hass.config.path(self.path))
+        current = await hass.async_add_job(_read, hass.config.path(self.path))
         if not current:
             current = self._empty_config()
         return current
@@ -176,8 +180,7 @@ class EditIdBasedConfigView(BaseEditConfigView):
 
     def _get_value(self, hass, data, config_key):
         """Get value."""
-        return next(
-            (val for val in data if val.get(CONF_ID) == config_key), None)
+        return next((val for val in data if val.get(CONF_ID) == config_key), None)
 
     def _write_value(self, hass, data, config_key, new_value):
         """Set value."""
@@ -203,5 +206,5 @@ def _write(path, data):
     # Do it before opening file. If dump causes error it will now not
     # truncate the file.
     data = dump(data)
-    with open(path, 'w', encoding='utf-8') as outfile:
+    with open(path, "w", encoding="utf-8") as outfile:
         outfile.write(data)

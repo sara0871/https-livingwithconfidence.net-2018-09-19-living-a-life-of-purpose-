@@ -7,22 +7,22 @@ https://home-assistant.io/components/light.homematicip_cloud/
 import logging
 
 from homeassistant.components.homematicip_cloud import (
-    HMIPC_HAPID, HomematicipGenericDevice)
+    HMIPC_HAPID,
+    HomematicipGenericDevice,
+)
 from homeassistant.components.homematicip_cloud import DOMAIN as HMIPC_DOMAIN
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, Light)
+from homeassistant.components.light import ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, Light
 
-DEPENDENCIES = ['homematicip_cloud']
+DEPENDENCIES = ["homematicip_cloud"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_ENERGY_COUNTER = 'energy_counter_kwh'
-ATTR_POWER_CONSUMPTION = 'power_consumption'
-ATTR_PROFILE_MODE = 'profile_mode'
+ATTR_ENERGY_COUNTER = "energy_counter_kwh"
+ATTR_POWER_CONSUMPTION = "power_consumption"
+ATTR_PROFILE_MODE = "profile_mode"
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Old way of setting up HomematicIP Cloud lights."""
     pass
 
@@ -72,13 +72,10 @@ class HomematicipLightMeasuring(HomematicipLight):
         """Return the state attributes of the generic device."""
         attr = super().device_state_attributes
         if self._device.currentPowerConsumption > 0.05:
-            attr.update({
-                ATTR_POWER_CONSUMPTION:
-                    round(self._device.currentPowerConsumption, 2)
-            })
-        attr.update({
-            ATTR_ENERGY_COUNTER: round(self._device.energyCounter, 2)
-        })
+            attr.update(
+                {ATTR_POWER_CONSUMPTION: round(self._device.currentPowerConsumption, 2)}
+            )
+        attr.update({ATTR_ENERGY_COUNTER: round(self._device.energyCounter, 2)})
         return attr
 
 
@@ -97,7 +94,7 @@ class HomematicipDimmer(HomematicipGenericDevice, Light):
     @property
     def brightness(self):
         """Return the brightness of this light between 0..255."""
-        return int(self._device.dimLevel*255)
+        return int(self._device.dimLevel * 255)
 
     @property
     def supported_features(self):
@@ -107,7 +104,7 @@ class HomematicipDimmer(HomematicipGenericDevice, Light):
     async def async_turn_on(self, **kwargs):
         """Turn the light on."""
         if ATTR_BRIGHTNESS in kwargs:
-            await self._device.set_dim_level(kwargs[ATTR_BRIGHTNESS]/255.0)
+            await self._device.set_dim_level(kwargs[ATTR_BRIGHTNESS] / 255.0)
         else:
             await self._device.set_dim_level(1)
 

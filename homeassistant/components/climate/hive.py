@@ -5,20 +5,33 @@ For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/climate.hive/
 """
 from homeassistant.components.climate import (
-    ClimateDevice, STATE_AUTO, STATE_HEAT, STATE_OFF, STATE_ON,
-    SUPPORT_AUX_HEAT, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE)
+    ClimateDevice,
+    STATE_AUTO,
+    STATE_HEAT,
+    STATE_OFF,
+    STATE_ON,
+    SUPPORT_AUX_HEAT,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_OPERATION_MODE,
+)
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 from homeassistant.components.hive import DATA_HIVE
 
-DEPENDENCIES = ['hive']
-HIVE_TO_HASS_STATE = {'SCHEDULE': STATE_AUTO, 'MANUAL': STATE_HEAT,
-                      'ON': STATE_ON, 'OFF': STATE_OFF}
-HASS_TO_HIVE_STATE = {STATE_AUTO: 'SCHEDULE', STATE_HEAT: 'MANUAL',
-                      STATE_ON: 'ON', STATE_OFF: 'OFF'}
+DEPENDENCIES = ["hive"]
+HIVE_TO_HASS_STATE = {
+    "SCHEDULE": STATE_AUTO,
+    "MANUAL": STATE_HEAT,
+    "ON": STATE_ON,
+    "OFF": STATE_OFF,
+}
+HASS_TO_HIVE_STATE = {
+    STATE_AUTO: "SCHEDULE",
+    STATE_HEAT: "MANUAL",
+    STATE_ON: "ON",
+    STATE_OFF: "OFF",
+}
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE |
-                 SUPPORT_OPERATION_MODE |
-                 SUPPORT_AUX_HEAT)
+SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | SUPPORT_AUX_HEAT
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -42,8 +55,7 @@ class HiveClimateEntity(ClimateDevice):
             self.thermostat_node_id = hivedevice["Thermostat_NodeID"]
         self.session = hivesession
         self.attributes = {}
-        self.data_updatesource = '{}.{}'.format(self.device_type,
-                                                self.node_id)
+        self.data_updatesource = "{}.{}".format(self.device_type, self.node_id)
 
         if self.device_type == "Heating":
             self.modes = [STATE_AUTO, STATE_HEAT, STATE_OFF]
@@ -59,7 +71,7 @@ class HiveClimateEntity(ClimateDevice):
 
     def handle_update(self, updatesource):
         """Handle the new update request."""
-        if '{}.{}'.format(self.device_type, self.node_id) not in updatesource:
+        if "{}.{}".format(self.device_type, self.node_id) not in updatesource:
             self.schedule_update_ha_state()
 
     @property
@@ -69,7 +81,7 @@ class HiveClimateEntity(ClimateDevice):
         if self.device_type == "Heating":
             friendly_name = "Heating"
             if self.node_name is not None:
-                friendly_name = '{} {}'.format(self.node_name, friendly_name)
+                friendly_name = "{} {}".format(self.node_name, friendly_name)
         elif self.device_type == "HotWater":
             friendly_name = "Hot Water"
         return friendly_name
@@ -138,8 +150,9 @@ class HiveClimateEntity(ClimateDevice):
         new_temperature = kwargs.get(ATTR_TEMPERATURE)
         if new_temperature is not None:
             if self.device_type == "Heating":
-                self.session.heating.set_target_temperature(self.node_id,
-                                                            new_temperature)
+                self.session.heating.set_target_temperature(
+                    self.node_id, new_temperature
+                )
 
             for entity in self.session.entities:
                 entity.handle_update(self.data_updatesource)
@@ -161,12 +174,11 @@ class HiveClimateEntity(ClimateDevice):
             curtemp = self.session.heating.current_temperature(self.node_id)
             curtemp = round(curtemp * 2) / 2
             target_boost_temperature = curtemp + 0.5
-            self.session.heating.turn_boost_on(self.node_id,
-                                               target_boost_time,
-                                               target_boost_temperature)
+            self.session.heating.turn_boost_on(
+                self.node_id, target_boost_time, target_boost_temperature
+            )
         elif self.device_type == "HotWater":
-            self.session.hotwater.turn_boost_on(self.node_id,
-                                                target_boost_time)
+            self.session.hotwater.turn_boost_on(self.node_id, target_boost_time)
 
         for entity in self.session.entities:
             entity.handle_update(self.data_updatesource)

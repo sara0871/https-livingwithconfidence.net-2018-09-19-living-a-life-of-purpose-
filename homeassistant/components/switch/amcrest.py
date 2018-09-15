@@ -8,18 +8,16 @@ import asyncio
 import logging
 
 from homeassistant.components.amcrest import DATA_AMCREST, SWITCHES
-from homeassistant.const import (
-    CONF_NAME, CONF_SWITCHES, STATE_OFF, STATE_ON)
+from homeassistant.const import CONF_NAME, CONF_SWITCHES, STATE_OFF, STATE_ON
 from homeassistant.helpers.entity import ToggleEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['amcrest']
+DEPENDENCIES = ["amcrest"]
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the IP Amcrest camera switch platform."""
     if discovery_info is None:
         return
@@ -43,7 +41,7 @@ class AmcrestSwitch(ToggleEntity):
         """Initialize the Amcrest switch."""
         self._setting = setting
         self._camera = camera
-        self._name = '{} {}'.format(SWITCHES[setting][0], name)
+        self._name = "{} {}".format(SWITCHES[setting][0], name)
         self._icon = SWITCHES[setting][1]
         self._state = None
 
@@ -64,25 +62,25 @@ class AmcrestSwitch(ToggleEntity):
 
     def turn_on(self, **kwargs):
         """Turn setting on."""
-        if self._setting == 'motion_detection':
-            self._camera.motion_detection = 'true'
-        elif self._setting == 'motion_recording':
-            self._camera.motion_recording = 'true'
+        if self._setting == "motion_detection":
+            self._camera.motion_detection = "true"
+        elif self._setting == "motion_recording":
+            self._camera.motion_recording = "true"
 
     def turn_off(self, **kwargs):
         """Turn setting off."""
-        if self._setting == 'motion_detection':
-            self._camera.motion_detection = 'false'
-        elif self._setting == 'motion_recording':
-            self._camera.motion_recording = 'false'
+        if self._setting == "motion_detection":
+            self._camera.motion_detection = "false"
+        elif self._setting == "motion_recording":
+            self._camera.motion_recording = "false"
 
     def update(self):
         """Update setting state."""
         _LOGGER.debug("Polling state for setting: %s ", self._name)
 
-        if self._setting == 'motion_detection':
+        if self._setting == "motion_detection":
             detection = self._camera.is_motion_detector_on()
-        elif self._setting == 'motion_recording':
+        elif self._setting == "motion_recording":
             detection = self._camera.is_record_on_motion_detection()
 
         self._state = STATE_ON if detection else STATE_OFF

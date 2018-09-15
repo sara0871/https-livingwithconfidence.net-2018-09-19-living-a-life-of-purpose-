@@ -8,21 +8,22 @@ import asyncio
 import logging
 
 from homeassistant.components.binary_sensor import BinarySensorDevice
-from homeassistant.components.satel_integra import (CONF_ZONES,
-                                                    CONF_ZONE_NAME,
-                                                    CONF_ZONE_TYPE,
-                                                    SIGNAL_ZONES_UPDATED)
+from homeassistant.components.satel_integra import (
+    CONF_ZONES,
+    CONF_ZONE_NAME,
+    CONF_ZONE_TYPE,
+    SIGNAL_ZONES_UPDATED,
+)
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-DEPENDENCIES = ['satel_integra']
+DEPENDENCIES = ["satel_integra"]
 
 _LOGGER = logging.getLogger(__name__)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Satel Integra binary sensor devices."""
     if not discovery_info:
         return
@@ -53,8 +54,7 @@ class SatelIntegraBinarySensor(BinarySensorDevice):
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Register callbacks."""
-        async_dispatcher_connect(
-            self.hass, SIGNAL_ZONES_UPDATED, self._zones_updated)
+        async_dispatcher_connect(self.hass, SIGNAL_ZONES_UPDATED, self._zones_updated)
 
     @property
     def name(self):
@@ -64,7 +64,7 @@ class SatelIntegraBinarySensor(BinarySensorDevice):
     @property
     def icon(self):
         """Icon for device by its type."""
-        if self._zone_type == 'smoke':
+        if self._zone_type == "smoke":
             return "mdi:fire"
 
     @property
@@ -85,7 +85,6 @@ class SatelIntegraBinarySensor(BinarySensorDevice):
     @callback
     def _zones_updated(self, zones):
         """Update the zone's state, if needed."""
-        if self._zone_number in zones \
-                and self._state != zones[self._zone_number]:
+        if self._zone_number in zones and self._state != zones[self._zone_number]:
             self._state = zones[self._zone_number]
             self.async_schedule_update_ha_state()

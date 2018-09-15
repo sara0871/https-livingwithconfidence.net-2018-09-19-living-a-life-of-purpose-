@@ -7,27 +7,29 @@ https://home-assistant.io/components/climate.homematicip_cloud/
 import logging
 
 from homeassistant.components.climate import (
-    ATTR_TEMPERATURE, STATE_AUTO, STATE_MANUAL, SUPPORT_TARGET_TEMPERATURE,
-    ClimateDevice)
+    ATTR_TEMPERATURE,
+    STATE_AUTO,
+    STATE_MANUAL,
+    SUPPORT_TARGET_TEMPERATURE,
+    ClimateDevice,
+)
 from homeassistant.components.homematicip_cloud import (
-    HMIPC_HAPID, HomematicipGenericDevice)
+    HMIPC_HAPID,
+    HomematicipGenericDevice,
+)
 from homeassistant.components.homematicip_cloud import DOMAIN as HMIPC_DOMAIN
 from homeassistant.const import TEMP_CELSIUS
 
 _LOGGER = logging.getLogger(__name__)
 
-STATE_BOOST = 'Boost'
+STATE_BOOST = "Boost"
 
-HA_STATE_TO_HMIP = {
-    STATE_AUTO: 'AUTOMATIC',
-    STATE_MANUAL: 'MANUAL',
-}
+HA_STATE_TO_HMIP = {STATE_AUTO: "AUTOMATIC", STATE_MANUAL: "MANUAL"}
 
 HMIP_STATE_TO_HA = {value: key for key, value in HA_STATE_TO_HMIP.items()}
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the HomematicIP Cloud climate devices."""
     pass
 
@@ -51,7 +53,7 @@ class HomematicipHeatingGroup(HomematicipGenericDevice, ClimateDevice):
 
     def __init__(self, home, device):
         """Initialize heating group."""
-        device.modelType = 'Group-Heating'
+        device.modelType = "Group-Heating"
         super().__init__(home, device)
 
     @property

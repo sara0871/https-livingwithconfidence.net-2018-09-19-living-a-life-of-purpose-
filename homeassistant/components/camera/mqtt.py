@@ -18,28 +18,26 @@ from homeassistant.helpers import config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_TOPIC = 'topic'
-DEFAULT_NAME = 'MQTT Camera'
+CONF_TOPIC = "topic"
+DEFAULT_NAME = "MQTT Camera"
 
-DEPENDENCIES = ['mqtt']
+DEPENDENCIES = ["mqtt"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_TOPIC): mqtt.valid_subscribe_topic,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_TOPIC): mqtt.valid_subscribe_topic,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the MQTT Camera."""
     if discovery_info is not None:
         config = PLATFORM_SCHEMA(discovery_info)
 
-    async_add_entities([MqttCamera(
-        config.get(CONF_NAME),
-        config.get(CONF_TOPIC)
-    )])
+    async_add_entities([MqttCamera(config.get(CONF_NAME), config.get(CONF_TOPIC))])
 
 
 class MqttCamera(Camera):
@@ -67,10 +65,12 @@ class MqttCamera(Camera):
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Subscribe MQTT events."""
+
         @callback
         def message_received(topic, payload, qos):
             """Handle new MQTT messages."""
             self._last_image = payload
 
         return mqtt.async_subscribe(
-            self.hass, self._topic, message_received, self._qos, None)
+            self.hass, self._topic, message_received, self._qos, None
+        )

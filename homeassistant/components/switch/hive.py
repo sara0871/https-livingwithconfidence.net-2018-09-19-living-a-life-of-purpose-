@@ -7,7 +7,7 @@ https://home-assistant.io/components/switch.hive/
 from homeassistant.components.switch import SwitchDevice
 from homeassistant.components.hive import DATA_HIVE
 
-DEPENDENCIES = ['hive']
+DEPENDENCIES = ["hive"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -29,13 +29,12 @@ class HiveDevicePlug(SwitchDevice):
         self.device_type = hivedevice["HA_DeviceType"]
         self.session = hivesession
         self.attributes = {}
-        self.data_updatesource = '{}.{}'.format(self.device_type,
-                                                self.node_id)
+        self.data_updatesource = "{}.{}".format(self.device_type, self.node_id)
         self.session.entities.append(self)
 
     def handle_update(self, updatesource):
         """Handle the new update request."""
-        if '{}.{}'.format(self.device_type, self.node_id) not in updatesource:
+        if "{}.{}".format(self.device_type, self.node_id) not in updatesource:
             self.schedule_update_ha_state()
 
     @property
@@ -73,5 +72,4 @@ class HiveDevicePlug(SwitchDevice):
     def update(self):
         """Update all Node data from Hive."""
         self.session.core.update_data(self.node_id)
-        self.attributes = self.session.attributes.state_attributes(
-            self.node_id)
+        self.attributes = self.session.attributes.state_attributes(self.node_id)

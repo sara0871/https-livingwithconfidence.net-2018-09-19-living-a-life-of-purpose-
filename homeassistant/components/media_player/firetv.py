@@ -10,60 +10,83 @@ import requests
 import voluptuous as vol
 
 from homeassistant.components.media_player import (
-    PLATFORM_SCHEMA, SUPPORT_NEXT_TRACK, SUPPORT_PAUSE, SUPPORT_PLAY,
-    SUPPORT_PREVIOUS_TRACK, SUPPORT_SELECT_SOURCE, SUPPORT_TURN_OFF,
-    SUPPORT_TURN_ON, SUPPORT_VOLUME_SET, MediaPlayerDevice)
+    PLATFORM_SCHEMA,
+    SUPPORT_NEXT_TRACK,
+    SUPPORT_PAUSE,
+    SUPPORT_PLAY,
+    SUPPORT_PREVIOUS_TRACK,
+    SUPPORT_SELECT_SOURCE,
+    SUPPORT_TURN_OFF,
+    SUPPORT_TURN_ON,
+    SUPPORT_VOLUME_SET,
+    MediaPlayerDevice,
+)
 from homeassistant.const import (
-    CONF_DEVICE, CONF_DEVICES, CONF_HOST, CONF_NAME, CONF_PORT, CONF_SSL,
-    STATE_IDLE, STATE_OFF, STATE_PAUSED, STATE_PLAYING, STATE_STANDBY,
-    STATE_UNKNOWN)
+    CONF_DEVICE,
+    CONF_DEVICES,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    CONF_SSL,
+    STATE_IDLE,
+    STATE_OFF,
+    STATE_PAUSED,
+    STATE_PLAYING,
+    STATE_STANDBY,
+    STATE_UNKNOWN,
+)
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FIRETV = SUPPORT_PAUSE | \
-    SUPPORT_TURN_ON | SUPPORT_TURN_OFF | SUPPORT_PREVIOUS_TRACK | \
-    SUPPORT_NEXT_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_VOLUME_SET | \
-    SUPPORT_PLAY
+SUPPORT_FIRETV = (
+    SUPPORT_PAUSE
+    | SUPPORT_TURN_ON
+    | SUPPORT_TURN_OFF
+    | SUPPORT_PREVIOUS_TRACK
+    | SUPPORT_NEXT_TRACK
+    | SUPPORT_SELECT_SOURCE
+    | SUPPORT_VOLUME_SET
+    | SUPPORT_PLAY
+)
 
 DEFAULT_SSL = False
-DEFAULT_DEVICE = 'default'
-DEFAULT_HOST = 'localhost'
-DEFAULT_NAME = 'Amazon Fire TV'
+DEFAULT_DEVICE = "default"
+DEFAULT_HOST = "localhost"
+DEFAULT_NAME = "Amazon Fire TV"
 DEFAULT_PORT = 5556
-DEVICE_ACTION_URL = '{0}://{1}:{2}/devices/action/{3}/{4}'
-DEVICE_LIST_URL = '{0}://{1}:{2}/devices/list'
-DEVICE_STATE_URL = '{0}://{1}:{2}/devices/state/{3}'
-DEVICE_APPS_URL = '{0}://{1}:{2}/devices/{3}/apps/{4}'
+DEVICE_ACTION_URL = "{0}://{1}:{2}/devices/action/{3}/{4}"
+DEVICE_LIST_URL = "{0}://{1}:{2}/devices/list"
+DEVICE_STATE_URL = "{0}://{1}:{2}/devices/state/{3}"
+DEVICE_APPS_URL = "{0}://{1}:{2}/devices/{3}/apps/{4}"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_DEVICE, default=DEFAULT_DEVICE): cv.string,
-    vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-    vol.Optional(CONF_SSL, default=DEFAULT_SSL): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_DEVICE, default=DEFAULT_DEVICE): cv.string,
+        vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+        vol.Optional(CONF_SSL, default=DEFAULT_SSL): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the FireTV platform."""
     name = config.get(CONF_NAME)
     ssl = config.get(CONF_SSL)
-    proto = 'https' if ssl else 'http'
+    proto = "https" if ssl else "http"
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
     device_id = config.get(CONF_DEVICE)
 
     try:
-        response = requests.get(
-            DEVICE_LIST_URL.format(proto, host, port)).json()
+        response = requests.get(DEVICE_LIST_URL.format(proto, host, port)).json()
         if device_id in response[CONF_DEVICES].keys():
             add_entities([FireTVDevice(proto, host, port, device_id, name)])
-            _LOGGER.info("Device %s accessible and ready for control",
-                         device_id)
+            _LOGGER.info("Device %s accessible and ready for control", device_id)
         else:
-            _LOGGER.warning("Device %s is not registered with firetv-server",
-                            device_id)
+            _LOGGER.warning("Device %s is not registered with firetv-server", device_id)
     except requests.exceptions.RequestException:
         _LOGGER.error("Could not connect to firetv-server at %s", host)
 
@@ -93,11 +116,12 @@ class FireTV:
             response = requests.get(
                 DEVICE_STATE_URL.format(
                     self.proto, self.host, self.port, self.device_id
-                    ), timeout=10).json()
-            return response.get('state', STATE_UNKNOWN)
+                ),
+                timeout=10,
+            ).json()
+            return response.get("state", STATE_UNKNOWN)
         except requests.exceptions.RequestException:
-            _LOGGER.error(
-                "Could not retrieve device state for %s", self.device_id)
+            _LOGGER.error("Could not retrieve device state for %s", self.device_id)
             return STATE_UNKNOWN
 
     @property
@@ -106,16 +130,17 @@ class FireTV:
         try:
             response = requests.get(
                 DEVICE_APPS_URL.format(
-                    self.proto, self.host, self.port, self.device_id, 'current'
-                    ), timeout=10).json()
-            _current_app = response.get('current_app')
+                    self.proto, self.host, self.port, self.device_id, "current"
+                ),
+                timeout=10,
+            ).json()
+            _current_app = response.get("current_app")
             if _current_app:
-                return _current_app.get('package')
+                return _current_app.get("package")
 
             return None
         except requests.exceptions.RequestException:
-            _LOGGER.error(
-                "Could not retrieve current app for %s", self.device_id)
+            _LOGGER.error("Could not retrieve current app for %s", self.device_id)
             return None
 
     @property
@@ -124,34 +149,46 @@ class FireTV:
         try:
             response = requests.get(
                 DEVICE_APPS_URL.format(
-                    self.proto, self.host, self.port, self.device_id, 'running'
-                    ), timeout=10).json()
-            return response.get('running_apps')
+                    self.proto, self.host, self.port, self.device_id, "running"
+                ),
+                timeout=10,
+            ).json()
+            return response.get("running_apps")
         except requests.exceptions.RequestException:
-            _LOGGER.error(
-                "Could not retrieve running apps for %s", self.device_id)
+            _LOGGER.error("Could not retrieve running apps for %s", self.device_id)
             return None
 
     def action(self, action_id):
         """Perform an action on the device."""
         try:
-            requests.get(DEVICE_ACTION_URL.format(
-                self.proto, self.host, self.port, self.device_id, action_id
-                ), timeout=10)
+            requests.get(
+                DEVICE_ACTION_URL.format(
+                    self.proto, self.host, self.port, self.device_id, action_id
+                ),
+                timeout=10,
+            )
         except requests.exceptions.RequestException:
             _LOGGER.error(
                 "Action request for %s was not accepted for device %s",
-                action_id, self.device_id)
+                action_id,
+                self.device_id,
+            )
 
     def start_app(self, app_name):
         """Start an app."""
         try:
-            requests.get(DEVICE_APPS_URL.format(
-                self.proto, self.host, self.port, self.device_id,
-                app_name + '/start'), timeout=10)
+            requests.get(
+                DEVICE_APPS_URL.format(
+                    self.proto,
+                    self.host,
+                    self.port,
+                    self.device_id,
+                    app_name + "/start",
+                ),
+                timeout=10,
+            )
         except requests.exceptions.RequestException:
-            _LOGGER.error(
-                "Could not start %s on %s", app_name, self.device_id)
+            _LOGGER.error("Could not start %s on %s", app_name, self.device_id)
 
 
 class FireTVDevice(MediaPlayerDevice):
@@ -198,12 +235,12 @@ class FireTVDevice(MediaPlayerDevice):
     def update(self):
         """Get the latest date and update device state."""
         self._state = {
-            'idle': STATE_IDLE,
-            'off': STATE_OFF,
-            'play': STATE_PLAYING,
-            'pause': STATE_PAUSED,
-            'standby': STATE_STANDBY,
-            'disconnected': STATE_UNKNOWN,
+            "idle": STATE_IDLE,
+            "off": STATE_OFF,
+            "play": STATE_PLAYING,
+            "pause": STATE_PAUSED,
+            "standby": STATE_STANDBY,
+            "disconnected": STATE_UNKNOWN,
         }.get(self._firetv.state, STATE_UNKNOWN)
 
         if self._state not in [STATE_OFF, STATE_UNKNOWN]:
@@ -215,39 +252,39 @@ class FireTVDevice(MediaPlayerDevice):
 
     def turn_on(self):
         """Turn on the device."""
-        self._firetv.action('turn_on')
+        self._firetv.action("turn_on")
 
     def turn_off(self):
         """Turn off the device."""
-        self._firetv.action('turn_off')
+        self._firetv.action("turn_off")
 
     def media_play(self):
         """Send play command."""
-        self._firetv.action('media_play')
+        self._firetv.action("media_play")
 
     def media_pause(self):
         """Send pause command."""
-        self._firetv.action('media_pause')
+        self._firetv.action("media_pause")
 
     def media_play_pause(self):
         """Send play/pause command."""
-        self._firetv.action('media_play_pause')
+        self._firetv.action("media_play_pause")
 
     def volume_up(self):
         """Send volume up command."""
-        self._firetv.action('volume_up')
+        self._firetv.action("volume_up")
 
     def volume_down(self):
         """Send volume down command."""
-        self._firetv.action('volume_down')
+        self._firetv.action("volume_down")
 
     def media_previous_track(self):
         """Send previous track command (results in rewind)."""
-        self._firetv.action('media_previous')
+        self._firetv.action("media_previous")
 
     def media_next_track(self):
         """Send next track command (results in fast-forward)."""
-        self._firetv.action('media_next')
+        self._firetv.action("media_next")
 
     def select_source(self, source):
         """Select input source."""

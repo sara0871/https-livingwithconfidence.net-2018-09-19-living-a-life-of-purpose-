@@ -7,38 +7,49 @@ https://home-assistant.io/components/climate.zwave/
 # Because we do not compile openzwave on CI
 import logging
 from homeassistant.components.climate import (
-    DOMAIN, ClimateDevice, STATE_AUTO, STATE_COOL, STATE_HEAT,
-    SUPPORT_TARGET_TEMPERATURE, SUPPORT_FAN_MODE,
-    SUPPORT_OPERATION_MODE, SUPPORT_SWING_MODE)
+    DOMAIN,
+    ClimateDevice,
+    STATE_AUTO,
+    STATE_COOL,
+    STATE_HEAT,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_FAN_MODE,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_SWING_MODE,
+)
 from homeassistant.components.zwave import ZWaveDeviceEntity
-from homeassistant.components.zwave import async_setup_platform  # noqa pylint: disable=unused-import
+from homeassistant.components.zwave import (
+    async_setup_platform
+)  # noqa pylint: disable=unused-import
 from homeassistant.const import (
-    STATE_OFF, TEMP_CELSIUS, TEMP_FAHRENHEIT, ATTR_TEMPERATURE)
+    STATE_OFF,
+    TEMP_CELSIUS,
+    TEMP_FAHRENHEIT,
+    ATTR_TEMPERATURE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_NAME = 'name'
-DEFAULT_NAME = 'Z-Wave Climate'
+CONF_NAME = "name"
+DEFAULT_NAME = "Z-Wave Climate"
 
 REMOTEC = 0x5254
 REMOTEC_ZXT_120 = 0x8377
 REMOTEC_ZXT_120_THERMOSTAT = (REMOTEC, REMOTEC_ZXT_120)
-ATTR_OPERATING_STATE = 'operating_state'
-ATTR_FAN_STATE = 'fan_state'
+ATTR_OPERATING_STATE = "operating_state"
+ATTR_FAN_STATE = "fan_state"
 
-WORKAROUND_ZXT_120 = 'zxt_120'
+WORKAROUND_ZXT_120 = "zxt_120"
 
-DEVICE_MAPPINGS = {
-    REMOTEC_ZXT_120_THERMOSTAT: WORKAROUND_ZXT_120
-}
+DEVICE_MAPPINGS = {REMOTEC_ZXT_120_THERMOSTAT: WORKAROUND_ZXT_120}
 
 STATE_MAPPINGS = {
-    'Off': STATE_OFF,
-    'Heat': STATE_HEAT,
-    'Heat Mode': STATE_HEAT,
-    'Heat (Default)': STATE_HEAT,
-    'Cool': STATE_COOL,
-    'Auto': STATE_AUTO,
+    "Off": STATE_OFF,
+    "Heat": STATE_HEAT,
+    "Heat Mode": STATE_HEAT,
+    "Heat (Default)": STATE_HEAT,
+    "Cool": STATE_COOL,
+    "Auto": STATE_AUTO,
 }
 
 
@@ -69,15 +80,14 @@ class ZWaveClimate(ZWaveDeviceEntity, ClimateDevice):
         _LOGGER.debug("temp_unit is %s", self._unit)
         self._zxt_120 = None
         # Make sure that we have values for the key before converting to int
-        if (self.node.manufacturer_id.strip() and
-                self.node.product_id.strip()):
+        if self.node.manufacturer_id.strip() and self.node.product_id.strip():
             specific_sensor_key = (
                 int(self.node.manufacturer_id, 16),
-                int(self.node.product_id, 16))
+                int(self.node.product_id, 16),
+            )
             if specific_sensor_key in DEVICE_MAPPINGS:
                 if DEVICE_MAPPINGS[specific_sensor_key] == WORKAROUND_ZXT_120:
-                    _LOGGER.debug(
-                        "Remotec ZXT-120 Zwave Thermostat workaround")
+                    _LOGGER.debug("Remotec ZXT-120 Zwave Thermostat workaround")
                     self._zxt_120 = 1
         self.update_properties()
 
@@ -110,8 +120,13 @@ class ZWaveClimate(ZWaveDeviceEntity, ClimateDevice):
                     self._operation_list.append(mode)
             current_mode = self.values.mode.data
             self._current_operation = next(
-                (key for key, value in self._operation_mapping.items()
-                 if value == current_mode), current_mode)
+                (
+                    key
+                    for key, value in self._operation_mapping.items()
+                    if value == current_mode
+                ),
+                current_mode,
+            )
         _LOGGER.debug("self._operation_list=%s", self._operation_list)
         _LOGGER.debug("self._current_operation=%s", self._current_operation)
 
@@ -129,8 +144,7 @@ class ZWaveClimate(ZWaveDeviceEntity, ClimateDevice):
             if fan_list:
                 self._fan_list = list(fan_list)
         _LOGGER.debug("self._fan_list=%s", self._fan_list)
-        _LOGGER.debug("self._current_fan_mode=%s",
-                      self._current_fan_mode)
+        _LOGGER.debug("self._current_fan_mode=%s", self._current_fan_mode)
         # Swing mode
         if self._zxt_120 == 1:
             if self.values.zxt_120_swing_mode:
@@ -139,19 +153,17 @@ class ZWaveClimate(ZWaveDeviceEntity, ClimateDevice):
                 if swing_list:
                     self._swing_list = list(swing_list)
             _LOGGER.debug("self._swing_list=%s", self._swing_list)
-            _LOGGER.debug("self._current_swing_mode=%s",
-                          self._current_swing_mode)
+            _LOGGER.debug("self._current_swing_mode=%s", self._current_swing_mode)
         # Set point
         if self.values.primary.data == 0:
-            _LOGGER.debug("Setpoint is 0, setting default to "
-                          "current_temperature=%s",
-                          self._current_temperature)
+            _LOGGER.debug(
+                "Setpoint is 0, setting default to " "current_temperature=%s",
+                self._current_temperature,
+            )
             if self._current_temperature is not None:
-                self._target_temperature = (
-                    round((float(self._current_temperature)), 1))
+                self._target_temperature = round((float(self._current_temperature)), 1)
         else:
-            self._target_temperature = round(
-                (float(self.values.primary.data)), 1)
+            self._target_temperature = round((float(self.values.primary.data)), 1)
 
         # Operating state
         if self.values.operating_state:
@@ -184,9 +196,9 @@ class ZWaveClimate(ZWaveDeviceEntity, ClimateDevice):
     @property
     def temperature_unit(self):
         """Return the unit of measurement."""
-        if self._unit == 'C':
+        if self._unit == "C":
             return TEMP_CELSIUS
-        if self._unit == 'F':
+        if self._unit == "F":
             return TEMP_FAHRENHEIT
         return self._unit
 
@@ -228,7 +240,8 @@ class ZWaveClimate(ZWaveDeviceEntity, ClimateDevice):
         """Set new target operation mode."""
         if self.values.mode:
             self.values.mode.data = self._operation_mapping.get(
-                operation_mode, operation_mode)
+                operation_mode, operation_mode
+            )
 
     def set_swing_mode(self, swing_mode):
         """Set new target swing mode."""

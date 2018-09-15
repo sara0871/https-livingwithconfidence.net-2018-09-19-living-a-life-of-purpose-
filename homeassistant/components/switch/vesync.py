@@ -6,19 +6,18 @@ https://home-assistant.io/components/switch.vesync/
 """
 import logging
 import voluptuous as vol
-from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA)
-from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD)
+from homeassistant.components.switch import SwitchDevice, PLATFORM_SCHEMA
+from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
 import homeassistant.helpers.config_validation as cv
 
 
-REQUIREMENTS = ['pyvesync==0.1.1']
+REQUIREMENTS = ["pyvesync==0.1.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_USERNAME): cv.string, vol.Required(CONF_PASSWORD): cv.string}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -37,17 +36,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     if manager.devices is not None and manager.devices:
         if len(manager.devices) == 1:
-            count_string = 'switch'
+            count_string = "switch"
         else:
-            count_string = 'switches'
+            count_string = "switches"
 
-        _LOGGER.info("Discovered %d VeSync %s",
-                     len(manager.devices), count_string)
+        _LOGGER.info("Discovered %d VeSync %s", len(manager.devices), count_string)
 
         for switch in manager.devices:
             switches.append(VeSyncSwitchHA(switch))
-            _LOGGER.info("Added a VeSync switch named '%s'",
-                         switch.device_name)
+            _LOGGER.info("Added a VeSync switch named '%s'", switch.device_name)
     else:
         _LOGGER.info("No VeSync devices found")
 

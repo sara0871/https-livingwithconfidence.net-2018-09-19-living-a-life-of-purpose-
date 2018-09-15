@@ -8,7 +8,10 @@ import logging
 import time
 from homeassistant.components.switch import DOMAIN, SwitchDevice
 from homeassistant.components import zwave
-from homeassistant.components.zwave import workaround, async_setup_platform  # noqa pylint: disable=unused-import
+from homeassistant.components.zwave import (
+    workaround,
+    async_setup_platform,
+)  # noqa pylint: disable=unused-import
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,16 +28,16 @@ class ZwaveSwitch(zwave.ZWaveDeviceEntity, SwitchDevice):
         """Initialize the Z-Wave switch device."""
         zwave.ZWaveDeviceEntity.__init__(self, values, DOMAIN)
         self.refresh_on_update = (
-            workaround.get_device_mapping(values.primary) ==
-            workaround.WORKAROUND_REFRESH_NODE_ON_UPDATE)
+            workaround.get_device_mapping(values.primary)
+            == workaround.WORKAROUND_REFRESH_NODE_ON_UPDATE
+        )
         self.last_update = time.perf_counter()
         self._state = self.values.primary.data
 
     def update_properties(self):
         """Handle data changes for node values."""
         self._state = self.values.primary.data
-        if self.refresh_on_update and \
-                time.perf_counter() - self.last_update > 30:
+        if self.refresh_on_update and time.perf_counter() - self.last_update > 30:
             self.last_update = time.perf_counter()
             self.node.request_state()
 

@@ -7,31 +7,42 @@ https://home-assistant.io/components/climate.melissa/
 import logging
 
 from homeassistant.components.climate import (
-    ClimateDevice, SUPPORT_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_ON_OFF, STATE_AUTO, STATE_HEAT, STATE_COOL, STATE_DRY,
-    STATE_FAN_ONLY, SUPPORT_FAN_MODE
+    ClimateDevice,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_ON_OFF,
+    STATE_AUTO,
+    STATE_HEAT,
+    STATE_COOL,
+    STATE_DRY,
+    STATE_FAN_ONLY,
+    SUPPORT_FAN_MODE,
 )
 from homeassistant.components.fan import SPEED_LOW, SPEED_MEDIUM, SPEED_HIGH
 from homeassistant.components.melissa import DATA_MELISSA
 from homeassistant.const import (
-    TEMP_CELSIUS, STATE_ON, STATE_OFF, STATE_IDLE, ATTR_TEMPERATURE,
-    PRECISION_WHOLE
+    TEMP_CELSIUS,
+    STATE_ON,
+    STATE_OFF,
+    STATE_IDLE,
+    ATTR_TEMPERATURE,
+    PRECISION_WHOLE,
 )
 
-DEPENDENCIES = ['melissa']
+DEPENDENCIES = ["melissa"]
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FLAGS = (SUPPORT_FAN_MODE | SUPPORT_OPERATION_MODE |
-                 SUPPORT_ON_OFF | SUPPORT_TARGET_TEMPERATURE)
+SUPPORT_FLAGS = (
+    SUPPORT_FAN_MODE
+    | SUPPORT_OPERATION_MODE
+    | SUPPORT_ON_OFF
+    | SUPPORT_TARGET_TEMPERATURE
+)
 
-OP_MODES = [
-    STATE_COOL, STATE_DRY, STATE_FAN_ONLY, STATE_HEAT
-]
+OP_MODES = [STATE_COOL, STATE_DRY, STATE_FAN_ONLY, STATE_HEAT]
 
-FAN_MODES = [
-    STATE_AUTO, SPEED_HIGH, SPEED_LOW, SPEED_MEDIUM
-]
+FAN_MODES = [STATE_AUTO, SPEED_HIGH, SPEED_LOW, SPEED_MEDIUM]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -42,9 +53,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     all_devices = []
 
     for device in devices:
-        if device['type'] == 'melissa':
-            all_devices.append(MelissaClimate(
-                api, device['serial_number'], device))
+        if device["type"] == "melissa":
+            all_devices.append(MelissaClimate(api, device["serial_number"], device))
 
     add_entities(all_devices)
 
@@ -54,10 +64,10 @@ class MelissaClimate(ClimateDevice):
 
     def __init__(self, api, serial_number, init_data):
         """Initialize the climate device."""
-        self._name = init_data['name']
+        self._name = init_data["name"]
         self._api = api
         self._serial_number = serial_number
-        self._data = init_data['controller_log']
+        self._data = init_data["controller_log"]
         self._state = None
         self._cur_settings = None
 
@@ -71,15 +81,16 @@ class MelissaClimate(ClimateDevice):
         """Return current state."""
         if self._cur_settings is not None:
             return self._cur_settings[self._api.STATE] in (
-                self._api.STATE_ON, self._api.STATE_IDLE)
+                self._api.STATE_ON,
+                self._api.STATE_IDLE,
+            )
         return None
 
     @property
     def current_fan_mode(self):
         """Return the current fan mode."""
         if self._cur_settings is not None:
-            return self.melissa_fan_to_hass(
-                self._cur_settings[self._api.FAN])
+            return self.melissa_fan_to_hass(self._cur_settings[self._api.FAN])
 
     @property
     def current_temperature(self):
@@ -96,8 +107,7 @@ class MelissaClimate(ClimateDevice):
     def current_operation(self):
         """Return the current operation mode."""
         if self._cur_settings is not None:
-            return self.melissa_op_to_hass(
-                self._cur_settings[self._api.MODE])
+            return self.melissa_op_to_hass(self._cur_settings[self._api.MODE])
 
     @property
     def operation_list(self):
@@ -119,8 +129,7 @@ class MelissaClimate(ClimateDevice):
     def state(self):
         """Return current state."""
         if self._cur_settings is not None:
-            return self.melissa_state_to_hass(
-                self._cur_settings[self._api.STATE])
+            return self.melissa_state_to_hass(self._cur_settings[self._api.STATE])
 
     @property
     def temperature_unit(self):
@@ -181,12 +190,11 @@ class MelissaClimate(ClimateDevice):
         """Get latest data from Melissa."""
         try:
             self._data = self._api.status(cached=True)[self._serial_number]
-            self._cur_settings = self._api.cur_settings(
-                self._serial_number
-            )['controller']['_relation']['command_log']
+            self._cur_settings = self._api.cur_settings(self._serial_number)[
+                "controller"
+            ]["_relation"]["command_log"]
         except KeyError:
-            _LOGGER.warning(
-                'Unable to update entity %s', self.entity_id)
+            _LOGGER.warning("Unable to update entity %s", self.entity_id)
 
     def melissa_state_to_hass(self, state):
         """Translate Melissa states to hass states."""
@@ -208,8 +216,7 @@ class MelissaClimate(ClimateDevice):
             return STATE_DRY
         if mode == self._api.MODE_FAN:
             return STATE_FAN_ONLY
-        _LOGGER.warning(
-            "Operation mode %s could not be mapped to hass", mode)
+        _LOGGER.warning("Operation mode %s could not be mapped to hass", mode)
         return None
 
     def melissa_fan_to_hass(self, fan):

@@ -4,9 +4,15 @@ Demo fan platform that has a fake fan.
 For more details about this platform, please refer to the documentation
 https://home-assistant.io/components/demo/
 """
-from homeassistant.components.fan import (SPEED_LOW, SPEED_MEDIUM, SPEED_HIGH,
-                                          FanEntity, SUPPORT_SET_SPEED,
-                                          SUPPORT_OSCILLATE, SUPPORT_DIRECTION)
+from homeassistant.components.fan import (
+    SPEED_LOW,
+    SPEED_MEDIUM,
+    SPEED_HIGH,
+    FanEntity,
+    SUPPORT_SET_SPEED,
+    SUPPORT_OSCILLATE,
+    SUPPORT_DIRECTION,
+)
 from homeassistant.const import STATE_OFF
 
 FULL_SUPPORT = SUPPORT_SET_SPEED | SUPPORT_OSCILLATE | SUPPORT_DIRECTION
@@ -15,10 +21,12 @@ LIMITED_SUPPORT = SUPPORT_SET_SPEED
 
 def setup_platform(hass, config, add_entities_callback, discovery_info=None):
     """Set up the demo fan platform."""
-    add_entities_callback([
-        DemoFan(hass, "Living Room Fan", FULL_SUPPORT),
-        DemoFan(hass, "Ceiling Fan", LIMITED_SUPPORT),
-    ])
+    add_entities_callback(
+        [
+            DemoFan(hass, "Living Room Fan", FULL_SUPPORT),
+            DemoFan(hass, "Ceiling Fan", LIMITED_SUPPORT),
+        ]
+    )
 
 
 class DemoFan(FanEntity):

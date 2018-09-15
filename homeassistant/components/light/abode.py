@@ -8,12 +8,16 @@ import logging
 from math import ceil
 from homeassistant.components.abode import AbodeDevice, DOMAIN as ABODE_DOMAIN
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_HS_COLOR,
-    SUPPORT_BRIGHTNESS, SUPPORT_COLOR, Light)
+    ATTR_BRIGHTNESS,
+    ATTR_HS_COLOR,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR,
+    Light,
+)
 import homeassistant.util.color as color_util
 
 
-DEPENDENCIES = ['abode']
+DEPENDENCIES = ["abode"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,10 +49,12 @@ class AbodeLight(AbodeDevice, Light):
 
     def turn_on(self, **kwargs):
         """Turn on the light."""
-        if (ATTR_HS_COLOR in kwargs and
-                self._device.is_dimmable and self._device.has_color):
-            self._device.set_color(color_util.color_hs_to_RGB(
-                *kwargs[ATTR_HS_COLOR]))
+        if (
+            ATTR_HS_COLOR in kwargs
+            and self._device.is_dimmable
+            and self._device.has_color
+        ):
+            self._device.set_color(color_util.color_hs_to_RGB(*kwargs[ATTR_HS_COLOR]))
 
         if ATTR_BRIGHTNESS in kwargs and self._device.is_dimmable:
             # Convert HASS brightness (0-255) to Abode brightness (0-99)

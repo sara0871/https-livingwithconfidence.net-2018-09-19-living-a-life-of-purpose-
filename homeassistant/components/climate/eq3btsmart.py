@@ -9,37 +9,45 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.climate import (
-    STATE_ON, STATE_OFF, STATE_AUTO, PLATFORM_SCHEMA, ClimateDevice,
-    SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE)
+    STATE_ON,
+    STATE_OFF,
+    STATE_AUTO,
+    PLATFORM_SCHEMA,
+    ClimateDevice,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_AWAY_MODE,
+)
 from homeassistant.const import (
-    CONF_MAC, CONF_DEVICES, TEMP_CELSIUS, ATTR_TEMPERATURE, PRECISION_HALVES)
+    CONF_MAC,
+    CONF_DEVICES,
+    TEMP_CELSIUS,
+    ATTR_TEMPERATURE,
+    PRECISION_HALVES,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['python-eq3bt==0.1.9', 'construct==2.9.41']
+REQUIREMENTS = ["python-eq3bt==0.1.9", "construct==2.9.41"]
 
 _LOGGER = logging.getLogger(__name__)
 
-STATE_BOOST = 'boost'
-STATE_AWAY = 'away'
-STATE_MANUAL = 'manual'
+STATE_BOOST = "boost"
+STATE_AWAY = "away"
+STATE_MANUAL = "manual"
 
-ATTR_STATE_WINDOW_OPEN = 'window_open'
-ATTR_STATE_VALVE = 'valve'
-ATTR_STATE_LOCKED = 'is_locked'
-ATTR_STATE_LOW_BAT = 'low_battery'
-ATTR_STATE_AWAY_END = 'away_end'
+ATTR_STATE_WINDOW_OPEN = "window_open"
+ATTR_STATE_VALVE = "valve"
+ATTR_STATE_LOCKED = "is_locked"
+ATTR_STATE_LOW_BAT = "low_battery"
+ATTR_STATE_AWAY_END = "away_end"
 
-DEVICE_SCHEMA = vol.Schema({
-    vol.Required(CONF_MAC): cv.string,
-})
+DEVICE_SCHEMA = vol.Schema({vol.Required(CONF_MAC): cv.string})
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_DEVICES):
-        vol.Schema({cv.string: DEVICE_SCHEMA}),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_DEVICES): vol.Schema({cv.string: DEVICE_SCHEMA})}
+)
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE |
-                 SUPPORT_AWAY_MODE)
+SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | SUPPORT_AWAY_MODE
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -177,19 +185,20 @@ class EQ3BTSmartThermostat(ClimateDevice):
     def update(self):
         """Update the data from the thermostat."""
         from bluepy.btle import BTLEException
+
         try:
             self._thermostat.update()
         except BTLEException as ex:
             _LOGGER.warning("Updating the state failed: %s", ex)
 
-        if (self._target_temperature and
-                self._thermostat.target_temperature
-                != self._target_temperature):
+        if (
+            self._target_temperature
+            and self._thermostat.target_temperature != self._target_temperature
+        ):
             self.set_temperature(temperature=self._target_temperature)
         else:
             self._target_temperature = None
-        if (self._target_mode and
-                self.modes[self._thermostat.mode] != self._target_mode):
+        if self._target_mode and self.modes[self._thermostat.mode] != self._target_mode:
             self.set_operation_mode(operation_mode=self._target_mode)
         else:
             self._target_mode = None

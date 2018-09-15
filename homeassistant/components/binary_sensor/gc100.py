@@ -7,20 +7,17 @@ https://home-assistant.io/components/binary_sensor.gc100/
 import voluptuous as vol
 
 from homeassistant.components.gc100 import DATA_GC100, CONF_PORTS
-from homeassistant.components.binary_sensor import (
-    BinarySensorDevice, PLATFORM_SCHEMA)
+from homeassistant.components.binary_sensor import BinarySensorDevice, PLATFORM_SCHEMA
 from homeassistant.const import DEVICE_DEFAULT_NAME
 import homeassistant.helpers.config_validation as cv
 
-DEPENDENCIES = ['gc100']
+DEPENDENCIES = ["gc100"]
 
-_SENSORS_SCHEMA = vol.Schema({
-    cv.string: cv.string,
-})
+_SENSORS_SCHEMA = vol.Schema({cv.string: cv.string})
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_PORTS): vol.All(cv.ensure_list, [_SENSORS_SCHEMA])
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_PORTS): vol.All(cv.ensure_list, [_SENSORS_SCHEMA])}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -29,8 +26,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ports = config.get(CONF_PORTS)
     for port in ports:
         for port_addr, port_name in port.items():
-            binary_sensors.append(GC100BinarySensor(
-                port_name, port_addr, hass.data[DATA_GC100]))
+            binary_sensors.append(
+                GC100BinarySensor(port_name, port_addr, hass.data[DATA_GC100])
+            )
     add_entities(binary_sensors, True)
 
 

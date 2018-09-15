@@ -14,10 +14,11 @@ from aiohttp.hdrs import CONNECTION, KEEP_ALIVE
 
 from homeassistant.components.telegram_bot import (
     initialize_bot,
-    CONF_ALLOWED_CHAT_IDS, BaseTelegramBotEntity,
-    PLATFORM_SCHEMA as TELEGRAM_PLATFORM_SCHEMA)
-from homeassistant.const import (
-    EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP)
+    CONF_ALLOWED_CHAT_IDS,
+    BaseTelegramBotEntity,
+    PLATFORM_SCHEMA as TELEGRAM_PLATFORM_SCHEMA,
+)
+from homeassistant.const import EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -63,11 +64,11 @@ class TelegramPoll(BaseTelegramBotEntity):
         BaseTelegramBotEntity.__init__(self, hass, allowed_chat_ids)
         self.update_id = 0
         self.websession = async_get_clientsession(hass)
-        self.update_url = '{0}/getUpdates'.format(bot.base_url)
+        self.update_url = "{0}/getUpdates".format(bot.base_url)
         self.polling_task = None  # The actual polling task.
         self.timeout = 15  # async post timeout
         # Polling timeout should always be less than async post timeout.
-        self.post_data = {'timeout': self.timeout - 5}
+        self.post_data = {"timeout": self.timeout - 5}
 
     def start_polling(self):
         """Start the polling task."""
@@ -82,17 +83,18 @@ class TelegramPoll(BaseTelegramBotEntity):
         """Bypass the default long polling method to enable asyncio."""
         resp = None
         if offset:
-            self.post_data['offset'] = offset
+            self.post_data["offset"] = offset
         try:
             with async_timeout.timeout(self.timeout, loop=self.hass.loop):
                 resp = yield from self.websession.post(
-                    self.update_url, data=self.post_data,
-                    headers={CONNECTION: KEEP_ALIVE}
+                    self.update_url,
+                    data=self.post_data,
+                    headers={CONNECTION: KEEP_ALIVE},
                 )
             if resp.status == 200:
                 _json = yield from resp.json()
                 return _json
-            raise WrongHttpStatus('wrong status {}'.format(resp.status))
+            raise WrongHttpStatus("wrong status {}".format(resp.status))
         finally:
             if resp is not None:
                 yield from resp.release()
@@ -116,12 +118,12 @@ class TelegramPoll(BaseTelegramBotEntity):
                     pass
                 else:
                     # no exception raised. update received data.
-                    _updates = _updates.get('result')
+                    _updates = _updates.get("result")
                     if _updates is None:
                         _LOGGER.error("Incorrect result received.")
                     else:
                         for update in _updates:
-                            self.update_id = update['update_id'] + 1
+                            self.update_id = update["update_id"] + 1
                             self.process_message(update)
         except CancelledError:
             _LOGGER.debug("Stopping Telegram polling bot")

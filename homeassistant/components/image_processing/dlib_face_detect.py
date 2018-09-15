@@ -8,25 +8,30 @@ import logging
 import io
 
 from homeassistant.core import split_entity_id
+
 # pylint: disable=unused-import
 from homeassistant.components.image_processing import PLATFORM_SCHEMA  # noqa
 from homeassistant.components.image_processing import (
-    ImageProcessingFaceEntity, CONF_SOURCE, CONF_ENTITY_ID, CONF_NAME)
+    ImageProcessingFaceEntity,
+    CONF_SOURCE,
+    CONF_ENTITY_ID,
+    CONF_NAME,
+)
 
-REQUIREMENTS = ['face_recognition==1.0.0']
+REQUIREMENTS = ["face_recognition==1.0.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_LOCATION = 'location'
+ATTR_LOCATION = "location"
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Dlib Face detection platform."""
     entities = []
     for camera in config[CONF_SOURCE]:
-        entities.append(DlibFaceDetectEntity(
-            camera[CONF_ENTITY_ID], camera.get(CONF_NAME)
-        ))
+        entities.append(
+            DlibFaceDetectEntity(camera[CONF_ENTITY_ID], camera.get(CONF_NAME))
+        )
 
     add_entities(entities)
 
@@ -43,8 +48,7 @@ class DlibFaceDetectEntity(ImageProcessingFaceEntity):
         if name:
             self._name = name
         else:
-            self._name = "Dlib Face {0}".format(
-                split_entity_id(camera_entity)[1])
+            self._name = "Dlib Face {0}".format(split_entity_id(camera_entity)[1])
 
     @property
     def camera_entity(self):
@@ -62,13 +66,12 @@ class DlibFaceDetectEntity(ImageProcessingFaceEntity):
         import face_recognition
 
         fak_file = io.BytesIO(image)
-        fak_file.name = 'snapshot.jpg'
+        fak_file.name = "snapshot.jpg"
         fak_file.seek(0)
 
         image = face_recognition.load_image_file(fak_file)
         face_locations = face_recognition.face_locations(image)
 
-        face_locations = [{ATTR_LOCATION: location}
-                          for location in face_locations]
+        face_locations = [{ATTR_LOCATION: location} for location in face_locations]
 
         self.process_faces(face_locations, len(face_locations))

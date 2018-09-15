@@ -7,16 +7,16 @@ https://home-assistant.io/components/light.isy994/
 import logging
 from typing import Callable
 
-from homeassistant.components.light import (
-    Light, SUPPORT_BRIGHTNESS, DOMAIN)
+from homeassistant.components.light import Light, SUPPORT_BRIGHTNESS, DOMAIN
 from homeassistant.components.isy994 import ISY994_NODES, ISYDevice
 from homeassistant.helpers.typing import ConfigType
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def setup_platform(hass, config: ConfigType,
-                   add_entities: Callable[[list], None], discovery_info=None):
+def setup_platform(
+    hass, config: ConfigType, add_entities: Callable[[list], None], discovery_info=None
+):
     """Set up the ISY994 light platform."""
     devices = []
     for node in hass.data[ISY994_NODES][DOMAIN]:

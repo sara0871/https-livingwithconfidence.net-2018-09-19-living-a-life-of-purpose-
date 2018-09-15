@@ -11,13 +11,13 @@ from homeassistant.components.dyson import DYSON_DEVICES
 from homeassistant.const import STATE_OFF, TEMP_CELSIUS
 from homeassistant.helpers.entity import Entity
 
-DEPENDENCIES = ['dyson']
+DEPENDENCIES = ["dyson"]
 
 SENSOR_UNITS = {
-    'air_quality': 'level',
-    'dust': 'level',
-    'filter_life': 'hours',
-    'humidity': '%',
+    "air_quality": "level",
+    "dust": "level",
+    "filter_life": "hours",
+    "humidity": "%",
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,8 +30,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     unit = hass.config.units.temperature_unit
     # Get Dyson Devices from parent component
     from libpurecoollink.dyson_pure_cool_link import DysonPureCoolLink
-    for device in [d for d in hass.data[DYSON_DEVICES] if
-                   isinstance(d, DysonPureCoolLink)]:
+
+    for device in [
+        d for d in hass.data[DYSON_DEVICES] if isinstance(d, DysonPureCoolLink)
+    ]:
         devices.append(DysonFilterLifeSensor(hass, device))
         devices.append(DysonDustSensor(hass, device))
         devices.append(DysonHumiditySensor(hass, device))
@@ -53,15 +55,13 @@ class DysonSensor(Entity):
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Call when entity is added to hass."""
-        self.hass.async_add_job(
-            self._device.add_message_listener, self.on_message)
+        self.hass.async_add_job(self._device.add_message_listener, self.on_message)
 
     def on_message(self, message):
         """Handle new messages which are received from the fan."""
         # Prevent refreshing if not needed
         if self._old_value is None or self._old_value != self.state:
-            _LOGGER.debug("Message received for %s device: %s", self.name,
-                          message)
+            _LOGGER.debug("Message received for %s device: %s", self.name, message)
             self._old_value = self.state
             self.schedule_update_ha_state()
 
@@ -94,7 +94,7 @@ class DysonFilterLifeSensor(DysonSensor):
     @property
     def unit_of_measurement(self):
         """Return the unit the value is expressed in."""
-        return SENSOR_UNITS['filter_life']
+        return SENSOR_UNITS["filter_life"]
 
 
 class DysonDustSensor(DysonSensor):
@@ -115,7 +115,7 @@ class DysonDustSensor(DysonSensor):
     @property
     def unit_of_measurement(self):
         """Return the unit the value is expressed in."""
-        return SENSOR_UNITS['dust']
+        return SENSOR_UNITS["dust"]
 
 
 class DysonHumiditySensor(DysonSensor):
@@ -138,7 +138,7 @@ class DysonHumiditySensor(DysonSensor):
     @property
     def unit_of_measurement(self):
         """Return the unit the value is expressed in."""
-        return SENSOR_UNITS['humidity']
+        return SENSOR_UNITS["humidity"]
 
 
 class DysonTemperatureSensor(DysonSensor):
@@ -186,4 +186,4 @@ class DysonAirQualitySensor(DysonSensor):
     @property
     def unit_of_measurement(self):
         """Return the unit the value is expressed in."""
-        return SENSOR_UNITS['air_quality']
+        return SENSOR_UNITS["air_quality"]

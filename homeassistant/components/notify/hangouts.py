@@ -8,26 +8,32 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.components.notify import (ATTR_TARGET, PLATFORM_SCHEMA,
-                                             NOTIFY_SERVICE_SCHEMA,
-                                             BaseNotificationService,
-                                             ATTR_MESSAGE)
+from homeassistant.components.notify import (
+    ATTR_TARGET,
+    PLATFORM_SCHEMA,
+    NOTIFY_SERVICE_SCHEMA,
+    BaseNotificationService,
+    ATTR_MESSAGE,
+)
 
-from homeassistant.components.hangouts.const \
-    import (DOMAIN, SERVICE_SEND_MESSAGE,
-            TARGETS_SCHEMA, CONF_DEFAULT_CONVERSATIONS)
+from homeassistant.components.hangouts.const import (
+    DOMAIN,
+    SERVICE_SEND_MESSAGE,
+    TARGETS_SCHEMA,
+    CONF_DEFAULT_CONVERSATIONS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [DOMAIN]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_DEFAULT_CONVERSATIONS): [TARGETS_SCHEMA]
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_DEFAULT_CONVERSATIONS): [TARGETS_SCHEMA]}
+)
 
-NOTIFY_SERVICE_SCHEMA = NOTIFY_SERVICE_SCHEMA.extend({
-    vol.Optional(ATTR_TARGET): [TARGETS_SCHEMA]
-})
+NOTIFY_SERVICE_SCHEMA = NOTIFY_SERVICE_SCHEMA.extend(
+    {vol.Optional(ATTR_TARGET): [TARGETS_SCHEMA]}
+)
 
 
 def get_service(hass, config, discovery_info=None):
@@ -48,19 +54,17 @@ class HangoutsNotificationService(BaseNotificationService):
         if ATTR_TARGET in kwargs:
             target_conversations = []
             for target in kwargs.get(ATTR_TARGET):
-                target_conversations.append({'id': target})
+                target_conversations.append({"id": target})
         else:
             target_conversations = self._default_conversations
 
         messages = []
-        if 'title' in kwargs:
-            messages.append({'text': kwargs['title'], 'is_bold': True})
+        if "title" in kwargs:
+            messages.append({"text": kwargs["title"], "is_bold": True})
 
-        messages.append({'text': message, 'parse_str': True})
-        service_data = {
-            ATTR_TARGET: target_conversations,
-            ATTR_MESSAGE: messages
-        }
+        messages.append({"text": message, "parse_str": True})
+        service_data = {ATTR_TARGET: target_conversations, ATTR_MESSAGE: messages}
 
         return self.hass.services.call(
-            DOMAIN, SERVICE_SEND_MESSAGE, service_data=service_data)
+            DOMAIN, SERVICE_SEND_MESSAGE, service_data=service_data
+        )

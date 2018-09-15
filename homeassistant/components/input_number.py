@@ -11,7 +11,12 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import (
-    ATTR_ENTITY_ID, ATTR_UNIT_OF_MEASUREMENT, CONF_ICON, CONF_NAME, CONF_MODE)
+    ATTR_ENTITY_ID,
+    ATTR_UNIT_OF_MEASUREMENT,
+    CONF_ICON,
+    CONF_NAME,
+    CONF_MODE,
+)
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.restore_state import async_get_last_state
@@ -19,35 +24,35 @@ from homeassistant.loader import bind_hass
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'input_number'
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+DOMAIN = "input_number"
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
-CONF_INITIAL = 'initial'
-CONF_MIN = 'min'
-CONF_MAX = 'max'
-CONF_STEP = 'step'
+CONF_INITIAL = "initial"
+CONF_MIN = "min"
+CONF_MAX = "max"
+CONF_STEP = "step"
 
-MODE_SLIDER = 'slider'
-MODE_BOX = 'box'
+MODE_SLIDER = "slider"
+MODE_BOX = "box"
 
-ATTR_VALUE = 'value'
-ATTR_MIN = 'min'
-ATTR_MAX = 'max'
-ATTR_STEP = 'step'
-ATTR_MODE = 'mode'
+ATTR_VALUE = "value"
+ATTR_MIN = "min"
+ATTR_MAX = "max"
+ATTR_STEP = "step"
+ATTR_MODE = "mode"
 
-SERVICE_SET_VALUE = 'set_value'
-SERVICE_INCREMENT = 'increment'
-SERVICE_DECREMENT = 'decrement'
+SERVICE_SET_VALUE = "set_value"
+SERVICE_INCREMENT = "increment"
+SERVICE_DECREMENT = "decrement"
 
-SERVICE_DEFAULT_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids
-})
+SERVICE_DEFAULT_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
-SERVICE_SET_VALUE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-    vol.Required(ATTR_VALUE): vol.Coerce(float),
-})
+SERVICE_SET_VALUE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Required(ATTR_VALUE): vol.Coerce(float),
+    }
+)
 
 
 def _cv_input_number(cfg):
@@ -55,56 +60,64 @@ def _cv_input_number(cfg):
     minimum = cfg.get(CONF_MIN)
     maximum = cfg.get(CONF_MAX)
     if minimum >= maximum:
-        raise vol.Invalid('Maximum ({}) is not greater than minimum ({})'
-                          .format(minimum, maximum))
+        raise vol.Invalid(
+            "Maximum ({}) is not greater than minimum ({})".format(minimum, maximum)
+        )
     state = cfg.get(CONF_INITIAL)
     if state is not None and (state < minimum or state > maximum):
-        raise vol.Invalid('Initial value {} not in range {}-{}'
-                          .format(state, minimum, maximum))
+        raise vol.Invalid(
+            "Initial value {} not in range {}-{}".format(state, minimum, maximum)
+        )
     return cfg
 
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        cv.slug: vol.All({
-            vol.Optional(CONF_NAME): cv.string,
-            vol.Required(CONF_MIN): vol.Coerce(float),
-            vol.Required(CONF_MAX): vol.Coerce(float),
-            vol.Optional(CONF_INITIAL): vol.Coerce(float),
-            vol.Optional(CONF_STEP, default=1):
-                vol.All(vol.Coerce(float), vol.Range(min=1e-3)),
-            vol.Optional(CONF_ICON): cv.icon,
-            vol.Optional(ATTR_UNIT_OF_MEASUREMENT): cv.string,
-            vol.Optional(CONF_MODE, default=MODE_SLIDER):
-                vol.In([MODE_BOX, MODE_SLIDER]),
-        }, _cv_input_number)
-    })
-}, required=True, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                cv.slug: vol.All(
+                    {
+                        vol.Optional(CONF_NAME): cv.string,
+                        vol.Required(CONF_MIN): vol.Coerce(float),
+                        vol.Required(CONF_MAX): vol.Coerce(float),
+                        vol.Optional(CONF_INITIAL): vol.Coerce(float),
+                        vol.Optional(CONF_STEP, default=1): vol.All(
+                            vol.Coerce(float), vol.Range(min=1e-3)
+                        ),
+                        vol.Optional(CONF_ICON): cv.icon,
+                        vol.Optional(ATTR_UNIT_OF_MEASUREMENT): cv.string,
+                        vol.Optional(CONF_MODE, default=MODE_SLIDER): vol.In(
+                            [MODE_BOX, MODE_SLIDER]
+                        ),
+                    },
+                    _cv_input_number,
+                )
+            }
+        )
+    },
+    required=True,
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 @bind_hass
 def set_value(hass, entity_id, value):
     """Set input_number to value."""
-    hass.services.call(DOMAIN, SERVICE_SET_VALUE, {
-        ATTR_ENTITY_ID: entity_id,
-        ATTR_VALUE: value,
-    })
+    hass.services.call(
+        DOMAIN, SERVICE_SET_VALUE, {ATTR_ENTITY_ID: entity_id, ATTR_VALUE: value}
+    )
 
 
 @bind_hass
 def increment(hass, entity_id):
     """Increment value of entity."""
-    hass.services.call(DOMAIN, SERVICE_INCREMENT, {
-        ATTR_ENTITY_ID: entity_id
-    })
+    hass.services.call(DOMAIN, SERVICE_INCREMENT, {ATTR_ENTITY_ID: entity_id})
 
 
 @bind_hass
 def decrement(hass, entity_id):
     """Decrement value of entity."""
-    hass.services.call(DOMAIN, SERVICE_DECREMENT, {
-        ATTR_ENTITY_ID: entity_id
-    })
+    hass.services.call(DOMAIN, SERVICE_DECREMENT, {ATTR_ENTITY_ID: entity_id})
 
 
 @asyncio.coroutine
@@ -124,26 +137,25 @@ def async_setup(hass, config):
         unit = cfg.get(ATTR_UNIT_OF_MEASUREMENT)
         mode = cfg.get(CONF_MODE)
 
-        entities.append(InputNumber(
-            object_id, name, initial, minimum, maximum, step, icon, unit,
-            mode))
+        entities.append(
+            InputNumber(
+                object_id, name, initial, minimum, maximum, step, icon, unit, mode
+            )
+        )
 
     if not entities:
         return False
 
     component.async_register_entity_service(
-        SERVICE_SET_VALUE, SERVICE_SET_VALUE_SCHEMA,
-        'async_set_value'
+        SERVICE_SET_VALUE, SERVICE_SET_VALUE_SCHEMA, "async_set_value"
     )
 
     component.async_register_entity_service(
-        SERVICE_INCREMENT, SERVICE_DEFAULT_SCHEMA,
-        'async_increment'
+        SERVICE_INCREMENT, SERVICE_DEFAULT_SCHEMA, "async_increment"
     )
 
     component.async_register_entity_service(
-        SERVICE_DECREMENT, SERVICE_DEFAULT_SCHEMA,
-        'async_decrement'
+        SERVICE_DECREMENT, SERVICE_DEFAULT_SCHEMA, "async_decrement"
     )
 
     yield from component.async_add_entities(entities)
@@ -153,8 +165,9 @@ def async_setup(hass, config):
 class InputNumber(Entity):
     """Representation of a slider."""
 
-    def __init__(self, object_id, name, initial, minimum, maximum, step, icon,
-                 unit, mode):
+    def __init__(
+        self, object_id, name, initial, minimum, maximum, step, icon, unit, mode
+    ):
         """Initialize an input number."""
         self.entity_id = ENTITY_ID_FORMAT.format(object_id)
         self._name = name
@@ -221,8 +234,12 @@ class InputNumber(Entity):
         """Set new value."""
         num_value = float(value)
         if num_value < self._minimum or num_value > self._maximum:
-            _LOGGER.warning("Invalid value: %s (range %s - %s)",
-                            num_value, self._minimum, self._maximum)
+            _LOGGER.warning(
+                "Invalid value: %s (range %s - %s)",
+                num_value,
+                self._minimum,
+                self._maximum,
+            )
             return
         self._current_value = num_value
         yield from self.async_update_ha_state()
@@ -232,8 +249,12 @@ class InputNumber(Entity):
         """Increment value."""
         new_value = self._current_value + self._step
         if new_value > self._maximum:
-            _LOGGER.warning("Invalid value: %s (range %s - %s)",
-                            new_value, self._minimum, self._maximum)
+            _LOGGER.warning(
+                "Invalid value: %s (range %s - %s)",
+                new_value,
+                self._minimum,
+                self._maximum,
+            )
             return
         self._current_value = new_value
         yield from self.async_update_ha_state()
@@ -243,8 +264,12 @@ class InputNumber(Entity):
         """Decrement value."""
         new_value = self._current_value - self._step
         if new_value < self._minimum:
-            _LOGGER.warning("Invalid value: %s (range %s - %s)",
-                            new_value, self._minimum, self._maximum)
+            _LOGGER.warning(
+                "Invalid value: %s (range %s - %s)",
+                new_value,
+                self._minimum,
+                self._maximum,
+            )
             return
         self._current_value = new_value
         yield from self.async_update_ha_state()

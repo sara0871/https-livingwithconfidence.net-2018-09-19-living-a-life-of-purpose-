@@ -5,30 +5,36 @@ import voluptuous as vol
 from homeassistant.core import split_entity_id
 from homeassistant.helpers import config_validation as cv
 
-CONF_INCLUDE_DOMAINS = 'include_domains'
-CONF_INCLUDE_ENTITIES = 'include_entities'
-CONF_EXCLUDE_DOMAINS = 'exclude_domains'
-CONF_EXCLUDE_ENTITIES = 'exclude_entities'
+CONF_INCLUDE_DOMAINS = "include_domains"
+CONF_INCLUDE_ENTITIES = "include_entities"
+CONF_EXCLUDE_DOMAINS = "exclude_domains"
+CONF_EXCLUDE_ENTITIES = "exclude_entities"
 
 FILTER_SCHEMA = vol.All(
-    vol.Schema({
-        vol.Optional(CONF_EXCLUDE_DOMAINS, default=[]):
-            vol.All(cv.ensure_list, [cv.string]),
-        vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
-        vol.Optional(CONF_INCLUDE_DOMAINS, default=[]):
-            vol.All(cv.ensure_list, [cv.string]),
-        vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
-    }),
+    vol.Schema(
+        {
+            vol.Optional(CONF_EXCLUDE_DOMAINS, default=[]): vol.All(
+                cv.ensure_list, [cv.string]
+            ),
+            vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+            vol.Optional(CONF_INCLUDE_DOMAINS, default=[]): vol.All(
+                cv.ensure_list, [cv.string]
+            ),
+            vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        }
+    ),
     lambda config: generate_filter(
         config[CONF_INCLUDE_DOMAINS],
         config[CONF_INCLUDE_ENTITIES],
         config[CONF_EXCLUDE_DOMAINS],
         config[CONF_EXCLUDE_ENTITIES],
-    ))
+    ),
+)
 
 
-def generate_filter(include_domains, include_entities,
-                    exclude_domains, exclude_entities):
+def generate_filter(
+    include_domains, include_entities, exclude_domains, exclude_entities
+):
     """Return a function that will filter entities based on the args."""
     include_d = set(include_domains)
     include_e = set(include_entities)
@@ -44,21 +50,21 @@ def generate_filter(include_domains, include_entities,
 
     # Case 2 - includes, no excludes - only include specified entities
     if have_include and not have_exclude:
+
         def entity_filter_2(entity_id):
             """Return filter function for case 2."""
             domain = split_entity_id(entity_id)[0]
-            return (entity_id in include_e or
-                    domain in include_d)
+            return entity_id in include_e or domain in include_d
 
         return entity_filter_2
 
     # Case 3 - excludes, no includes - only exclude specified entities
     if not have_include and have_exclude:
+
         def entity_filter_3(entity_id):
             """Return filter function for case 3."""
             domain = split_entity_id(entity_id)[0]
-            return (entity_id not in exclude_e and
-                    domain not in exclude_d)
+            return entity_id not in exclude_e and domain not in exclude_d
 
         return entity_filter_3
 
@@ -69,6 +75,7 @@ def generate_filter(include_domains, include_entities,
     # note: if both include and exclude domains specified,
     #   the exclude domains are ignored
     if include_d:
+
         def entity_filter_4a(entity_id):
             """Return filter function for case 4a."""
             domain = split_entity_id(entity_id)[0]
@@ -82,6 +89,7 @@ def generate_filter(include_domains, include_entities,
     #  - if domain is excluded, and entity not included, fail
     #  - if domain is not excluded, and entity not excluded, pass
     if exclude_d:
+
         def entity_filter_4b(entity_id):
             """Return filter function for case 4b."""
             domain = split_entity_id(entity_id)[0]

@@ -5,7 +5,7 @@ from homeassistant.core import callback
 from homeassistant.util import dt as dt_util
 from homeassistant.loader import bind_hass
 
-DATA_LOCATION_CACHE = 'astral_location_cache'
+DATA_LOCATION_CACHE = "astral_location_cache"
 
 
 @callback
@@ -18,7 +18,7 @@ def get_astral_location(hass):
     longitude = hass.config.longitude
     timezone = hass.config.time_zone.zone
     elevation = hass.config.elevation
-    info = ('', '', latitude, longitude, timezone, elevation)
+    info = ("", "", latitude, longitude, timezone, elevation)
 
     # Cache astral locations so they aren't recreated with the same args
     if DATA_LOCATION_CACHE not in hass.data:
@@ -47,10 +47,14 @@ def get_astral_event_next(hass, event, utc_point_in_time=None, offset=None):
     mod = -1
     while True:
         try:
-            next_dt = getattr(location, event)(
-                dt_util.as_local(utc_point_in_time).date() +
-                datetime.timedelta(days=mod),
-                local=False) + offset
+            next_dt = (
+                getattr(location, event)(
+                    dt_util.as_local(utc_point_in_time).date()
+                    + datetime.timedelta(days=mod),
+                    local=False,
+                )
+                + offset
+            )
             if next_dt > utc_point_in_time:
                 return next_dt
         except astral.AstralError:
@@ -86,7 +90,7 @@ def is_up(hass, utc_point_in_time=None):
     if utc_point_in_time is None:
         utc_point_in_time = dt_util.utcnow()
 
-    next_sunrise = get_astral_event_next(hass, 'sunrise', utc_point_in_time)
-    next_sunset = get_astral_event_next(hass, 'sunset', utc_point_in_time)
+    next_sunrise = get_astral_event_next(hass, "sunrise", utc_point_in_time)
+    next_sunset = get_astral_event_next(hass, "sunset", utc_point_in_time)
 
     return next_sunrise > next_sunset

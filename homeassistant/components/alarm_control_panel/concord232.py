@@ -14,25 +14,33 @@ import voluptuous as vol
 import homeassistant.components.alarm_control_panel as alarm
 from homeassistant.components.alarm_control_panel import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_HOST, CONF_NAME, CONF_PORT, STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED, STATE_UNKNOWN)
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_DISARMED,
+    STATE_UNKNOWN,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['concord232==0.15']
+REQUIREMENTS = ["concord232==0.15"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_HOST = 'localhost'
-DEFAULT_NAME = 'CONCORD232'
+DEFAULT_HOST = "localhost"
+DEFAULT_NAME = "CONCORD232"
 DEFAULT_PORT = 5007
 
 SCAN_INTERVAL = timedelta(seconds=10)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -41,7 +49,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
 
-    url = 'http://{}:{}'.format(host, port)
+    url = "http://{}:{}".format(host, port)
 
     try:
         add_entities([Concord232Alarm(hass, url, name)])
@@ -80,7 +88,7 @@ class Concord232Alarm(alarm.AlarmControlPanel):
     @property
     def code_format(self):
         """Return the characters if code is defined."""
-        return 'Number'
+        return "Number"
 
     @property
     def state(self):
@@ -92,16 +100,18 @@ class Concord232Alarm(alarm.AlarmControlPanel):
         try:
             part = self._alarm.list_partitions()[0]
         except requests.exceptions.ConnectionError as ex:
-            _LOGGER.error("Unable to connect to %(host)s: %(reason)s",
-                          dict(host=self._url, reason=ex))
+            _LOGGER.error(
+                "Unable to connect to %(host)s: %(reason)s",
+                dict(host=self._url, reason=ex),
+            )
             newstate = STATE_UNKNOWN
         except IndexError:
             _LOGGER.error("Concord232 reports no partitions")
             newstate = STATE_UNKNOWN
 
-        if part['arming_level'] == 'Off':
+        if part["arming_level"] == "Off":
             newstate = STATE_ALARM_DISARMED
-        elif 'Home' in part['arming_level']:
+        elif "Home" in part["arming_level"]:
             newstate = STATE_ALARM_ARMED_HOME
         else:
             newstate = STATE_ALARM_ARMED_AWAY
@@ -117,8 +127,8 @@ class Concord232Alarm(alarm.AlarmControlPanel):
 
     def alarm_arm_home(self, code=None):
         """Send arm home command."""
-        self._alarm.arm('stay')
+        self._alarm.arm("stay")
 
     def alarm_arm_away(self, code=None):
         """Send arm away command."""
-        self._alarm.arm('away')
+        self._alarm.arm("away")

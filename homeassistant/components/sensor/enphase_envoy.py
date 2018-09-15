@@ -11,32 +11,35 @@ import voluptuous as vol
 from homeassistant.helpers.entity import Entity
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import (CONF_IP_ADDRESS, CONF_MONITORED_CONDITIONS)
+from homeassistant.const import CONF_IP_ADDRESS, CONF_MONITORED_CONDITIONS
 
 
-REQUIREMENTS = ['envoy_reader==0.2']
+REQUIREMENTS = ["envoy_reader==0.2"]
 _LOGGER = logging.getLogger(__name__)
 
 SENSORS = {
-    "production": ("Envoy Current Energy Production", 'W'),
+    "production": ("Envoy Current Energy Production", "W"),
     "daily_production": ("Envoy Today's Energy Production", "Wh"),
     "seven_days_production": ("Envoy Last Seven Days Energy Production", "Wh"),
     "lifetime_production": ("Envoy Lifetime Energy Production", "Wh"),
     "consumption": ("Envoy Current Energy Consumption", "W"),
     "daily_consumption": ("Envoy Today's Energy Consumption", "Wh"),
-    "seven_days_consumption": ("Envoy Last Seven Days Energy Consumption",
-                               "Wh"),
-    "lifetime_consumption": ("Envoy Lifetime Energy Consumption", "Wh")
-    }
+    "seven_days_consumption": ("Envoy Last Seven Days Energy Consumption", "Wh"),
+    "lifetime_consumption": ("Envoy Lifetime Energy Consumption", "Wh"),
+}
 
 
-ICON = 'mdi:flash'
+ICON = "mdi:flash"
 CONST_DEFAULT_HOST = "envoy"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_IP_ADDRESS, default=CONST_DEFAULT_HOST): cv.string,
-    vol.Optional(CONF_MONITORED_CONDITIONS, default=list(SENSORS)):
-        vol.All(cv.ensure_list, [vol.In(list(SENSORS))])})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_IP_ADDRESS, default=CONST_DEFAULT_HOST): cv.string,
+        vol.Optional(CONF_MONITORED_CONDITIONS, default=list(SENSORS)): vol.All(
+            cv.ensure_list, [vol.In(list(SENSORS))]
+        ),
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -46,8 +49,14 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # Iterate through the list of sensors
     for condition in monitored_conditions:
-        add_entities([Envoy(ip_address, condition, SENSORS[condition][0],
-                            SENSORS[condition][1])], True)
+        add_entities(
+            [
+                Envoy(
+                    ip_address, condition, SENSORS[condition][0], SENSORS[condition][1]
+                )
+            ],
+            True,
+        )
 
 
 class Envoy(Entity):

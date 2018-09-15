@@ -2,25 +2,28 @@
 import logging
 
 from homeassistant.components.cover import CoverDevice, ATTR_POSITION
-from homeassistant.components.xiaomi_aqara import (PY_XIAOMI_GATEWAY,
-                                                   XiaomiDevice)
+from homeassistant.components.xiaomi_aqara import PY_XIAOMI_GATEWAY, XiaomiDevice
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_CURTAIN_LEVEL = 'curtain_level'
+ATTR_CURTAIN_LEVEL = "curtain_level"
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Perform the setup for Xiaomi devices."""
     devices = []
     for (_, gateway) in hass.data[PY_XIAOMI_GATEWAY].gateways.items():
-        for device in gateway.devices['cover']:
-            model = device['model']
-            if model == 'curtain':
-                devices.append(XiaomiGenericCover(device, "Curtain",
-                                                  {'status': 'status',
-                                                   'pos': 'curtain_level'},
-                                                  gateway))
+        for device in gateway.devices["cover"]:
+            model = device["model"]
+            if model == "curtain":
+                devices.append(
+                    XiaomiGenericCover(
+                        device,
+                        "Curtain",
+                        {"status": "status", "pos": "curtain_level"},
+                        gateway,
+                    )
+                )
     add_entities(devices)
 
 
@@ -45,20 +48,20 @@ class XiaomiGenericCover(XiaomiDevice, CoverDevice):
 
     def close_cover(self, **kwargs):
         """Close the cover."""
-        self._write_to_hub(self._sid, **{self._data_key['status']: 'close'})
+        self._write_to_hub(self._sid, **{self._data_key["status"]: "close"})
 
     def open_cover(self, **kwargs):
         """Open the cover."""
-        self._write_to_hub(self._sid, **{self._data_key['status']: 'open'})
+        self._write_to_hub(self._sid, **{self._data_key["status"]: "open"})
 
     def stop_cover(self, **kwargs):
         """Stop the cover."""
-        self._write_to_hub(self._sid, **{self._data_key['status']: 'stop'})
+        self._write_to_hub(self._sid, **{self._data_key["status"]: "stop"})
 
     def set_cover_position(self, **kwargs):
         """Move the cover to a specific position."""
         position = kwargs.get(ATTR_POSITION)
-        self._write_to_hub(self._sid, **{self._data_key['pos']: str(position)})
+        self._write_to_hub(self._sid, **{self._data_key["pos"]: str(position)})
 
     def parse_data(self, data, raw_data):
         """Parse data sent by gateway."""

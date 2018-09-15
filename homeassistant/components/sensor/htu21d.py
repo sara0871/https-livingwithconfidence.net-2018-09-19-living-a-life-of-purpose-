@@ -18,31 +18,31 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 from homeassistant.util.temperature import celsius_to_fahrenheit
 
-REQUIREMENTS = ['i2csense==0.0.4',
-                'smbus-cffi==0.5.1']
+REQUIREMENTS = ["i2csense==0.0.4", "smbus-cffi==0.5.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_I2C_BUS = 'i2c_bus'
+CONF_I2C_BUS = "i2c_bus"
 DEFAULT_I2C_BUS = 1
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=5)
 
-DEFAULT_NAME = 'HTU21D Sensor'
+DEFAULT_NAME = "HTU21D Sensor"
 
-SENSOR_TEMPERATURE = 'temperature'
-SENSOR_HUMIDITY = 'humidity'
+SENSOR_TEMPERATURE = "temperature"
+SENSOR_HUMIDITY = "humidity"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_I2C_BUS, default=DEFAULT_I2C_BUS): vol.Coerce(int),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_I2C_BUS, default=DEFAULT_I2C_BUS): vol.Coerce(int),
+    }
+)
 
 
 # pylint: disable=import-error
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the HTU21D sensor."""
     import smbus
     from i2csense.htu21d import HTU21D
@@ -52,17 +52,17 @@ def async_setup_platform(hass, config, async_add_entities,
     temp_unit = hass.config.units.temperature_unit
 
     bus = smbus.SMBus(config.get(CONF_I2C_BUS))
-    sensor = yield from hass.async_add_job(
-        partial(HTU21D, bus, logger=_LOGGER)
-    )
+    sensor = yield from hass.async_add_job(partial(HTU21D, bus, logger=_LOGGER))
     if not sensor.sample_ok:
         _LOGGER.error("HTU21D sensor not detected in bus %s", bus_number)
         return False
 
     sensor_handler = yield from hass.async_add_job(HTU21DHandler, sensor)
 
-    dev = [HTU21DSensor(sensor_handler, name, SENSOR_TEMPERATURE, temp_unit),
-           HTU21DSensor(sensor_handler, name, SENSOR_HUMIDITY, '%')]
+    dev = [
+        HTU21DSensor(sensor_handler, name, SENSOR_TEMPERATURE, temp_unit),
+        HTU21DSensor(sensor_handler, name, SENSOR_HUMIDITY, "%"),
+    ]
 
     async_add_entities(dev)
 
@@ -86,7 +86,7 @@ class HTU21DSensor(Entity):
 
     def __init__(self, htu21d_client, name, variable, unit):
         """Initialize the sensor."""
-        self._name = '{}_{}'.format(name, variable)
+        self._name = "{}_{}".format(name, variable)
         self._variable = variable
         self._unit_of_measurement = unit
         self._client = htu21d_client

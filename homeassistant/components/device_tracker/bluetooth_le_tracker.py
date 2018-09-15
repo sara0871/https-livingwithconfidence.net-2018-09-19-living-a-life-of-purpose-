@@ -8,16 +8,20 @@ import logging
 
 from homeassistant.helpers.event import track_point_in_utc_time
 from homeassistant.components.device_tracker import (
-    YAML_DEVICES, CONF_TRACK_NEW, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL,
-    load_config, SOURCE_TYPE_BLUETOOTH_LE
+    YAML_DEVICES,
+    CONF_TRACK_NEW,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    load_config,
+    SOURCE_TYPE_BLUETOOTH_LE,
 )
 import homeassistant.util.dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
-REQUIREMENTS = ['pygatt==3.2.0']
+REQUIREMENTS = ["pygatt==3.2.0"]
 
-BLE_PREFIX = 'BLE_'
+BLE_PREFIX = "BLE_"
 MIN_SEEN_NEW = 5
 
 
@@ -25,14 +29,14 @@ def setup_scanner(hass, config, see, discovery_info=None):
     """Set up the Bluetooth LE Scanner."""
     # pylint: disable=import-error
     import pygatt
+
     new_devices = {}
 
     def see_device(address, name, new_device=False):
         """Mark a device as seen."""
         if new_device:
             if address in new_devices:
-                _LOGGER.debug(
-                    "Seen %s %s times", address, new_devices[address])
+                _LOGGER.debug("Seen %s %s times", address, new_devices[address])
                 new_devices[address] += 1
                 if new_devices[address] >= MIN_SEEN_NEW:
                     _LOGGER.debug("Adding %s to tracked devices", address)
@@ -44,8 +48,11 @@ def setup_scanner(hass, config, see, discovery_info=None):
                 new_devices[address] = 1
                 return
 
-        see(mac=BLE_PREFIX + address, host_name=name.strip("\x00"),
-            source_type=SOURCE_TYPE_BLUETOOTH_LE)
+        see(
+            mac=BLE_PREFIX + address,
+            host_name=name.strip("\x00"),
+            source_type=SOURCE_TYPE_BLUETOOTH_LE,
+        )
 
     def discover_ble_devices():
         """Discover Bluetooth LE devices."""
@@ -54,7 +61,7 @@ def setup_scanner(hass, config, see, discovery_info=None):
             adapter = pygatt.GATTToolBackend()
             devs = adapter.scan()
 
-            devices = {x['address']: x['name'] for x in devs}
+            devices = {x["address"]: x["name"] for x in devs}
             _LOGGER.debug("Bluetooth LE devices discovered = %s", devices)
         except RuntimeError as error:
             _LOGGER.error("Error during Bluetooth LE scan: %s", error)
@@ -101,8 +108,7 @@ def setup_scanner(hass, config, see, discovery_info=None):
 
         if track_new:
             for address in devs:
-                if address not in devs_to_track and \
-                        address not in devs_donot_track:
+                if address not in devs_to_track and address not in devs_donot_track:
                     _LOGGER.info("Discovered Bluetooth LE device %s", address)
                     see_device(address, devs[address], new_device=True)
 

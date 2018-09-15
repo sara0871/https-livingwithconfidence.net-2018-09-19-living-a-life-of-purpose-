@@ -10,26 +10,32 @@ import time
 import voluptuous as vol
 
 from homeassistant.components.cover import (
-    CoverDevice, PLATFORM_SCHEMA, SUPPORT_OPEN, SUPPORT_CLOSE,
-    SUPPORT_STOP)
+    CoverDevice,
+    PLATFORM_SCHEMA,
+    SUPPORT_OPEN,
+    SUPPORT_CLOSE,
+    SUPPORT_STOP,
+)
 from homeassistant.components.velbus import DOMAIN
-from homeassistant.const import (CONF_COVERS, CONF_NAME)
+from homeassistant.const import CONF_COVERS, CONF_NAME
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-COVER_SCHEMA = vol.Schema({
-    vol.Required('module'): cv.positive_int,
-    vol.Required('open_channel'): cv.positive_int,
-    vol.Required('close_channel'): cv.positive_int,
-    vol.Required(CONF_NAME): cv.string
-})
+COVER_SCHEMA = vol.Schema(
+    {
+        vol.Required("module"): cv.positive_int,
+        vol.Required("open_channel"): cv.positive_int,
+        vol.Required("close_channel"): cv.positive_int,
+        vol.Required(CONF_NAME): cv.string,
+    }
+)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_COVERS): vol.Schema({cv.slug: COVER_SCHEMA}),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_COVERS): vol.Schema({cv.slug: COVER_SCHEMA})}
+)
 
-DEPENDENCIES = ['velbus']
+DEPENDENCIES = ["velbus"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -43,9 +49,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             VelbusCover(
                 velbus,
                 device_config.get(CONF_NAME, device_name),
-                device_config.get('module'),
-                device_config.get('open_channel'),
-                device_config.get('close_channel')
+                device_config.get("module"),
+                device_config.get("open_channel"),
+                device_config.get("close_channel"),
             )
         )
 
@@ -71,6 +77,7 @@ class VelbusCover(CoverDevice):
 
     async def async_added_to_hass(self):
         """Add listener for Velbus messages on bus."""
+
         def _init_velbus():
             """Initialize Velbus on startup."""
             self._velbus.subscribe(self._on_message)
@@ -80,6 +87,7 @@ class VelbusCover(CoverDevice):
 
     def _on_message(self, message):
         import velbus
+
         if isinstance(message, velbus.RelayStatusMessage):
             if message.address == self._module:
                 if message.channel == self._close_channel:
@@ -119,6 +127,7 @@ class VelbusCover(CoverDevice):
 
     def _relay_off(self, channel):
         import velbus
+
         message = velbus.SwitchRelayOffMessage()
         message.set_defaults(self._module)
         message.relay_channels = [channel]
@@ -126,6 +135,7 @@ class VelbusCover(CoverDevice):
 
     def _relay_on(self, channel):
         import velbus
+
         message = velbus.SwitchRelayOnMessage()
         message.set_defaults(self._module)
         message.relay_channels = [channel]
@@ -152,6 +162,7 @@ class VelbusCover(CoverDevice):
     def get_status(self):
         """Retrieve current status."""
         import velbus
+
         message = velbus.ModuleStatusRequestMessage()
         message.set_defaults(self._module)
         message.channels = [self._open_channel, self._close_channel]

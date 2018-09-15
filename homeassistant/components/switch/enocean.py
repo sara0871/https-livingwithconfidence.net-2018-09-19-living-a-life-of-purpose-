@@ -9,22 +9,24 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.switch import PLATFORM_SCHEMA
-from homeassistant.const import (CONF_NAME, CONF_ID)
+from homeassistant.const import CONF_NAME, CONF_ID
 from homeassistant.components import enocean
 from homeassistant.helpers.entity import ToggleEntity
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'EnOcean Switch'
-DEPENDENCIES = ['enocean']
-CONF_CHANNEL = 'channel'
+DEFAULT_NAME = "EnOcean Switch"
+DEPENDENCIES = ["enocean"]
+CONF_CHANNEL = "channel"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ID): vol.All(cv.ensure_list, [vol.Coerce(int)]),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_CHANNEL, default=0): cv.positive_int,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_ID): vol.All(cv.ensure_list, [vol.Coerce(int)]),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_CHANNEL, default=0): cv.positive_int,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -62,22 +64,26 @@ class EnOceanSwitch(enocean.EnOceanDevice, ToggleEntity):
 
     def turn_on(self, **kwargs):
         """Turn on the switch."""
-        optional = [0x03, ]
+        optional = [0x03]
         optional.extend(self.dev_id)
         optional.extend([0xff, 0x00])
-        self.send_command(data=[0xD2, 0x01, self.channel & 0xFF, 0x64, 0x00,
-                                0x00, 0x00, 0x00, 0x00], optional=optional,
-                          packet_type=0x01)
+        self.send_command(
+            data=[0xD2, 0x01, self.channel & 0xFF, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00],
+            optional=optional,
+            packet_type=0x01,
+        )
         self._on_state = True
 
     def turn_off(self, **kwargs):
         """Turn off the switch."""
-        optional = [0x03, ]
+        optional = [0x03]
         optional.extend(self.dev_id)
         optional.extend([0xff, 0x00])
-        self.send_command(data=[0xD2, 0x01, self.channel & 0xFF, 0x00, 0x00,
-                                0x00, 0x00, 0x00, 0x00], optional=optional,
-                          packet_type=0x01)
+        self.send_command(
+            data=[0xD2, 0x01, self.channel & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            optional=optional,
+            packet_type=0x01,
+        )
         self._on_state = False
 
     def value_changed(self, val):

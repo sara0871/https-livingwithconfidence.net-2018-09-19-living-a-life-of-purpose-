@@ -6,11 +6,15 @@ https://home-assistant.io/components/fan.tuya/
 """
 
 from homeassistant.components.fan import (
-    ENTITY_ID_FORMAT, FanEntity, SUPPORT_OSCILLATE, SUPPORT_SET_SPEED)
+    ENTITY_ID_FORMAT,
+    FanEntity,
+    SUPPORT_OSCILLATE,
+    SUPPORT_SET_SPEED,
+)
 from homeassistant.components.tuya import DATA_TUYA, TuyaDevice
 from homeassistant.const import STATE_OFF
 
-DEPENDENCIES = ['tuya']
+DEPENDENCIES = ["tuya"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -18,7 +22,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if discovery_info is None:
         return
     tuya = hass.data[DATA_TUYA]
-    dev_ids = discovery_info.get('dev_ids')
+    dev_ids = discovery_info.get("dev_ids")
     devices = []
     for dev_id in dev_ids:
         device = tuya.get_device_by_id(dev_id)

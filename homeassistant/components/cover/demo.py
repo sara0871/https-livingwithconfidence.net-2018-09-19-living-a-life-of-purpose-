@@ -5,27 +5,44 @@ For more details about this platform, please refer to the documentation
 https://home-assistant.io/components/demo/
 """
 from homeassistant.components.cover import (
-    CoverDevice, SUPPORT_OPEN, SUPPORT_CLOSE, ATTR_POSITION,
-    ATTR_TILT_POSITION)
+    CoverDevice,
+    SUPPORT_OPEN,
+    SUPPORT_CLOSE,
+    ATTR_POSITION,
+    ATTR_TILT_POSITION,
+)
 from homeassistant.helpers.event import track_utc_time_change
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Demo covers."""
-    add_entities([
-        DemoCover(hass, 'Kitchen Window'),
-        DemoCover(hass, 'Hall Window', 10),
-        DemoCover(hass, 'Living Room Window', 70, 50),
-        DemoCover(hass, 'Garage Door', device_class='garage',
-                  supported_features=(SUPPORT_OPEN | SUPPORT_CLOSE)),
-    ])
+    add_entities(
+        [
+            DemoCover(hass, "Kitchen Window"),
+            DemoCover(hass, "Hall Window", 10),
+            DemoCover(hass, "Living Room Window", 70, 50),
+            DemoCover(
+                hass,
+                "Garage Door",
+                device_class="garage",
+                supported_features=(SUPPORT_OPEN | SUPPORT_CLOSE),
+            ),
+        ]
+    )
 
 
 class DemoCover(CoverDevice):
     """Representation of a demo cover."""
 
-    def __init__(self, hass, name, position=None, tilt_position=None,
-                 device_class=None, supported_features=None):
+    def __init__(
+        self,
+        hass,
+        name,
+        position=None,
+        tilt_position=None,
+        device_class=None,
+        supported_features=None,
+    ):
         """Initialize the cover."""
         self.hass = hass
         self._name = name
@@ -182,7 +199,8 @@ class DemoCover(CoverDevice):
         """Listen for changes in cover."""
         if self._unsub_listener_cover is None:
             self._unsub_listener_cover = track_utc_time_change(
-                self.hass, self._time_changed_cover)
+                self.hass, self._time_changed_cover
+            )
 
     def _time_changed_cover(self, now):
         """Track time changes."""
@@ -202,7 +220,8 @@ class DemoCover(CoverDevice):
         """Listen for changes in cover tilt."""
         if self._unsub_listener_cover_tilt is None:
             self._unsub_listener_cover_tilt = track_utc_time_change(
-                self.hass, self._time_changed_cover_tilt)
+                self.hass, self._time_changed_cover_tilt
+            )
 
     def _time_changed_cover_tilt(self, now):
         """Track time changes."""

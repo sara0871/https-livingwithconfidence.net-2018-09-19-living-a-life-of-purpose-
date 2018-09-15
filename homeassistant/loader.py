@@ -15,7 +15,14 @@ import importlib
 import logging
 import sys
 from types import ModuleType
-from typing import Optional, Set, TYPE_CHECKING, Callable, Any, TypeVar  # noqa pylint: disable=unused-import
+from typing import (
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Callable,
+    Any,
+    TypeVar,
+)  # noqa pylint: disable=unused-import
 
 from homeassistant.const import PLATFORM_FORMAT
 from homeassistant.util import OrderedSet
@@ -25,22 +32,23 @@ from homeassistant.util import OrderedSet
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant  # NOQA
 
-CALLABLE_T = TypeVar('CALLABLE_T', bound=Callable)  # noqa pylint: disable=invalid-name
+CALLABLE_T = TypeVar("CALLABLE_T", bound=Callable)  # noqa pylint: disable=invalid-name
 
 PREPARED = False
 
-DEPENDENCY_BLACKLIST = {'config'}
+DEPENDENCY_BLACKLIST = {"config"}
 
 _LOGGER = logging.getLogger(__name__)
 
 
-DATA_KEY = 'components'
-PATH_CUSTOM_COMPONENTS = 'custom_components'
-PACKAGE_COMPONENTS = 'homeassistant.components'
+DATA_KEY = "components"
+PATH_CUSTOM_COMPONENTS = "custom_components"
+PACKAGE_COMPONENTS = "homeassistant.components"
 
 
-def set_component(hass,  # type: HomeAssistant
-                  comp_name: str, component: Optional[ModuleType]) -> None:
+def set_component(
+    hass, comp_name: str, component: Optional[ModuleType]  # type: HomeAssistant
+) -> None:
     """Set a component in the cache.
 
     Async friendly.
@@ -51,8 +59,9 @@ def set_component(hass,  # type: HomeAssistant
     cache[comp_name] = component
 
 
-def get_platform(hass,  # type: HomeAssistant
-                 domain: str, platform: str) -> Optional[ModuleType]:
+def get_platform(
+    hass, domain: str, platform: str  # type: HomeAssistant
+) -> Optional[ModuleType]:
     """Try to load specified platform.
 
     Async friendly.
@@ -60,8 +69,9 @@ def get_platform(hass,  # type: HomeAssistant
     return get_component(hass, PLATFORM_FORMAT.format(domain, platform))
 
 
-def get_component(hass,  # type: HomeAssistant
-                  comp_or_platform: str) -> Optional[ModuleType]:
+def get_component(
+    hass, comp_or_platform: str  # type: HomeAssistant
+) -> Optional[ModuleType]:
     """Try to load specified component.
 
     Looks in config dir first, then built-in components.
@@ -84,8 +94,10 @@ def get_component(hass,  # type: HomeAssistant
         cache = hass.data[DATA_KEY] = {}
 
     # First check custom, then built-in
-    potential_paths = ['custom_components.{}'.format(comp_or_platform),
-                       'homeassistant.components.{}'.format(comp_or_platform)]
+    potential_paths = [
+        "custom_components.{}".format(comp_or_platform),
+        "homeassistant.components.{}".format(comp_or_platform),
+    ]
 
     for index, path in enumerate(potential_paths):
         try:
@@ -100,7 +112,7 @@ def get_component(hass,  # type: HomeAssistant
             # custom_components/switch/some_platform.py exists,
             # the import custom_components.switch would succeed.
             # __file__ was unset for namespaces before Python 3.7
-            if getattr(module, '__file__', None) is None:
+            if getattr(module, "__file__", None) is None:
                 continue
 
             _LOGGER.info("Loaded %s from %s", comp_or_platform, path)
@@ -109,11 +121,12 @@ def get_component(hass,  # type: HomeAssistant
 
             if index == 0:
                 _LOGGER.warning(
-                    'You are using a custom component for %s which has not '
-                    'been tested by Home Assistant. This component might '
-                    'cause stability problems, be sure to disable it if you '
-                    'do experience issues with Home Assistant.',
-                    comp_or_platform)
+                    "You are using a custom component for %s which has not "
+                    "been tested by Home Assistant. This component might "
+                    "cause stability problems, be sure to disable it if you "
+                    "do experience issues with Home Assistant.",
+                    comp_or_platform,
+                )
 
             return module
 
@@ -124,15 +137,17 @@ def get_component(hass,  # type: HomeAssistant
             # and custom_components.switch.demo.
             white_listed_errors = []
             parts = []
-            for part in path.split('.'):
+            for part in path.split("."):
                 parts.append(part)
                 white_listed_errors.append(
-                    "No module named '{}'".format('.'.join(parts)))
+                    "No module named '{}'".format(".".join(parts))
+                )
 
             if str(err) not in white_listed_errors:
                 _LOGGER.exception(
-                    ("Error loading %s. Make sure all "
-                     "dependencies are installed"), path)
+                    ("Error loading %s. Make sure all " "dependencies are installed"),
+                    path,
+                )
 
     _LOGGER.error("Unable to find component %s", comp_or_platform)
 
@@ -142,9 +157,7 @@ def get_component(hass,  # type: HomeAssistant
 class ModuleWrapper:
     """Class to wrap a Python module and auto fill in hass argument."""
 
-    def __init__(self,
-                 hass,  # type: HomeAssistant
-                 module: ModuleType) -> None:
+    def __init__(self, hass, module: ModuleType) -> None:  # type: HomeAssistant
         """Initialize the module wrapper."""
         self._hass = hass
         self._module = module
@@ -153,7 +166,7 @@ class ModuleWrapper:
         """Fetch an attribute."""
         value = getattr(self._module, attr)
 
-        if hasattr(value, '__bind_hass'):
+        if hasattr(value, "__bind_hass"):
             value = ft.partial(value, self._hass)
 
         setattr(self, attr, value)
@@ -163,10 +176,7 @@ class ModuleWrapper:
 class Components:
     """Helper to load components."""
 
-    def __init__(
-            self,
-            hass  # type: HomeAssistant
-    ) -> None:
+    def __init__(self, hass) -> None:  # type: HomeAssistant
         """Initialize the Components class."""
         self._hass = hass
 
@@ -174,7 +184,7 @@ class Components:
         """Fetch a component."""
         component = get_component(self._hass, comp_name)
         if component is None:
-            raise ImportError('Unable to load {}'.format(comp_name))
+            raise ImportError("Unable to load {}".format(comp_name))
         wrapped = ModuleWrapper(self._hass, component)
         setattr(self, comp_name, wrapped)
         return wrapped
@@ -183,17 +193,13 @@ class Components:
 class Helpers:
     """Helper to load helpers."""
 
-    def __init__(
-            self,
-            hass  # type: HomeAssistant
-    ) -> None:
+    def __init__(self, hass) -> None:  # type: HomeAssistant
         """Initialize the Helpers class."""
         self._hass = hass
 
     def __getattr__(self, helper_name: str) -> ModuleWrapper:
         """Fetch a helper."""
-        helper = importlib.import_module(
-            'homeassistant.helpers.{}'.format(helper_name))
+        helper = importlib.import_module("homeassistant.helpers.{}".format(helper_name))
         wrapped = ModuleWrapper(self._hass, helper)
         setattr(self, helper_name, wrapped)
         return wrapped
@@ -201,12 +207,11 @@ class Helpers:
 
 def bind_hass(func: CALLABLE_T) -> CALLABLE_T:
     """Decorate function to indicate that first argument is hass."""
-    setattr(func, '__bind_hass', True)
+    setattr(func, "__bind_hass", True)
     return func
 
 
-def load_order_component(hass,  # type: HomeAssistant
-                         comp_name: str) -> OrderedSet:
+def load_order_component(hass, comp_name: str) -> OrderedSet:  # type: HomeAssistant
     """Return an OrderedSet of components in the correct order of loading.
 
     Raises HomeAssistantError if a circular dependency is detected.
@@ -217,9 +222,9 @@ def load_order_component(hass,  # type: HomeAssistant
     return _load_order_component(hass, comp_name, OrderedSet(), set())
 
 
-def _load_order_component(hass,  # type: HomeAssistant
-                          comp_name: str, load_order: OrderedSet,
-                          loading: Set) -> OrderedSet:
+def _load_order_component(
+    hass, comp_name: str, load_order: OrderedSet, loading: Set  # type: HomeAssistant
+) -> OrderedSet:
     """Recursive function to get load order of components.
 
     Async friendly.
@@ -232,24 +237,23 @@ def _load_order_component(hass,  # type: HomeAssistant
 
     loading.add(comp_name)
 
-    for dependency in getattr(component, 'DEPENDENCIES', []):
+    for dependency in getattr(component, "DEPENDENCIES", []):
         # Check not already loaded
         if dependency in load_order:
             continue
 
         # If we are already loading it, we have a circular dependency.
         if dependency in loading:
-            _LOGGER.error("Circular dependency detected: %s -> %s",
-                          comp_name, dependency)
+            _LOGGER.error(
+                "Circular dependency detected: %s -> %s", comp_name, dependency
+            )
             return OrderedSet()
 
-        dep_load_order = _load_order_component(
-            hass, dependency, load_order, loading)
+        dep_load_order = _load_order_component(hass, dependency, load_order, loading)
 
         # length == 0 means error loading dependency or children
         if not dep_load_order:
-            _LOGGER.error("Error loading %s dependency: %s",
-                          comp_name, dependency)
+            _LOGGER.error("Error loading %s dependency: %s", comp_name, dependency)
             return OrderedSet()
 
         load_order.update(dep_load_order)

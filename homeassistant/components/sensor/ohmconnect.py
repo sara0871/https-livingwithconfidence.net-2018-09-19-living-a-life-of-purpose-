@@ -19,16 +19,18 @@ from homeassistant.helpers.entity import Entity
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_ID = 'id'
+CONF_ID = "id"
 
-DEFAULT_NAME = 'OhmConnect Status'
+DEFAULT_NAME = "OhmConnect Status"
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=1)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ID): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_ID): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -69,8 +71,9 @@ class OhmconnectSensor(Entity):
     def update(self):
         """Get the latest data from OhmConnect."""
         try:
-            url = ("https://login.ohmconnect.com"
-                   "/verify-ohm-hour/{}").format(self._ohmid)
+            url = ("https://login.ohmconnect.com" "/verify-ohm-hour/{}").format(
+                self._ohmid
+            )
             response = requests.get(url, timeout=10)
             root = ET.fromstring(response.text)
 

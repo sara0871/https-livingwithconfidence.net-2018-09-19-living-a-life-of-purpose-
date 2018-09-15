@@ -7,25 +7,29 @@ https://home-assistant.io/components/sensor.homematicip_cloud/
 import logging
 
 from homeassistant.components.homematicip_cloud import (
-    HMIPC_HAPID, HomematicipGenericDevice)
+    HMIPC_HAPID,
+    HomematicipGenericDevice,
+)
 from homeassistant.components.homematicip_cloud import DOMAIN as HMIPC_DOMAIN
 from homeassistant.const import (
-    DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_ILLUMINANCE, DEVICE_CLASS_TEMPERATURE,
-    TEMP_CELSIUS)
+    DEVICE_CLASS_HUMIDITY,
+    DEVICE_CLASS_ILLUMINANCE,
+    DEVICE_CLASS_TEMPERATURE,
+    TEMP_CELSIUS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['homematicip_cloud']
+DEPENDENCIES = ["homematicip_cloud"]
 
-ATTR_VALVE_STATE = 'valve_state'
-ATTR_VALVE_POSITION = 'valve_position'
-ATTR_TEMPERATURE = 'temperature'
-ATTR_TEMPERATURE_OFFSET = 'temperature_offset'
-ATTR_HUMIDITY = 'humidity'
+ATTR_VALVE_STATE = "valve_state"
+ATTR_VALVE_POSITION = "valve_position"
+ATTR_TEMPERATURE = "temperature"
+ATTR_TEMPERATURE_OFFSET = "temperature_offset"
+ATTR_HUMIDITY = "humidity"
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the HomematicIP Cloud sensors devices."""
     pass
 
@@ -33,16 +37,21 @@ async def async_setup_platform(
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the HomematicIP Cloud sensors from a config entry."""
     from homematicip.device import (
-        HeatingThermostat, TemperatureHumiditySensorWithoutDisplay,
-        TemperatureHumiditySensorDisplay, MotionDetectorIndoor)
+        HeatingThermostat,
+        TemperatureHumiditySensorWithoutDisplay,
+        TemperatureHumiditySensorDisplay,
+        MotionDetectorIndoor,
+    )
 
     home = hass.data[HMIPC_DOMAIN][config_entry.data[HMIPC_HAPID]].home
     devices = [HomematicipAccesspointStatus(home)]
     for device in home.devices:
         if isinstance(device, HeatingThermostat):
             devices.append(HomematicipHeatingThermostat(home, device))
-        if isinstance(device, (TemperatureHumiditySensorDisplay,
-                               TemperatureHumiditySensorWithoutDisplay)):
+        if isinstance(
+            device,
+            (TemperatureHumiditySensorDisplay, TemperatureHumiditySensorWithoutDisplay),
+        ):
             devices.append(HomematicipTemperatureSensor(home, device))
             devices.append(HomematicipHumiditySensor(home, device))
         if isinstance(device, MotionDetectorIndoor):
@@ -62,7 +71,7 @@ class HomematicipAccesspointStatus(HomematicipGenericDevice):
     @property
     def icon(self):
         """Return the icon of the access point device."""
-        return 'mdi:access-point-network'
+        return "mdi:access-point-network"
 
     @property
     def state(self):
@@ -77,7 +86,7 @@ class HomematicipAccesspointStatus(HomematicipGenericDevice):
     @property
     def unit_of_measurement(self):
         """Return the unit this state is expressed in."""
-        return '%'
+        return "%"
 
 
 class HomematicipHeatingThermostat(HomematicipGenericDevice):
@@ -85,7 +94,7 @@ class HomematicipHeatingThermostat(HomematicipGenericDevice):
 
     def __init__(self, home, device):
         """Initialize heating thermostat device."""
-        super().__init__(home, device, 'Heating')
+        super().__init__(home, device, "Heating")
 
     @property
     def icon(self):
@@ -95,8 +104,8 @@ class HomematicipHeatingThermostat(HomematicipGenericDevice):
         if super().icon:
             return super().icon
         if self._device.valveState != ValveState.ADAPTION_DONE:
-            return 'mdi:alert'
-        return 'mdi:radiator'
+            return "mdi:alert"
+        return "mdi:radiator"
 
     @property
     def state(self):
@@ -105,12 +114,12 @@ class HomematicipHeatingThermostat(HomematicipGenericDevice):
 
         if self._device.valveState != ValveState.ADAPTION_DONE:
             return self._device.valveState
-        return round(self._device.valvePosition*100)
+        return round(self._device.valvePosition * 100)
 
     @property
     def unit_of_measurement(self):
         """Return the unit this state is expressed in."""
-        return '%'
+        return "%"
 
 
 class HomematicipHumiditySensor(HomematicipGenericDevice):
@@ -118,7 +127,7 @@ class HomematicipHumiditySensor(HomematicipGenericDevice):
 
     def __init__(self, home, device):
         """Initialize the thermometer device."""
-        super().__init__(home, device, 'Humidity')
+        super().__init__(home, device, "Humidity")
 
     @property
     def device_class(self):
@@ -133,7 +142,7 @@ class HomematicipHumiditySensor(HomematicipGenericDevice):
     @property
     def unit_of_measurement(self):
         """Return the unit this state is expressed in."""
-        return '%'
+        return "%"
 
 
 class HomematicipTemperatureSensor(HomematicipGenericDevice):
@@ -141,7 +150,7 @@ class HomematicipTemperatureSensor(HomematicipGenericDevice):
 
     def __init__(self, home, device):
         """Initialize the thermometer device."""
-        super().__init__(home, device, 'Temperature')
+        super().__init__(home, device, "Temperature")
 
     @property
     def device_class(self):
@@ -164,7 +173,7 @@ class HomematicipIlluminanceSensor(HomematicipGenericDevice):
 
     def __init__(self, home, device):
         """Initialize the  device."""
-        super().__init__(home, device, 'Illuminance')
+        super().__init__(home, device, "Illuminance")
 
     @property
     def device_class(self):
@@ -179,4 +188,4 @@ class HomematicipIlluminanceSensor(HomematicipGenericDevice):
     @property
     def unit_of_measurement(self):
         """Return the unit this state is expressed in."""
-        return 'lx'
+        return "lx"

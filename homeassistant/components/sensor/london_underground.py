@@ -18,29 +18,29 @@ from homeassistant.util import Throttle
 _LOGGER = logging.getLogger(__name__)
 
 ATTRIBUTION = "Powered by TfL Open Data"
-CONF_LINE = 'line'
+CONF_LINE = "line"
 SCAN_INTERVAL = timedelta(seconds=30)
 TUBE_LINES = [
-    'Bakerloo',
-    'Central',
-    'Circle',
-    'District',
-    'DLR',
-    'Hammersmith & City',
-    'Jubilee',
-    'London Overground',
-    'Metropolitan',
-    'Northern',
-    'Piccadilly',
-    'TfL Rail',
-    'Victoria',
-    'Waterloo & City']
-URL = 'https://api.tfl.gov.uk/line/mode/tube,overground,dlr,tflrail/status'
+    "Bakerloo",
+    "Central",
+    "Circle",
+    "District",
+    "DLR",
+    "Hammersmith & City",
+    "Jubilee",
+    "London Overground",
+    "Metropolitan",
+    "Northern",
+    "Piccadilly",
+    "TfL Rail",
+    "Victoria",
+    "Waterloo & City",
+]
+URL = "https://api.tfl.gov.uk/line/mode/tube,overground,dlr,tflrail/status"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_LINE):
-        vol.All(cv.ensure_list, [vol.In(list(TUBE_LINES))]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_LINE): vol.All(cv.ensure_list, [vol.In(list(TUBE_LINES))])}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -57,7 +57,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class LondonTubeSensor(Entity):
     """Sensor that reads the status of a line from TubeData."""
 
-    ICON = 'mdi:subway'
+    ICON = "mdi:subway"
 
     def __init__(self, name, data):
         """Initialize the sensor."""
@@ -85,14 +85,14 @@ class LondonTubeSensor(Entity):
     def device_state_attributes(self):
         """Return other details about the sensor state."""
         attrs = {}
-        attrs['Description'] = self._description
+        attrs["Description"] = self._description
         return attrs
 
     def update(self):
         """Update the sensor."""
         self._data.update()
-        self._state = self._data.data[self.name]['State']
-        self._description = self._data.data[self.name]['Description']
+        self._state = self._data.data[self.name]["State"]
+        self._description = self._data.data[self.name]["Description"]
 
 
 class TubeData:
@@ -115,21 +115,21 @@ class TubeData:
 
 def parse_api_response(response):
     """Take in the TFL API json response."""
-    lines = [line['name'] for line in response]
+    lines = [line["name"] for line in response]
     data_dict = dict.fromkeys(lines)
 
     for line in response:
-        statuses = [status['statusSeverityDescription']
-                    for status in line['lineStatuses']]
-        state = ' + '.join(sorted(set(statuses)))
+        statuses = [
+            status["statusSeverityDescription"] for status in line["lineStatuses"]
+        ]
+        state = " + ".join(sorted(set(statuses)))
 
-        if state == 'Good Service':
-            reason = 'Nothing to report'
+        if state == "Good Service":
+            reason = "Nothing to report"
         else:
-            reason = ' *** '.join(
-                [status['reason'] for status in line['lineStatuses']])
+            reason = " *** ".join([status["reason"] for status in line["lineStatuses"]])
 
-        attr = {'State': state, 'Description': reason}
-        data_dict[line['name']] = attr
+        attr = {"State": state, "Description": reason}
+        data_dict[line["name"]] = attr
 
     return data_dict

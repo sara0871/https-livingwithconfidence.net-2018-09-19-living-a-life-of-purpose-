@@ -20,25 +20,22 @@ from homeassistant.components.http import KEY_AUTHENTICATED, HomeAssistantView
 
 _LOGGER = logging.getLogger(__name__)
 
-X_HASSIO = 'X-HASSIO-KEY'
+X_HASSIO = "X-HASSIO-KEY"
 
 NO_TIMEOUT = {
-    re.compile(r'^homeassistant/update$'),
-    re.compile(r'^host/update$'),
-    re.compile(r'^supervisor/update$'),
-    re.compile(r'^addons/[^/]*/update$'),
-    re.compile(r'^addons/[^/]*/install$'),
-    re.compile(r'^addons/[^/]*/rebuild$'),
-    re.compile(r'^snapshots/.*/full$'),
-    re.compile(r'^snapshots/.*/partial$'),
-    re.compile(r'^snapshots/[^/]*/upload$'),
-    re.compile(r'^snapshots/[^/]*/download$'),
+    re.compile(r"^homeassistant/update$"),
+    re.compile(r"^host/update$"),
+    re.compile(r"^supervisor/update$"),
+    re.compile(r"^addons/[^/]*/update$"),
+    re.compile(r"^addons/[^/]*/install$"),
+    re.compile(r"^addons/[^/]*/rebuild$"),
+    re.compile(r"^snapshots/.*/full$"),
+    re.compile(r"^snapshots/.*/partial$"),
+    re.compile(r"^snapshots/[^/]*/upload$"),
+    re.compile(r"^snapshots/[^/]*/download$"),
 }
 
-NO_AUTH = {
-    re.compile(r'^app/.*$'),
-    re.compile(r'^addons/[^/]*/logo$')
-}
+NO_AUTH = {re.compile(r"^app/.*$"), re.compile(r"^addons/[^/]*/logo$")}
 
 
 class HassIOView(HomeAssistantView):
@@ -62,7 +59,7 @@ class HassIOView(HomeAssistantView):
         client = yield from self._command_proxy(path, request)
 
         data = yield from client.read()
-        if path.endswith('/logs'):
+        if path.endswith("/logs"):
             return _create_response_log(client, data)
         return _create_response(client, data)
 
@@ -76,11 +73,11 @@ class HassIOView(HomeAssistantView):
         This method is a coroutine.
         """
         read_timeout = _get_timeout(path)
-        hass = request.app['hass']
+        hass = request.app["hass"]
 
         try:
             data = None
-            headers = {X_HASSIO: os.environ.get('HASSIO_TOKEN', "")}
+            headers = {X_HASSIO: os.environ.get("HASSIO_TOKEN", "")}
             with async_timeout.timeout(10, loop=hass.loop):
                 data = yield from request.read()
                 if data:
@@ -90,8 +87,10 @@ class HassIOView(HomeAssistantView):
 
             method = getattr(self._websession, request.method.lower())
             client = yield from method(
-                "http://{}/{}".format(self._host, path), data=data,
-                headers=headers, timeout=read_timeout
+                "http://{}/{}".format(self._host, path),
+                data=data,
+                headers=headers,
+                timeout=read_timeout,
             )
 
             return client
@@ -108,9 +107,7 @@ class HassIOView(HomeAssistantView):
 def _create_response(client, data):
     """Convert a response from client request."""
     return web.Response(
-        body=data,
-        status=client.status,
-        content_type=client.content_type,
+        body=data, status=client.status, content_type=client.content_type
     )
 
 
@@ -120,9 +117,7 @@ def _create_response_log(client, data):
     log = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", data.decode())
 
     return web.Response(
-        text=log,
-        status=client.status,
-        content_type=CONTENT_TYPE_TEXT_PLAIN,
+        text=log, status=client.status, content_type=CONTENT_TYPE_TEXT_PLAIN
     )
 
 

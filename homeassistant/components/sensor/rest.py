@@ -13,40 +13,54 @@ from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_AUTHENTICATION, CONF_FORCE_UPDATE, CONF_HEADERS, CONF_NAME,
-    CONF_METHOD, CONF_PASSWORD, CONF_PAYLOAD, CONF_RESOURCE,
-    CONF_UNIT_OF_MEASUREMENT, CONF_USERNAME,
-    CONF_VALUE_TEMPLATE, CONF_VERIFY_SSL,
-    HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION, STATE_UNKNOWN)
+    CONF_AUTHENTICATION,
+    CONF_FORCE_UPDATE,
+    CONF_HEADERS,
+    CONF_NAME,
+    CONF_METHOD,
+    CONF_PASSWORD,
+    CONF_PAYLOAD,
+    CONF_RESOURCE,
+    CONF_UNIT_OF_MEASUREMENT,
+    CONF_USERNAME,
+    CONF_VALUE_TEMPLATE,
+    CONF_VERIFY_SSL,
+    HTTP_BASIC_AUTHENTICATION,
+    HTTP_DIGEST_AUTHENTICATION,
+    STATE_UNKNOWN,
+)
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_METHOD = 'GET'
-DEFAULT_NAME = 'REST Sensor'
+DEFAULT_METHOD = "GET"
+DEFAULT_NAME = "REST Sensor"
 DEFAULT_VERIFY_SSL = True
 DEFAULT_FORCE_UPDATE = False
 
-CONF_JSON_ATTRS = 'json_attributes'
-METHODS = ['POST', 'GET']
+CONF_JSON_ATTRS = "json_attributes"
+METHODS = ["POST", "GET"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_RESOURCE): cv.url,
-    vol.Optional(CONF_AUTHENTICATION):
-        vol.In([HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION]),
-    vol.Optional(CONF_HEADERS): vol.Schema({cv.string: cv.string}),
-    vol.Optional(CONF_JSON_ATTRS, default=[]): cv.ensure_list_csv,
-    vol.Optional(CONF_METHOD, default=DEFAULT_METHOD): vol.In(METHODS),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_PAYLOAD): cv.string,
-    vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
-    vol.Optional(CONF_USERNAME): cv.string,
-    vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
-    vol.Optional(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): cv.boolean,
-    vol.Optional(CONF_FORCE_UPDATE, default=DEFAULT_FORCE_UPDATE): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_RESOURCE): cv.url,
+        vol.Optional(CONF_AUTHENTICATION): vol.In(
+            [HTTP_BASIC_AUTHENTICATION, HTTP_DIGEST_AUTHENTICATION]
+        ),
+        vol.Optional(CONF_HEADERS): vol.Schema({cv.string: cv.string}),
+        vol.Optional(CONF_JSON_ATTRS, default=[]): cv.ensure_list_csv,
+        vol.Optional(CONF_METHOD, default=DEFAULT_METHOD): vol.In(METHODS),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_PAYLOAD): cv.string,
+        vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
+        vol.Optional(CONF_USERNAME): cv.string,
+        vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
+        vol.Optional(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): cv.boolean,
+        vol.Optional(CONF_FORCE_UPDATE, default=DEFAULT_FORCE_UPDATE): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -77,16 +91,25 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     rest = RestData(method, resource, auth, headers, payload, verify_ssl)
     rest.update()
 
-    add_entities([RestSensor(
-        hass, rest, name, unit, value_template, json_attrs, force_update
-    )], True)
+    add_entities(
+        [RestSensor(hass, rest, name, unit, value_template, json_attrs, force_update)],
+        True,
+    )
 
 
 class RestSensor(Entity):
     """Implementation of a REST sensor."""
 
-    def __init__(self, hass, rest, name, unit_of_measurement,
-                 value_template, json_attrs, force_update):
+    def __init__(
+        self,
+        hass,
+        rest,
+        name,
+        unit_of_measurement,
+        value_template,
+        json_attrs,
+        force_update,
+    ):
         """Initialize the REST sensor."""
         self._hass = hass
         self.rest = rest
@@ -134,8 +157,9 @@ class RestSensor(Entity):
                 try:
                     json_dict = json.loads(value)
                     if isinstance(json_dict, dict):
-                        attrs = {k: json_dict[k] for k in self._json_attrs
-                                 if k in json_dict}
+                        attrs = {
+                            k: json_dict[k] for k in self._json_attrs if k in json_dict
+                        }
                         self._attributes = attrs
                     else:
                         _LOGGER.warning("JSON result was not a dictionary")
@@ -148,7 +172,8 @@ class RestSensor(Entity):
             value = STATE_UNKNOWN
         elif self._value_template is not None:
             value = self._value_template.render_with_possible_json_value(
-                value, STATE_UNKNOWN)
+                value, STATE_UNKNOWN
+            )
 
         self._state = value
 
@@ -164,7 +189,8 @@ class RestData:
     def __init__(self, method, resource, auth, headers, data, verify_ssl):
         """Initialize the data object."""
         self._request = requests.Request(
-            method, resource, headers=headers, auth=auth, data=data).prepare()
+            method, resource, headers=headers, auth=auth, data=data
+        ).prepare()
         self._verify_ssl = verify_ssl
         self.data = None
 
@@ -172,11 +198,14 @@ class RestData:
         """Get the latest data from REST service with provided method."""
         try:
             with requests.Session() as sess:
-                response = sess.send(
-                    self._request, timeout=10, verify=self._verify_ssl)
+                response = sess.send(self._request, timeout=10, verify=self._verify_ssl)
 
             self.data = response.text
         except requests.exceptions.RequestException as ex:
-            _LOGGER.error("Error fetching data: %s from %s failed with %s",
-                          self._request, self._request.url, ex)
+            _LOGGER.error(
+                "Error fetching data: %s from %s failed with %s",
+                self._request,
+                self._request.url,
+                ex,
+            )
             self.data = None

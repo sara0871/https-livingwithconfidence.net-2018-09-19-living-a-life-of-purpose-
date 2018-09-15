@@ -16,18 +16,22 @@ from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA  # noqa
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import (
-    STATE_ON, SERVICE_TURN_ON, SERVICE_TURN_OFF, SERVICE_TOGGLE,
-    ATTR_ENTITY_ID)
+    STATE_ON,
+    SERVICE_TURN_ON,
+    SERVICE_TURN_OFF,
+    SERVICE_TOGGLE,
+    ATTR_ENTITY_ID,
+)
 from homeassistant.components import group
 
-DOMAIN = 'switch'
-DEPENDENCIES = ['group']
+DOMAIN = "switch"
+DEPENDENCIES = ["group"]
 SCAN_INTERVAL = timedelta(seconds=30)
 
-GROUP_NAME_ALL_SWITCHES = 'all switches'
-ENTITY_ID_ALL_SWITCHES = group.ENTITY_ID_FORMAT.format('all_switches')
+GROUP_NAME_ALL_SWITCHES = "all switches"
+ENTITY_ID_ALL_SWITCHES = group.ENTITY_ID_FORMAT.format("all_switches")
 
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
 ATTR_TODAY_ENERGY_KWH = "today_energy_kwh"
 ATTR_CURRENT_POWER_W = "current_power_w"
@@ -35,13 +39,11 @@ ATTR_CURRENT_POWER_W = "current_power_w"
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=10)
 
 PROP_TO_ATTR = {
-    'current_power_w': ATTR_CURRENT_POWER_W,
-    'today_energy_kwh': ATTR_TODAY_ENERGY_KWH,
+    "current_power_w": ATTR_CURRENT_POWER_W,
+    "today_energy_kwh": ATTR_TODAY_ENERGY_KWH,
 }
 
-SWITCH_SERVICE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-})
+SWITCH_SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,8 +83,7 @@ def turn_off(hass, entity_id=None):
 def async_turn_off(hass, entity_id=None):
     """Turn all or specified switch off."""
     data = {ATTR_ENTITY_ID: entity_id} if entity_id else None
-    hass.async_add_job(
-        hass.services.async_call(DOMAIN, SERVICE_TURN_OFF, data))
+    hass.async_add_job(hass.services.async_call(DOMAIN, SERVICE_TURN_OFF, data))
 
 
 @bind_hass
@@ -95,22 +96,20 @@ def toggle(hass, entity_id=None):
 async def async_setup(hass, config):
     """Track states and offer events for switches."""
     component = hass.data[DOMAIN] = EntityComponent(
-        _LOGGER, DOMAIN, hass, SCAN_INTERVAL, GROUP_NAME_ALL_SWITCHES)
+        _LOGGER, DOMAIN, hass, SCAN_INTERVAL, GROUP_NAME_ALL_SWITCHES
+    )
     await component.async_setup(config)
 
     component.async_register_entity_service(
-        SERVICE_TURN_OFF, SWITCH_SERVICE_SCHEMA,
-        'async_turn_off'
+        SERVICE_TURN_OFF, SWITCH_SERVICE_SCHEMA, "async_turn_off"
     )
 
     component.async_register_entity_service(
-        SERVICE_TURN_ON, SWITCH_SERVICE_SCHEMA,
-        'async_turn_on'
+        SERVICE_TURN_ON, SWITCH_SERVICE_SCHEMA, "async_turn_on"
     )
 
     component.async_register_entity_service(
-        SERVICE_TOGGLE, SWITCH_SERVICE_SCHEMA,
-        'async_toggle'
+        SERVICE_TOGGLE, SWITCH_SERVICE_SCHEMA, "async_toggle"
     )
 
     return True

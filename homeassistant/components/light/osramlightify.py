@@ -13,22 +13,34 @@ import voluptuous as vol
 
 from homeassistant import util
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_COLOR_TEMP, ATTR_EFFECT, ATTR_HS_COLOR,
-    ATTR_TRANSITION, EFFECT_RANDOM, PLATFORM_SCHEMA, SUPPORT_BRIGHTNESS,
-    SUPPORT_COLOR, SUPPORT_COLOR_TEMP, SUPPORT_EFFECT, SUPPORT_TRANSITION,
-    Light)
+    ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP,
+    ATTR_EFFECT,
+    ATTR_HS_COLOR,
+    ATTR_TRANSITION,
+    EFFECT_RANDOM,
+    PLATFORM_SCHEMA,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR,
+    SUPPORT_COLOR_TEMP,
+    SUPPORT_EFFECT,
+    SUPPORT_TRANSITION,
+    Light,
+)
 from homeassistant.const import CONF_HOST
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util.color import (
-    color_temperature_kelvin_to_mired, color_temperature_mired_to_kelvin)
+    color_temperature_kelvin_to_mired,
+    color_temperature_mired_to_kelvin,
+)
 import homeassistant.util.color as color_util
 
-REQUIREMENTS = ['lightify==1.0.6.1']
+REQUIREMENTS = ["lightify==1.0.6.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_ALLOW_LIGHTIFY_NODES = 'allow_lightify_nodes'
-CONF_ALLOW_LIGHTIFY_GROUPS = 'allow_lightify_groups'
+CONF_ALLOW_LIGHTIFY_NODES = "allow_lightify_nodes"
+CONF_ALLOW_LIGHTIFY_GROUPS = "allow_lightify_groups"
 
 DEFAULT_ALLOW_LIGHTIFY_NODES = True
 DEFAULT_ALLOW_LIGHTIFY_GROUPS = True
@@ -36,17 +48,25 @@ DEFAULT_ALLOW_LIGHTIFY_GROUPS = True
 MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(milliseconds=100)
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=10)
 
-SUPPORT_OSRAMLIGHTIFY = (SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP |
-                         SUPPORT_EFFECT | SUPPORT_COLOR |
-                         SUPPORT_TRANSITION)
+SUPPORT_OSRAMLIGHTIFY = (
+    SUPPORT_BRIGHTNESS
+    | SUPPORT_COLOR_TEMP
+    | SUPPORT_EFFECT
+    | SUPPORT_COLOR
+    | SUPPORT_TRANSITION
+)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_ALLOW_LIGHTIFY_NODES,
-                 default=DEFAULT_ALLOW_LIGHTIFY_NODES): cv.boolean,
-    vol.Optional(CONF_ALLOW_LIGHTIFY_GROUPS,
-                 default=DEFAULT_ALLOW_LIGHTIFY_GROUPS): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(
+            CONF_ALLOW_LIGHTIFY_NODES, default=DEFAULT_ALLOW_LIGHTIFY_NODES
+        ): cv.boolean,
+        vol.Optional(
+            CONF_ALLOW_LIGHTIFY_GROUPS, default=DEFAULT_ALLOW_LIGHTIFY_GROUPS
+        ): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -60,8 +80,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     try:
         bridge = lightify.Lightify(host)
     except socket.error as err:
-        msg = "Error connecting to bridge: {} due to: {}".format(
-            host, str(err))
+        msg = "Error connecting to bridge: {} due to: {}".format(host, str(err))
         _LOGGER.exception(msg)
         return
 
@@ -88,8 +107,7 @@ def setup_bridge(bridge, add_entities, add_nodes, add_groups):
         if add_nodes:
             for (light_id, light) in bridge.lights().items():
                 if light_id not in lights:
-                    osram_light = OsramLightifyLight(
-                        light_id, light, update_lights)
+                    osram_light = OsramLightifyLight(light_id, light, update_lights)
                     lights[light_id] = osram_light
                     new_lights.append(osram_light)
                 else:
@@ -98,8 +116,7 @@ def setup_bridge(bridge, add_entities, add_nodes, add_groups):
         if add_groups:
             for (group_name, group) in bridge.groups().items():
                 if group_name not in lights:
-                    osram_group = OsramLightifyGroup(
-                        group, bridge, update_lights)
+                    osram_group = OsramLightifyGroup(group, bridge, update_lights)
                     lights[group_name] = osram_group
                     new_lights.append(osram_group)
                 else:
@@ -169,14 +186,12 @@ class Luminary(Light):
 
         if ATTR_BRIGHTNESS in kwargs:
             self._brightness = kwargs[ATTR_BRIGHTNESS]
-            self._luminary.set_luminance(
-                int(self._brightness / 2.55), transition)
+            self._luminary.set_luminance(int(self._brightness / 2.55), transition)
         else:
             self._luminary.set_onoff(1)
 
         if ATTR_HS_COLOR in kwargs:
-            red, green, blue = \
-                color_util.color_hs_to_RGB(*kwargs[ATTR_HS_COLOR])
+            red, green, blue = color_util.color_hs_to_RGB(*kwargs[ATTR_HS_COLOR])
             self._luminary.set_rgb(red, green, blue, transition)
 
         if ATTR_COLOR_TEMP in kwargs:
@@ -188,8 +203,11 @@ class Luminary(Light):
             effect = kwargs.get(ATTR_EFFECT)
             if effect == EFFECT_RANDOM:
                 self._luminary.set_rgb(
-                    random.randrange(0, 255), random.randrange(0, 255),
-                    random.randrange(0, 255), transition)
+                    random.randrange(0, 255),
+                    random.randrange(0, 255),
+                    random.randrange(0, 255),
+                    transition,
+                )
 
         self.schedule_update_ha_state()
 
@@ -227,8 +245,7 @@ class OsramLightifyLight(Luminary):
         if o_temp == 0:
             self._temperature = None
         else:
-            self._temperature = color_temperature_kelvin_to_mired(
-                self._luminary.temp())
+            self._temperature = color_temperature_kelvin_to_mired(self._luminary.temp())
         self._brightness = int(self._luminary.lum() * 2.55)
 
 

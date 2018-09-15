@@ -17,15 +17,20 @@ REQUIREMENTS = ["py-melissa-climate==1.0.6"]
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "melissa"
-DATA_MELISSA = 'MELISSA'
+DATA_MELISSA = "MELISSA"
 
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_USERNAME): cv.string,
+                vol.Required(CONF_PASSWORD): cv.string,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 def setup(hass, config):
@@ -39,6 +44,6 @@ def setup(hass, config):
     api = melissa.Melissa(username=username, password=password)
     hass.data[DATA_MELISSA] = api
 
-    load_platform(hass, 'sensor', DOMAIN, {})
-    load_platform(hass, 'climate', DOMAIN, {})
+    load_platform(hass, "sensor", DOMAIN, {})
+    load_platform(hass, "climate", DOMAIN, {})
     return True

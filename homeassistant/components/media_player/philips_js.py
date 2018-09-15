@@ -10,42 +10,63 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.media_player import (
-    PLATFORM_SCHEMA, SUPPORT_NEXT_TRACK, SUPPORT_PLAY, SUPPORT_PREVIOUS_TRACK,
-    SUPPORT_SELECT_SOURCE, SUPPORT_TURN_OFF, SUPPORT_TURN_ON,
-    SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_VOLUME_STEP,
-    MediaPlayerDevice)
+    PLATFORM_SCHEMA,
+    SUPPORT_NEXT_TRACK,
+    SUPPORT_PLAY,
+    SUPPORT_PREVIOUS_TRACK,
+    SUPPORT_SELECT_SOURCE,
+    SUPPORT_TURN_OFF,
+    SUPPORT_TURN_ON,
+    SUPPORT_VOLUME_MUTE,
+    SUPPORT_VOLUME_SET,
+    SUPPORT_VOLUME_STEP,
+    MediaPlayerDevice,
+)
 from homeassistant.const import (
-    CONF_API_VERSION, CONF_HOST, CONF_NAME, STATE_OFF, STATE_ON, STATE_UNKNOWN)
+    CONF_API_VERSION,
+    CONF_HOST,
+    CONF_NAME,
+    STATE_OFF,
+    STATE_ON,
+    STATE_UNKNOWN,
+)
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.script import Script
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['ha-philipsjs==0.0.5']
+REQUIREMENTS = ["ha-philipsjs==0.0.5"]
 
 _LOGGER = logging.getLogger(__name__)
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=30)
 
-SUPPORT_PHILIPS_JS = SUPPORT_TURN_OFF | SUPPORT_VOLUME_STEP | \
-                     SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | \
-                     SUPPORT_SELECT_SOURCE
+SUPPORT_PHILIPS_JS = (
+    SUPPORT_TURN_OFF
+    | SUPPORT_VOLUME_STEP
+    | SUPPORT_VOLUME_SET
+    | SUPPORT_VOLUME_MUTE
+    | SUPPORT_SELECT_SOURCE
+)
 
-SUPPORT_PHILIPS_JS_TV = SUPPORT_PHILIPS_JS | SUPPORT_NEXT_TRACK | \
-                        SUPPORT_PREVIOUS_TRACK | SUPPORT_PLAY
+SUPPORT_PHILIPS_JS_TV = (
+    SUPPORT_PHILIPS_JS | SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_PLAY
+)
 
-CONF_ON_ACTION = 'turn_on_action'
+CONF_ON_ACTION = "turn_on_action"
 
-DEFAULT_DEVICE = 'default'
-DEFAULT_HOST = '127.0.0.1'
+DEFAULT_DEVICE = "default"
+DEFAULT_HOST = "127.0.0.1"
 DEFAULT_NAME = "Philips TV"
-DEFAULT_API_VERSION = '1'
+DEFAULT_API_VERSION = "1"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_API_VERSION, default=DEFAULT_API_VERSION): cv.string,
-    vol.Optional(CONF_ON_ACTION): cv.SCRIPT_SCHEMA,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_API_VERSION, default=DEFAULT_API_VERSION): cv.string,
+        vol.Optional(CONF_ON_ACTION): cv.SCRIPT_SCHEMA,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -125,7 +146,7 @@ class PhilipsTV(MediaPlayerDevice):
             self._source = source
             if not self._tv.on:
                 self._state = STATE_OFF
-            self._watching_tv = bool(self._tv.source_id == 'tv')
+            self._watching_tv = bool(self._tv.source_id == "tv")
 
     @property
     def volume_level(self):
@@ -144,25 +165,25 @@ class PhilipsTV(MediaPlayerDevice):
 
     def turn_off(self):
         """Turn off the device."""
-        self._tv.sendKey('Standby')
+        self._tv.sendKey("Standby")
         if not self._tv.on:
             self._state = STATE_OFF
 
     def volume_up(self):
         """Send volume up command."""
-        self._tv.sendKey('VolumeUp')
+        self._tv.sendKey("VolumeUp")
         if not self._tv.on:
             self._state = STATE_OFF
 
     def volume_down(self):
         """Send volume down command."""
-        self._tv.sendKey('VolumeDown')
+        self._tv.sendKey("VolumeDown")
         if not self._tv.on:
             self._state = STATE_OFF
 
     def mute_volume(self, mute):
         """Send mute command."""
-        self._tv.sendKey('Mute')
+        self._tv.sendKey("Mute")
         if not self._tv.on:
             self._state = STATE_OFF
 
@@ -172,17 +193,17 @@ class PhilipsTV(MediaPlayerDevice):
 
     def media_previous_track(self):
         """Send rewind command."""
-        self._tv.sendKey('Previous')
+        self._tv.sendKey("Previous")
 
     def media_next_track(self):
         """Send fast forward command."""
-        self._tv.sendKey('Next')
+        self._tv.sendKey("Next")
 
     @property
     def media_title(self):
         """Title of current playing media."""
         if self._watching_tv and self._channel_name:
-            return '{} - {}'.format(self._source, self._channel_name)
+            return "{} - {}".format(self._source, self._channel_name)
         return self._source
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
@@ -205,11 +226,11 @@ class PhilipsTV(MediaPlayerDevice):
         else:
             self._state = STATE_OFF
 
-        self._watching_tv = bool(self._tv.source_id == 'tv')
+        self._watching_tv = bool(self._tv.source_id == "tv")
 
         self._tv.getChannelId()
         self._tv.getChannels()
         if self._tv.channels and self._tv.channel_id in self._tv.channels:
-            self._channel_name = self._tv.channels[self._tv.channel_id]['name']
+            self._channel_name = self._tv.channels[self._tv.channel_id]["name"]
         else:
             self._channel_name = None

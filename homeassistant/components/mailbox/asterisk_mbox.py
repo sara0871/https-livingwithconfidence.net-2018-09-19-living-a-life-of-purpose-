@@ -8,17 +8,16 @@ import asyncio
 import logging
 
 from homeassistant.components.asterisk_mbox import DOMAIN
-from homeassistant.components.mailbox import (
-    CONTENT_TYPE_MPEG, Mailbox, StreamError)
+from homeassistant.components.mailbox import CONTENT_TYPE_MPEG, Mailbox, StreamError
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['asterisk_mbox']
+DEPENDENCIES = ["asterisk_mbox"]
 
-SIGNAL_MESSAGE_REQUEST = 'asterisk_mbox.message_request'
-SIGNAL_MESSAGE_UPDATE = 'asterisk_mbox.message_updated'
+SIGNAL_MESSAGE_REQUEST = "asterisk_mbox.message_request"
+SIGNAL_MESSAGE_UPDATE = "asterisk_mbox.message_updated"
 
 
 @asyncio.coroutine
@@ -34,7 +33,8 @@ class AsteriskMailbox(Mailbox):
         """Initialize Asterisk mailbox."""
         super().__init__(hass, name)
         async_dispatcher_connect(
-            self.hass, SIGNAL_MESSAGE_UPDATE, self._update_callback)
+            self.hass, SIGNAL_MESSAGE_UPDATE, self._update_callback
+        )
 
     @callback
     def _update_callback(self, msg):
@@ -50,6 +50,7 @@ class AsteriskMailbox(Mailbox):
     def async_get_media(self, msgid):
         """Return the media blob for the msgid."""
         from asterisk_mbox import ServerError
+
         client = self.hass.data[DOMAIN].client
         try:
             return client.mp3(msgid, sync=True)

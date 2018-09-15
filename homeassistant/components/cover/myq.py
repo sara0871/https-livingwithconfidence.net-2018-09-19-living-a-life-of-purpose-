@@ -8,33 +8,39 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.components.cover import (
-    CoverDevice, SUPPORT_CLOSE, SUPPORT_OPEN)
+from homeassistant.components.cover import CoverDevice, SUPPORT_CLOSE, SUPPORT_OPEN
 from homeassistant.const import (
-    CONF_PASSWORD, CONF_TYPE, CONF_USERNAME, STATE_CLOSED, STATE_CLOSING,
-    STATE_OPENING)
+    CONF_PASSWORD,
+    CONF_TYPE,
+    CONF_USERNAME,
+    STATE_CLOSED,
+    STATE_CLOSING,
+    STATE_OPENING,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['pymyq==0.0.15']
+REQUIREMENTS = ["pymyq==0.0.15"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'myq'
+DEFAULT_NAME = "myq"
 
 MYQ_TO_HASS = {
-    'closed': STATE_CLOSED,
-    'closing': STATE_CLOSING,
-    'opening': STATE_OPENING
+    "closed": STATE_CLOSED,
+    "closing": STATE_CLOSING,
+    "opening": STATE_OPENING,
 }
 
-NOTIFICATION_ID = 'myq_notification'
-NOTIFICATION_TITLE = 'MyQ Cover Setup'
+NOTIFICATION_ID = "myq_notification"
+NOTIFICATION_TITLE = "MyQ Cover Setup"
 
-COVER_SCHEMA = vol.Schema({
-    vol.Required(CONF_TYPE): cv.string,
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string
-})
+COVER_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_TYPE): cv.string,
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -59,11 +65,12 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     except (TypeError, KeyError, NameError, ValueError) as ex:
         _LOGGER.error("%s", ex)
         hass.components.persistent_notification.create(
-            'Error: {}<br />'
-            'You will need to restart hass after fixing.'
-            ''.format(ex),
+            "Error: {}<br />"
+            "You will need to restart hass after fixing."
+            "".format(ex),
             title=NOTIFICATION_TITLE,
-            notification_id=NOTIFICATION_ID)
+            notification_id=NOTIFICATION_ID,
+        )
         return False
 
 
@@ -73,14 +80,14 @@ class MyQDevice(CoverDevice):
     def __init__(self, myq, device):
         """Initialize with API object, device id."""
         self.myq = myq
-        self.device_id = device['deviceid']
-        self._name = device['name']
+        self.device_id = device["deviceid"]
+        self._name = device["name"]
         self._status = STATE_CLOSED
 
     @property
     def device_class(self):
         """Define this cover as a garage door."""
-        return 'garage'
+        return "garage"
 
     @property
     def should_poll(self):

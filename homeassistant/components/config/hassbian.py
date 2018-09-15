@@ -34,7 +34,7 @@ _TEST_OUTPUT = """
 def async_setup(hass):
     """Set up the Hassbian config."""
     # Test if is Hassbian
-    test_mode = 'FORCE_HASSBIAN' in os.environ
+    test_mode = "FORCE_HASSBIAN" in os.environ
     is_hassbian = test_mode
 
     if not is_hassbian:
@@ -53,14 +53,14 @@ def hassbian_status(hass, test_mode=False):
     if test_mode:
         return json.loads(_TEST_OUTPUT)
 
-    raise Exception('Real mode not implemented yet.')
+    raise Exception("Real mode not implemented yet.")
 
 
 class HassbianSuitesView(HomeAssistantView):
     """Hassbian packages endpoint."""
 
-    url = '/api/config/hassbian/suites'
-    name = 'api:config:hassbian:suites'
+    url = "/api/config/hassbian/suites"
+    name = "api:config:hassbian:suites"
 
     def __init__(self, test_mode):
         """Initialize suites view."""
@@ -69,16 +69,16 @@ class HassbianSuitesView(HomeAssistantView):
     @asyncio.coroutine
     def get(self, request):
         """Request suite status."""
-        inp = yield from hassbian_status(request.app['hass'], self._test_mode)
+        inp = yield from hassbian_status(request.app["hass"], self._test_mode)
 
-        return self.json(inp['suites'])
+        return self.json(inp["suites"])
 
 
 class HassbianSuiteInstallView(HomeAssistantView):
     """Hassbian packages endpoint."""
 
-    url = '/api/config/hassbian/suites/{suite}/install'
-    name = 'api:config:hassbian:suite'
+    url = "/api/config/hassbian/suites/{suite}/install"
+    name = "api:config:hassbian:suite"
 
     def __init__(self, test_mode):
         """Initialize suite view."""

@@ -7,18 +7,21 @@ https://home-assistant.io/components/sensor.rainmachine/
 import logging
 
 from homeassistant.components.rainmachine import (
-    DATA_RAINMACHINE, SENSOR_UPDATE_TOPIC, SENSORS, RainMachineEntity)
+    DATA_RAINMACHINE,
+    SENSOR_UPDATE_TOPIC,
+    SENSORS,
+    RainMachineEntity,
+)
 from homeassistant.const import CONF_MONITORED_CONDITIONS
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-DEPENDENCIES = ['rainmachine']
+DEPENDENCIES = ["rainmachine"]
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the RainMachine Switch platform."""
     if discovery_info is None:
         return
@@ -28,8 +31,7 @@ async def async_setup_platform(
     sensors = []
     for sensor_type in discovery_info[CONF_MONITORED_CONDITIONS]:
         name, icon, unit = SENSORS[sensor_type]
-        sensors.append(
-            RainMachineSensor(rainmachine, sensor_type, name, icon, unit))
+        sensors.append(RainMachineSensor(rainmachine, sensor_type, name, icon, unit))
 
     async_add_entities(sensors, True)
 
@@ -65,8 +67,9 @@ class RainMachineSensor(RainMachineEntity):
     @property
     def unique_id(self) -> str:
         """Return a unique, HASS-friendly identifier for this entity."""
-        return '{0}_{1}'.format(
-            self.rainmachine.device_mac.replace(':', ''), self._sensor_type)
+        return "{0}_{1}".format(
+            self.rainmachine.device_mac.replace(":", ""), self._sensor_type
+        )
 
     @property
     def unit_of_measurement(self):
@@ -80,10 +83,8 @@ class RainMachineSensor(RainMachineEntity):
 
     async def async_added_to_hass(self):
         """Register callbacks."""
-        async_dispatcher_connect(
-            self.hass, SENSOR_UPDATE_TOPIC, self._update_data)
+        async_dispatcher_connect(self.hass, SENSOR_UPDATE_TOPIC, self._update_data)
 
     async def async_update(self):
         """Update the sensor's state."""
-        self._state = self.rainmachine.restrictions['global'][
-            'freezeProtectTemp']
+        self._state = self.rainmachine.restrictions["global"]["freezeProtectTemp"]

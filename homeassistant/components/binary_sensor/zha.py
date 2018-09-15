@@ -11,21 +11,20 @@ from homeassistant.components import zha
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['zha']
+DEPENDENCIES = ["zha"]
 
 # ZigBee Cluster Library Zone Type to Home Assistant device class
 CLASS_MAPPING = {
-    0x000d: 'motion',
-    0x0015: 'opening',
-    0x0028: 'smoke',
-    0x002a: 'moisture',
-    0x002b: 'gas',
-    0x002d: 'vibration',
+    0x000d: "motion",
+    0x0015: "opening",
+    0x0028: "smoke",
+    0x002a: "moisture",
+    0x002b: "gas",
+    0x002d: "vibration",
 }
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Zigbee Home Automation binary sensors."""
     discovery_info = zha.get_discovery_info(hass, discovery_info)
     if discovery_info is None:
@@ -33,26 +32,25 @@ async def async_setup_platform(hass, config, async_add_entities,
 
     from zigpy.zcl.clusters.general import OnOff
     from zigpy.zcl.clusters.security import IasZone
-    if IasZone.cluster_id in discovery_info['in_clusters']:
-        await _async_setup_iaszone(hass, config, async_add_entities,
-                                   discovery_info)
-    elif OnOff.cluster_id in discovery_info['out_clusters']:
-        await _async_setup_remote(hass, config, async_add_entities,
-                                  discovery_info)
+
+    if IasZone.cluster_id in discovery_info["in_clusters"]:
+        await _async_setup_iaszone(hass, config, async_add_entities, discovery_info)
+    elif OnOff.cluster_id in discovery_info["out_clusters"]:
+        await _async_setup_remote(hass, config, async_add_entities, discovery_info)
 
 
-async def _async_setup_iaszone(hass, config, async_add_entities,
-                               discovery_info):
+async def _async_setup_iaszone(hass, config, async_add_entities, discovery_info):
     device_class = None
     from zigpy.zcl.clusters.security import IasZone
-    cluster = discovery_info['in_clusters'][IasZone.cluster_id]
-    if discovery_info['new_join']:
+
+    cluster = discovery_info["in_clusters"][IasZone.cluster_id]
+    if discovery_info["new_join"]:
         await cluster.bind()
         ieee = cluster.endpoint.device.application.ieee
-        await cluster.write_attributes({'cie_addr': ieee})
+        await cluster.write_attributes({"cie_addr": ieee})
 
     try:
-        zone_type = await cluster['zone_type']
+        zone_type = await cluster["zone_type"]
         device_class = CLASS_MAPPING.get(zone_type, None)
     except Exception:  # pylint: disable=broad-except
         # If we fail to read from the device, use a non-specific class
@@ -62,25 +60,33 @@ async def _async_setup_iaszone(hass, config, async_add_entities,
     async_add_entities([sensor], update_before_add=True)
 
 
-async def _async_setup_remote(hass, config, async_add_entities,
-                              discovery_info):
+async def _async_setup_remote(hass, config, async_add_entities, discovery_info):
 
     remote = Remote(**discovery_info)
 
-    if discovery_info['new_join']:
+    if discovery_info["new_join"]:
         from zigpy.zcl.clusters.general import OnOff, LevelControl
-        out_clusters = discovery_info['out_clusters']
+
+        out_clusters = discovery_info["out_clusters"]
         if OnOff.cluster_id in out_clusters:
             cluster = out_clusters[OnOff.cluster_id]
             await zha.configure_reporting(
-                remote.entity_id, cluster, 0, min_report=0, max_report=600,
-                reportable_change=1
+                remote.entity_id,
+                cluster,
+                0,
+                min_report=0,
+                max_report=600,
+                reportable_change=1,
             )
         if LevelControl.cluster_id in out_clusters:
             cluster = out_clusters[LevelControl.cluster_id]
             await zha.configure_reporting(
-                remote.entity_id, cluster, 0, min_report=1, max_report=600,
-                reportable_change=1
+                remote.entity_id,
+                cluster,
+                0,
+                min_report=1,
+                max_report=600,
+                reportable_change=1,
             )
 
     async_add_entities([remote], update_before_add=True)
@@ -96,6 +102,7 @@ class BinarySensor(zha.Entity, BinarySensorDevice):
         super().__init__(**kwargs)
         self._device_class = device_class
         from zigpy.zcl.clusters.security import IasZone
+
         self._ias_zone_cluster = self._in_clusters[IasZone.cluster_id]
 
     @property
@@ -130,13 +137,15 @@ class BinarySensor(zha.Entity, BinarySensorDevice):
         """Retrieve latest state."""
         from zigpy.types.basic import uint16_t
 
-        result = await zha.safe_read(self._endpoint.ias_zone,
-                                     ['zone_status'],
-                                     allow_cache=False,
-                                     only_cache=(not self._initialized))
-        state = result.get('zone_status', self._state)
+        result = await zha.safe_read(
+            self._endpoint.ias_zone,
+            ["zone_status"],
+            allow_cache=False,
+            only_cache=(not self._initialized),
+        )
+        state = result.get("zone_status", self._state)
         if isinstance(state, (int, uint16_t)):
-            self._state = result.get('zone_status', self._state) & 3
+            self._state = result.get("zone_status", self._state) & 3
 
 
 class Remote(zha.Entity, BinarySensorDevice):
@@ -205,6 +214,7 @@ class Remote(zha.Entity, BinarySensorDevice):
         self._state = False
         self._level = 0
         from zigpy.zcl.clusters import general
+
         self._out_listeners = {
             general.OnOff.cluster_id: self.OnOffListener(self),
             general.LevelControl.cluster_id: self.LevelListener(self),
@@ -223,9 +233,9 @@ class Remote(zha.Entity, BinarySensorDevice):
     @property
     def device_state_attributes(self):
         """Return the device state attributes."""
-        self._device_state_attributes.update({
-            'level': self._state and self._level or 0
-        })
+        self._device_state_attributes.update(
+            {"level": self._state and self._level or 0}
+        )
         return self._device_state_attributes
 
     def move_level(self, change):
@@ -252,6 +262,8 @@ class Remote(zha.Entity, BinarySensorDevice):
     async def async_update(self):
         """Retrieve latest state."""
         from zigpy.zcl.clusters.general import OnOff
+
         result = await zha.safe_read(
-            self._endpoint.out_clusters[OnOff.cluster_id], ['on_off'])
-        self._state = result.get('on_off', self._state)
+            self._endpoint.out_clusters[OnOff.cluster_id], ["on_off"]
+        )
+        self._state = result.get("on_off", self._state)

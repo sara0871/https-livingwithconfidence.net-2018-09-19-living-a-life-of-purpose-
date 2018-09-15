@@ -18,21 +18,23 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.components.device_tracker import (
-    PLATFORM_SCHEMA, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-from homeassistant.const import (
-    CONF_HOST, CONF_PORT)
+    PLATFORM_SCHEMA,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+)
+from homeassistant.const import CONF_HOST, CONF_PORT
 
-REQUIREMENTS = ['aiofreepybox==0.0.4']
+REQUIREMENTS = ["aiofreepybox==0.0.4"]
 
 _LOGGER = logging.getLogger(__name__)
 
-FREEBOX_CONFIG_FILE = 'freebox.conf'
+FREEBOX_CONFIG_FILE = "freebox.conf"
 
 PLATFORM_SCHEMA = vol.All(
-    PLATFORM_SCHEMA.extend({
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_PORT): cv.port
-    }))
+    PLATFORM_SCHEMA.extend(
+        {vol.Required(CONF_HOST): cv.string, vol.Required(CONF_PORT): cv.port}
+    )
+)
 
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=10)
 
@@ -41,10 +43,13 @@ async def async_setup_scanner(hass, config, async_see, discovery_info=None):
     """Set up the Freebox device tracker and start the polling."""
     freebox_config = copy.deepcopy(config)
     if discovery_info is not None:
-        freebox_config[CONF_HOST] = discovery_info['properties']['api_domain']
-        freebox_config[CONF_PORT] = discovery_info['properties']['https_port']
-        _LOGGER.info("Discovered Freebox server: %s:%s",
-                     freebox_config[CONF_HOST], freebox_config[CONF_PORT])
+        freebox_config[CONF_HOST] = discovery_info["properties"]["api_domain"]
+        freebox_config[CONF_PORT] = discovery_info["properties"]["https_port"]
+        _LOGGER.info(
+            "Discovered Freebox server: %s:%s",
+            freebox_config[CONF_HOST],
+            freebox_config[CONF_PORT],
+        )
 
     scanner = FreeboxDeviceScanner(hass, freebox_config, async_see)
     interval = freebox_config.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
@@ -52,14 +57,15 @@ async def async_setup_scanner(hass, config, async_see, discovery_info=None):
     return True
 
 
-Device = namedtuple('Device', ['id', 'name', 'ip'])
+Device = namedtuple("Device", ["id", "name", "ip"])
 
 
 def _build_device(device_dict):
     return Device(
-        device_dict['l2ident']['id'],
-        device_dict['primary_name'],
-        device_dict['l3connectivities'][0]['addr'])
+        device_dict["l2ident"]["id"],
+        device_dict["primary_name"],
+        device_dict["l3connectivities"][0]["addr"],
+    )
 
 
 class FreeboxDeviceScanner:
@@ -79,17 +85,16 @@ class FreeboxDeviceScanner:
         # The version can be changed if we want the user to re-authorize HASS
         # on her Freebox.
         app_desc = {
-            'app_id': 'hass',
-            'app_name': 'Home Assistant',
-            'app_version': '0.65',
-            'device_name': socket.gethostname()
+            "app_id": "hass",
+            "app_name": "Home Assistant",
+            "app_version": "0.65",
+            "device_name": socket.gethostname(),
         }
 
-        api_version = 'v1'  # Use the lowest working version.
+        api_version = "v1"  # Use the lowest working version.
         self.fbx = Freepybox(
-            app_desc=app_desc,
-            token_file=self.token_file,
-            api_version=api_version)
+            app_desc=app_desc, token_file=self.token_file, api_version=api_version
+        )
 
     async def async_start(self, hass, interval):
         """Perform a first update and start polling at the given interval."""
@@ -101,20 +106,21 @@ class FreeboxDeviceScanner:
         """Check the Freebox for devices."""
         from aiofreepybox.exceptions import HttpRequestError
 
-        _LOGGER.info('Scanning devices')
+        _LOGGER.info("Scanning devices")
 
         await self.fbx.open(self.host, self.port)
         try:
             hosts = await self.fbx.lan.get_hosts_list()
         except HttpRequestError:
-            _LOGGER.exception('Failed to scan devices')
+            _LOGGER.exception("Failed to scan devices")
         else:
-            active_devices = [_build_device(device)
-                              for device in hosts
-                              if device['active']]
+            active_devices = [
+                _build_device(device) for device in hosts if device["active"]
+            ]
 
             if active_devices:
-                await asyncio.wait([self.async_see(mac=d.id, host_name=d.name)
-                                    for d in active_devices])
+                await asyncio.wait(
+                    [self.async_see(mac=d.id, host_name=d.name) for d in active_devices]
+                )
 
         await self.fbx.close()

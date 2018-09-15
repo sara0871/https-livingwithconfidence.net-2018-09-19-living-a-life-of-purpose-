@@ -17,17 +17,18 @@ from homeassistant.helpers.entity_component import EntityComponent
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_DISTANCE = 'distance'
-DOMAIN = 'geo_location'
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
-GROUP_NAME_ALL_EVENTS = 'All Geo Location Events'
+ATTR_DISTANCE = "distance"
+DOMAIN = "geo_location"
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
+GROUP_NAME_ALL_EVENTS = "All Geo Location Events"
 SCAN_INTERVAL = timedelta(seconds=60)
 
 
 async def async_setup(hass, config):
     """Set up this component."""
     component = EntityComponent(
-        _LOGGER, DOMAIN, hass, SCAN_INTERVAL, GROUP_NAME_ALL_EVENTS)
+        _LOGGER, DOMAIN, hass, SCAN_INTERVAL, GROUP_NAME_ALL_EVENTS
+    )
     await component.async_setup(config)
     return True
 

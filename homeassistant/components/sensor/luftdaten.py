@@ -11,55 +11,63 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    ATTR_ATTRIBUTION, ATTR_LATITUDE, ATTR_LONGITUDE, CONF_MONITORED_CONDITIONS,
-    CONF_NAME, CONF_SHOW_ON_MAP, TEMP_CELSIUS)
+    ATTR_ATTRIBUTION,
+    ATTR_LATITUDE,
+    ATTR_LONGITUDE,
+    CONF_MONITORED_CONDITIONS,
+    CONF_NAME,
+    CONF_SHOW_ON_MAP,
+    TEMP_CELSIUS,
+)
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['luftdaten==0.2.0']
+REQUIREMENTS = ["luftdaten==0.2.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_SENSOR_ID = 'sensor_id'
+ATTR_SENSOR_ID = "sensor_id"
 
 CONF_ATTRIBUTION = "Data provided by luftdaten.info"
 
 
-VOLUME_MICROGRAMS_PER_CUBIC_METER = 'µg/m3'
+VOLUME_MICROGRAMS_PER_CUBIC_METER = "µg/m3"
 
-SENSOR_TEMPERATURE = 'temperature'
-SENSOR_HUMIDITY = 'humidity'
-SENSOR_PM10 = 'P1'
-SENSOR_PM2_5 = 'P2'
-SENSOR_PRESSURE = 'pressure'
+SENSOR_TEMPERATURE = "temperature"
+SENSOR_HUMIDITY = "humidity"
+SENSOR_PM10 = "P1"
+SENSOR_PM2_5 = "P2"
+SENSOR_PRESSURE = "pressure"
 
 SENSOR_TYPES = {
-    SENSOR_TEMPERATURE: ['Temperature', TEMP_CELSIUS],
-    SENSOR_HUMIDITY: ['Humidity', '%'],
-    SENSOR_PRESSURE: ['Pressure', 'Pa'],
-    SENSOR_PM10: ['PM10', VOLUME_MICROGRAMS_PER_CUBIC_METER],
-    SENSOR_PM2_5: ['PM2.5', VOLUME_MICROGRAMS_PER_CUBIC_METER]
+    SENSOR_TEMPERATURE: ["Temperature", TEMP_CELSIUS],
+    SENSOR_HUMIDITY: ["Humidity", "%"],
+    SENSOR_PRESSURE: ["Pressure", "Pa"],
+    SENSOR_PM10: ["PM10", VOLUME_MICROGRAMS_PER_CUBIC_METER],
+    SENSOR_PM2_5: ["PM2.5", VOLUME_MICROGRAMS_PER_CUBIC_METER],
 }
 
-DEFAULT_NAME = 'Luftdaten'
+DEFAULT_NAME = "Luftdaten"
 
-CONF_SENSORID = 'sensorid'
+CONF_SENSORID = "sensorid"
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=5)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_SENSORID): cv.positive_int,
-    vol.Required(CONF_MONITORED_CONDITIONS):
-        vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)]),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_SHOW_ON_MAP, default=False): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_SENSORID): cv.positive_int,
+        vol.Required(CONF_MONITORED_CONDITIONS): vol.All(
+            cv.ensure_list, [vol.In(SENSOR_TYPES)]
+        ),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_SHOW_ON_MAP, default=False): cv.boolean,
+    }
+)
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Luftdaten sensor."""
     from luftdaten import Luftdaten
 
@@ -79,10 +87,14 @@ async def async_setup_platform(
     devices = []
     for variable in config[CONF_MONITORED_CONDITIONS]:
         if luftdaten.data.values[variable] is None:
-            _LOGGER.warning("It might be that sensor %s is not providing "
-                            "measurements for %s", sensor_id, variable)
+            _LOGGER.warning(
+                "It might be that sensor %s is not providing " "measurements for %s",
+                sensor_id,
+                variable,
+            )
         devices.append(
-            LuftdatenSensor(luftdaten, name, variable, sensor_id, show_on_map))
+            LuftdatenSensor(luftdaten, name, variable, sensor_id, show_on_map)
+        )
 
     async_add_entities(devices)
 
@@ -103,7 +115,7 @@ class LuftdatenSensor(Entity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return '{} {}'.format(self._name, SENSOR_TYPES[self.sensor_type][0])
+        return "{} {}".format(self._name, SENSOR_TYPES[self.sensor_type][0])
 
     @property
     def state(self):
@@ -119,14 +131,14 @@ class LuftdatenSensor(Entity):
     def device_state_attributes(self):
         """Return the state attributes."""
         onmap = ATTR_LATITUDE, ATTR_LONGITUDE
-        nomap = 'lat', 'long'
+        nomap = "lat", "long"
         lat_format, lon_format = onmap if self._show_on_map else nomap
         try:
             attr = {
                 ATTR_ATTRIBUTION: CONF_ATTRIBUTION,
                 ATTR_SENSOR_ID: self._sensor_id,
-                lat_format: self.luftdaten.data.meta['latitude'],
-                lon_format: self.luftdaten.data.meta['longitude'],
+                lat_format: self.luftdaten.data.meta["latitude"],
+                lon_format: self.luftdaten.data.meta["longitude"],
             }
             return attr
         except KeyError:

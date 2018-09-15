@@ -14,7 +14,11 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.components.thethingsnetwork import (
-    DATA_TTN, TTN_APP_ID, TTN_ACCESS_KEY, TTN_DATA_STORAGE_URL)
+    DATA_TTN,
+    TTN_APP_ID,
+    TTN_ACCESS_KEY,
+    TTN_DATA_STORAGE_URL,
+)
 from homeassistant.const import CONTENT_TYPE_JSON
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
@@ -22,25 +26,26 @@ from homeassistant.helpers.entity import Entity
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_DEVICE_ID = 'device_id'
-ATTR_RAW = 'raw'
-ATTR_TIME = 'time'
+ATTR_DEVICE_ID = "device_id"
+ATTR_RAW = "raw"
+ATTR_TIME = "time"
 
 DEFAULT_TIMEOUT = 10
-DEPENDENCIES = ['thethingsnetwork']
+DEPENDENCIES = ["thethingsnetwork"]
 
-CONF_DEVICE_ID = 'device_id'
-CONF_VALUES = 'values'
+CONF_DEVICE_ID = "device_id"
+CONF_VALUES = "values"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_DEVICE_ID): cv.string,
-    vol.Required(CONF_VALUES): {cv.string: cv.string},
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_DEVICE_ID): cv.string,
+        vol.Required(CONF_VALUES): {cv.string: cv.string},
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up The Things Network Data storage sensors."""
     ttn = hass.data.get(DATA_TTN)
     device_id = config.get(CONF_DEVICE_ID)
@@ -48,8 +53,7 @@ def async_setup_platform(hass, config, async_add_entities,
     app_id = ttn.get(TTN_APP_ID)
     access_key = ttn.get(TTN_ACCESS_KEY)
 
-    ttn_data_storage = TtnDataStorage(
-        hass, app_id, device_id, access_key, values)
+    ttn_data_storage = TtnDataStorage(hass, app_id, device_id, access_key, values)
     success = yield from ttn_data_storage.async_update()
 
     if not success:
@@ -57,23 +61,23 @@ def async_setup_platform(hass, config, async_add_entities,
 
     devices = []
     for value, unit_of_measurement in values.items():
-        devices.append(TtnDataSensor(
-            ttn_data_storage, device_id, value, unit_of_measurement))
+        devices.append(
+            TtnDataSensor(ttn_data_storage, device_id, value, unit_of_measurement)
+        )
     async_add_entities(devices, True)
 
 
 class TtnDataSensor(Entity):
     """Representation of a The Things Network Data Storage sensor."""
 
-    def __init__(self, ttn_data_storage, device_id, value,
-                 unit_of_measurement):
+    def __init__(self, ttn_data_storage, device_id, value, unit_of_measurement):
         """Initialize a The Things Network Data Storage sensor."""
         self._ttn_data_storage = ttn_data_storage
         self._state = None
         self._device_id = device_id
         self._unit_of_measurement = unit_of_measurement
         self._value = value
-        self._name = '{} {}'.format(self._device_id, self._value)
+        self._name = "{} {}".format(self._device_id, self._value)
 
     @property
     def name(self):
@@ -100,8 +104,8 @@ class TtnDataSensor(Entity):
         if self._ttn_data_storage.data is not None:
             return {
                 ATTR_DEVICE_ID: self._device_id,
-                ATTR_RAW: self._state['raw'],
-                ATTR_TIME: self._state['time'],
+                ATTR_RAW: self._state["raw"],
+                ATTR_TIME: self._state["time"],
             }
 
     @asyncio.coroutine
@@ -122,10 +126,11 @@ class TtnDataStorage:
         self._device_id = device_id
         self._values = values
         self._url = TTN_DATA_STORAGE_URL.format(
-            app_id=app_id, endpoint='api/v2/query', device_id=device_id)
+            app_id=app_id, endpoint="api/v2/query", device_id=device_id
+        )
         self._headers = {
             ACCEPT: CONTENT_TYPE_JSON,
-            AUTHORIZATION: 'key {}'.format(access_key),
+            AUTHORIZATION: "key {}".format(access_key),
         }
 
     @asyncio.coroutine
@@ -147,8 +152,7 @@ class TtnDataStorage:
             return False
 
         if status == 401:
-            _LOGGER.error(
-                "Not authorized for Application ID: %s", self._app_id)
+            _LOGGER.error("Not authorized for Application ID: %s", self._app_id)
             return False
 
         if status == 404:

@@ -4,11 +4,20 @@ import logging
 from homeassistant.helpers import dispatcher, intent
 
 from .const import (
-    ATTR_MESSAGE, ATTR_TARGET, CONF_CONVERSATIONS, DOMAIN,
-    EVENT_HANGOUTS_CONNECTED, EVENT_HANGOUTS_CONVERSATIONS_CHANGED,
-    EVENT_HANGOUTS_DISCONNECTED, EVENT_HANGOUTS_MESSAGE_RECEIVED,
-    CONF_MATCHERS, CONF_CONVERSATION_ID,
-    CONF_CONVERSATION_NAME, EVENT_HANGOUTS_CONVERSATIONS_RESOLVED, INTENT_HELP)
+    ATTR_MESSAGE,
+    ATTR_TARGET,
+    CONF_CONVERSATIONS,
+    DOMAIN,
+    EVENT_HANGOUTS_CONNECTED,
+    EVENT_HANGOUTS_CONVERSATIONS_CHANGED,
+    EVENT_HANGOUTS_DISCONNECTED,
+    EVENT_HANGOUTS_MESSAGE_RECEIVED,
+    CONF_MATCHERS,
+    CONF_CONVERSATION_ID,
+    CONF_CONVERSATION_NAME,
+    EVENT_HANGOUTS_CONVERSATIONS_RESOLVED,
+    INTENT_HELP,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,8 +25,9 @@ _LOGGER = logging.getLogger(__name__)
 class HangoutsBot:
     """The Hangouts Bot."""
 
-    def __init__(self, hass, refresh_token, intents,
-                 default_convs, error_suppressed_convs):
+    def __init__(
+        self, hass, refresh_token, intents, default_convs, error_suppressed_convs
+    ):
         """Set up the client."""
         self.hass = hass
         self._connected = False
@@ -36,8 +46,10 @@ class HangoutsBot:
         self._error_suppressed_conv_ids = None
 
         dispatcher.async_dispatcher_connect(
-            self.hass, EVENT_HANGOUTS_MESSAGE_RECEIVED,
-            self._async_handle_conversation_message)
+            self.hass,
+            EVENT_HANGOUTS_MESSAGE_RECEIVED,
+            self._async_handle_conversation_message,
+        )
 
     def _resolve_conversation_id(self, obj):
         if CONF_CONVERSATION_ID in obj:
@@ -65,14 +77,15 @@ class HangoutsBot:
                     conv_id = self._resolve_conversation_id(conversation)
                     if conv_id is not None:
                         conversations.append(conv_id)
-                data['_' + CONF_CONVERSATIONS] = conversations
+                data["_" + CONF_CONVERSATIONS] = conversations
             elif self._default_conv_ids:
-                data['_' + CONF_CONVERSATIONS] = self._default_conv_ids
+                data["_" + CONF_CONVERSATIONS] = self._default_conv_ids
             else:
-                data['_' + CONF_CONVERSATIONS] = \
-                    [conv.id_ for conv in self._conversation_list.get_all()]
+                data["_" + CONF_CONVERSATIONS] = [
+                    conv.id_ for conv in self._conversation_list.get_all()
+                ]
 
-            for conv_id in data['_' + CONF_CONVERSATIONS]:
+            for conv_id in data["_" + CONF_CONVERSATIONS]:
                 if conv_id not in self._conversation_intents:
                     self._conversation_intents[conv_id] = {}
 
@@ -80,11 +93,13 @@ class HangoutsBot:
 
         try:
             self._conversation_list.on_event.remove_observer(
-                self._async_handle_conversation_event)
+                self._async_handle_conversation_event
+            )
         except ValueError:
             pass
         self._conversation_list.on_event.add_observer(
-            self._async_handle_conversation_event)
+            self._async_handle_conversation_event
+        )
 
     def async_resolve_conversations(self, _):
         """Resolve the list of default and error suppressed conversations."""
@@ -100,34 +115,36 @@ class HangoutsBot:
             conv_id = self._resolve_conversation_id(conversation)
             if conv_id is not None:
                 self._error_suppressed_conv_ids.append(conv_id)
-        dispatcher.async_dispatcher_send(self.hass,
-                                         EVENT_HANGOUTS_CONVERSATIONS_RESOLVED)
+        dispatcher.async_dispatcher_send(
+            self.hass, EVENT_HANGOUTS_CONVERSATIONS_RESOLVED
+        )
 
     async def _async_handle_conversation_event(self, event):
         from hangups import ChatMessageEvent
-        if isinstance(event, ChatMessageEvent):
-            dispatcher.async_dispatcher_send(self.hass,
-                                             EVENT_HANGOUTS_MESSAGE_RECEIVED,
-                                             event.conversation_id,
-                                             event.user_id, event)
 
-    async def _async_handle_conversation_message(self,
-                                                 conv_id, user_id, event):
+        if isinstance(event, ChatMessageEvent):
+            dispatcher.async_dispatcher_send(
+                self.hass,
+                EVENT_HANGOUTS_MESSAGE_RECEIVED,
+                event.conversation_id,
+                event.user_id,
+                event,
+            )
+
+    async def _async_handle_conversation_message(self, conv_id, user_id, event):
         """Handle a message sent to a conversation."""
         user = self._user_list.get_user(user_id)
         if user.is_self:
             return
         message = event.text
 
-        _LOGGER.debug("Handling message '%s' from %s",
-                      message, user.full_name)
+        _LOGGER.debug("Handling message '%s' from %s", message, user.full_name)
 
         intents = self._conversation_intents.get(conv_id)
         if intents is not None:
             is_error = False
             try:
-                intent_result = await self._async_process(intents, message,
-                                                          conv_id)
+                intent_result = await self._async_process(intents, message, conv_id)
             except (intent.UnknownIntent, intent.IntentHandleError) as err:
                 is_error = True
                 intent_result = intent.IntentResponse()
@@ -136,17 +153,19 @@ class HangoutsBot:
             if intent_result is None:
                 is_error = True
                 intent_result = intent.IntentResponse()
-                intent_result.async_set_speech(
-                    "Sorry, I didn't understand that")
+                intent_result.async_set_speech("Sorry, I didn't understand that")
 
-            message = intent_result.as_dict().get('speech', {})\
-                .get('plain', {}).get('speech')
+            message = (
+                intent_result.as_dict().get("speech", {}).get("plain", {}).get("speech")
+            )
 
             if (message is not None) and not (
-                    is_error and conv_id in self._error_suppressed_conv_ids):
+                is_error and conv_id in self._error_suppressed_conv_ids
+            ):
                 await self._async_send_message(
-                    [{'text': message, 'parse_str': True}],
-                    [{CONF_CONVERSATION_ID: conv_id}])
+                    [{"text": message, "parse_str": True}],
+                    [{CONF_CONVERSATION_ID: conv_id}],
+                )
 
     async def _async_process(self, intents, text, conv_id):
         """Detect a matching intent."""
@@ -158,13 +177,15 @@ class HangoutsBot:
                     continue
                 if intent_type == INTENT_HELP:
                     return await self.hass.helpers.intent.async_handle(
-                        DOMAIN, intent_type,
-                        {'conv_id': {'value': conv_id}}, text)
+                        DOMAIN, intent_type, {"conv_id": {"value": conv_id}}, text
+                    )
 
                 return await self.hass.helpers.intent.async_handle(
-                    DOMAIN, intent_type,
-                    {key: {'value': value}
-                     for key, value in match.groupdict().items()}, text)
+                    DOMAIN,
+                    intent_type,
+                    {key: {"value": value} for key, value in match.groupdict().items()},
+                    text,
+                )
 
     async def async_connect(self):
         """Login to the Google Hangouts."""
@@ -172,9 +193,12 @@ class HangoutsBot:
 
         from hangups import Client
         from hangups import get_auth
+
         session = await self.hass.async_add_executor_job(
-            get_auth, HangoutsCredentials(None, None, None),
-            HangoutsRefreshToken(self._refresh_token))
+            get_auth,
+            HangoutsCredentials(None, None, None),
+            HangoutsRefreshToken(self._refresh_token),
+        )
 
         self._client = Client(session)
         self._client.on_connect.add_observer(self._on_connect)
@@ -183,16 +207,15 @@ class HangoutsBot:
         self.hass.loop.create_task(self._client.connect())
 
     def _on_connect(self):
-        _LOGGER.debug('Connected!')
+        _LOGGER.debug("Connected!")
         self._connected = True
         dispatcher.async_dispatcher_send(self.hass, EVENT_HANGOUTS_CONNECTED)
 
     def _on_disconnect(self):
         """Handle disconnecting."""
-        _LOGGER.debug('Connection lost!')
+        _LOGGER.debug("Connection lost!")
         self._connected = False
-        dispatcher.async_dispatcher_send(self.hass,
-                                         EVENT_HANGOUTS_DISCONNECTED)
+        dispatcher.async_dispatcher_send(self.hass, EVENT_HANGOUTS_DISCONNECTED)
 
     async def async_disconnect(self):
         """Disconnect the client if it is connected."""
@@ -208,11 +231,11 @@ class HangoutsBot:
         for target in targets:
             conversation = None
             if CONF_CONVERSATION_ID in target:
-                conversation = self._conversation_list.get(
-                    target[CONF_CONVERSATION_ID])
+                conversation = self._conversation_list.get(target[CONF_CONVERSATION_ID])
             elif CONF_CONVERSATION_NAME in target:
                 conversation = self._resolve_conversation_name(
-                    target[CONF_CONVERSATION_NAME])
+                    target[CONF_CONVERSATION_NAME]
+                )
             if conversation is not None:
                 conversations.append(conversation)
 
@@ -220,17 +243,20 @@ class HangoutsBot:
             return False
 
         from hangups import ChatMessageSegment, hangouts_pb2
+
         messages = []
         for segment in message:
             if messages:
-                messages.append(ChatMessageSegment('',
-                                                   segment_type=hangouts_pb2.
-                                                   SEGMENT_TYPE_LINE_BREAK))
-            if 'parse_str' in segment and segment['parse_str']:
-                messages.extend(ChatMessageSegment.from_str(segment['text']))
+                messages.append(
+                    ChatMessageSegment(
+                        "", segment_type=hangouts_pb2.SEGMENT_TYPE_LINE_BREAK
+                    )
+                )
+            if "parse_str" in segment and segment["parse_str"]:
+                messages.extend(ChatMessageSegment.from_str(segment["text"]))
             else:
-                if 'parse_str' in segment:
-                    del segment['parse_str']
+                if "parse_str" in segment:
+                    del segment["parse_str"]
                 messages.append(ChatMessageSegment(**segment))
 
         if not messages:
@@ -240,28 +266,35 @@ class HangoutsBot:
 
     async def _async_list_conversations(self):
         import hangups
-        self._user_list, self._conversation_list = \
-            (await hangups.build_user_conversation_list(self._client))
+
+        self._user_list, self._conversation_list = await hangups.build_user_conversation_list(
+            self._client
+        )
         conversations = {}
         for i, conv in enumerate(self._conversation_list.get_all()):
             users_in_conversation = []
             for user in conv.users:
                 users_in_conversation.append(user.full_name)
-            conversations[str(i)] = {CONF_CONVERSATION_ID: str(conv.id_),
-                                     CONF_CONVERSATION_NAME: conv.name,
-                                     'users': users_in_conversation}
+            conversations[str(i)] = {
+                CONF_CONVERSATION_ID: str(conv.id_),
+                CONF_CONVERSATION_NAME: conv.name,
+                "users": users_in_conversation,
+            }
 
-        self.hass.states.async_set("{}.conversations".format(DOMAIN),
-                                   len(self._conversation_list.get_all()),
-                                   attributes=conversations)
-        dispatcher.async_dispatcher_send(self.hass,
-                                         EVENT_HANGOUTS_CONVERSATIONS_CHANGED,
-                                         conversations)
+        self.hass.states.async_set(
+            "{}.conversations".format(DOMAIN),
+            len(self._conversation_list.get_all()),
+            attributes=conversations,
+        )
+        dispatcher.async_dispatcher_send(
+            self.hass, EVENT_HANGOUTS_CONVERSATIONS_CHANGED, conversations
+        )
 
     async def async_handle_send_message(self, service):
         """Handle the send_message service."""
-        await self._async_send_message(service.data[ATTR_MESSAGE],
-                                       service.data[ATTR_TARGET])
+        await self._async_send_message(
+            service.data[ATTR_MESSAGE], service.data[ATTR_TARGET]
+        )
 
     async def async_handle_update_users_and_conversations(self, _=None):
         """Handle the update_users_and_conversations service."""

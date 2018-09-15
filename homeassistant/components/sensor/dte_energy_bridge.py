@@ -15,20 +15,23 @@ from homeassistant.const import CONF_NAME
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_IP_ADDRESS = 'ip'
-CONF_VERSION = 'version'
+CONF_IP_ADDRESS = "ip"
+CONF_VERSION = "version"
 
-DEFAULT_NAME = 'Current Energy Usage'
+DEFAULT_NAME = "Current Energy Usage"
 DEFAULT_VERSION = 1
 
-ICON = 'mdi:flash'
+ICON = "mdi:flash"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_IP_ADDRESS): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_VERSION, default=DEFAULT_VERSION):
-        vol.All(vol.Coerce(int), vol.Any(1, 2))
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_IP_ADDRESS): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_VERSION, default=DEFAULT_VERSION): vol.All(
+            vol.Coerce(int), vol.Any(1, 2)
+        ),
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -86,14 +89,16 @@ class DteEnergyBridgeSensor(Entity):
             response = requests.get(self._url, timeout=5)
         except (requests.exceptions.RequestException, ValueError):
             _LOGGER.warning(
-                'Could not update status for DTE Energy Bridge (%s)',
-                self._name)
+                "Could not update status for DTE Energy Bridge (%s)", self._name
+            )
             return
 
         if response.status_code != 200:
             _LOGGER.warning(
-                'Invalid status_code from DTE Energy Bridge: %s (%s)',
-                response.status_code, self._name)
+                "Invalid status_code from DTE Energy Bridge: %s (%s)",
+                response.status_code,
+                self._name,
+            )
             return
 
         response_split = response.text.split()
@@ -101,7 +106,9 @@ class DteEnergyBridgeSensor(Entity):
         if len(response_split) != 2:
             _LOGGER.warning(
                 'Invalid response from DTE Energy Bridge: "%s" (%s)',
-                response.text, self._name)
+                response.text,
+                self._name,
+            )
             return
 
         val = float(response_split[0])
@@ -109,4 +116,4 @@ class DteEnergyBridgeSensor(Entity):
         # A workaround for a bug in the DTE energy bridge.
         # The returned value can randomly be in W or kW.  Checking for a
         # a decimal seems to be a reliable way to determine the units.
-        self._state = val if '.' in response_split[0] else val / 1000
+        self._state = val if "." in response_split[0] else val / 1000

@@ -11,16 +11,19 @@ from aiohttp.hdrs import CONTENT_TYPE
 import requests
 import voluptuous as vol
 
-from homeassistant.components.notify import (
-    PLATFORM_SCHEMA, BaseNotificationService)
+from homeassistant.components.notify import PLATFORM_SCHEMA, BaseNotificationService
 from homeassistant.const import (
-    CONF_API_KEY, CONF_RECIPIENT, CONF_SENDER, CONF_USERNAME,
-    CONTENT_TYPE_JSON)
+    CONF_API_KEY,
+    CONF_RECIPIENT,
+    CONF_SENDER,
+    CONF_USERNAME,
+    CONTENT_TYPE_JSON,
+)
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-BASE_API_URL = 'https://rest.clicksend.com/v3'
+BASE_API_URL = "https://rest.clicksend.com/v3"
 
 HEADERS = {CONTENT_TYPE: CONTENT_TYPE_JSON}
 
@@ -34,13 +37,20 @@ def validate_sender(config):
 
 
 PLATFORM_SCHEMA = vol.Schema(
-    vol.All(PLATFORM_SCHEMA.extend({
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Required(CONF_API_KEY): cv.string,
-        vol.Required(CONF_RECIPIENT, default=[]):
-            vol.All(cv.ensure_list, [cv.string]),
-        vol.Optional(CONF_SENDER): cv.string,
-    }), validate_sender))
+    vol.All(
+        PLATFORM_SCHEMA.extend(
+            {
+                vol.Required(CONF_USERNAME): cv.string,
+                vol.Required(CONF_API_KEY): cv.string,
+                vol.Required(CONF_RECIPIENT, default=[]): vol.All(
+                    cv.ensure_list, [cv.string]
+                ),
+                vol.Optional(CONF_SENDER): cv.string,
+            }
+        ),
+        validate_sender,
+    )
+)
 
 
 def get_service(hass, config, discovery_info=None):
@@ -67,34 +77,44 @@ class ClicksendNotificationService(BaseNotificationService):
         """Send a message to a user."""
         data = {"messages": []}
         for recipient in self.recipients:
-            data["messages"].append({
-                'source': 'hass.notify',
-                'from': self.sender,
-                'to': recipient,
-                'body': message,
-            })
+            data["messages"].append(
+                {
+                    "source": "hass.notify",
+                    "from": self.sender,
+                    "to": recipient,
+                    "body": message,
+                }
+            )
 
         api_url = "{}/sms/send".format(BASE_API_URL)
 
         resp = requests.post(
-            api_url, data=json.dumps(data), headers=HEADERS,
-            auth=(self.username, self.api_key), timeout=5)
+            api_url,
+            data=json.dumps(data),
+            headers=HEADERS,
+            auth=(self.username, self.api_key),
+            timeout=5,
+        )
 
         obj = json.loads(resp.text)
-        response_msg = obj['response_msg']
-        response_code = obj['response_code']
+        response_msg = obj["response_msg"]
+        response_code = obj["response_code"]
 
         if resp.status_code != 200:
-            _LOGGER.error("Error %s : %s (Code %s)", resp.status_code,
-                          response_msg, response_code)
+            _LOGGER.error(
+                "Error %s : %s (Code %s)", resp.status_code, response_msg, response_code
+            )
 
 
 def _authenticate(config):
     """Authenticate with ClickSend."""
-    api_url = '{}/account'.format(BASE_API_URL)
+    api_url = "{}/account".format(BASE_API_URL)
     resp = requests.get(
-        api_url, headers=HEADERS, auth=(config.get(CONF_USERNAME),
-                                        config.get(CONF_API_KEY)), timeout=5)
+        api_url,
+        headers=HEADERS,
+        auth=(config.get(CONF_USERNAME), config.get(CONF_API_KEY)),
+        timeout=5,
+    )
 
     if resp.status_code != 200:
         return False

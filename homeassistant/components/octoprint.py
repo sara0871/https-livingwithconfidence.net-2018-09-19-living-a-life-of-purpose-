@@ -16,23 +16,28 @@ import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'octoprint'
-CONF_NUMBER_OF_TOOLS = 'number_of_tools'
-CONF_BED = 'bed'
+DOMAIN = "octoprint"
+CONF_NUMBER_OF_TOOLS = "number_of_tools"
+CONF_BED = "bed"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_API_KEY): cv.string,
-        vol.Required(CONF_HOST): cv.string,
-        vol.Optional(CONF_NUMBER_OF_TOOLS, default=0): cv.positive_int,
-        vol.Optional(CONF_BED, default=False): cv.boolean
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_API_KEY): cv.string,
+                vol.Required(CONF_HOST): cv.string,
+                vol.Optional(CONF_NUMBER_OF_TOOLS, default=0): cv.positive_int,
+                vol.Optional(CONF_BED, default=False): cv.boolean,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 def setup(hass, config):
     """Set up the OctoPrint component."""
-    base_url = 'http://{}/api/'.format(config[DOMAIN][CONF_HOST])
+    base_url = "http://{}/api/".format(config[DOMAIN][CONF_HOST])
     api_key = config[DOMAIN][CONF_API_KEY]
     number_of_tools = config[DOMAIN][CONF_NUMBER_OF_TOOLS]
     bed = config[DOMAIN][CONF_BED]
@@ -42,8 +47,8 @@ def setup(hass, config):
     try:
         octoprint_api = OctoPrintAPI(base_url, api_key, bed, number_of_tools)
         hass.data[DOMAIN]["api"] = octoprint_api
-        octoprint_api.get('printer')
-        octoprint_api.get('job')
+        octoprint_api.get("printer")
+        octoprint_api.get("job")
     except requests.exceptions.RequestException as conn_err:
         _LOGGER.error("Error setting up OctoPrint API: %r", conn_err)
 
@@ -56,10 +61,7 @@ class OctoPrintAPI:
     def __init__(self, api_url, key, bed, number_of_tools):
         """Initialize OctoPrint API and set headers needed later."""
         self.api_url = api_url
-        self.headers = {
-            CONTENT_TYPE: CONTENT_TYPE_JSON,
-            'X-Api-Key': key,
-        }
+        self.headers = {CONTENT_TYPE: CONTENT_TYPE_JSON, "X-Api-Key": key}
         self.printer_last_reading = [{}, None]
         self.job_last_reading = [{}, None]
         self.job_available = False
@@ -77,9 +79,9 @@ class OctoPrintAPI:
             for tool_number in range(0, self.number_of_tools):
                 tools.append("tool" + str(tool_number))
         if self.bed:
-            tools.append('bed')
+            tools.append("bed")
         if not self.bed and self.number_of_tools == 0:
-            temps = self.printer_last_reading[0].get('temperature')
+            temps = self.printer_last_reading[0].get("temperature")
             if temps is not None:
                 tools = temps.keys()
         return tools
@@ -101,8 +103,7 @@ class OctoPrintAPI:
 
         url = self.api_url + endpoint
         try:
-            response = requests.get(
-                url, headers=self.headers, timeout=9)
+            response = requests.get(url, headers=self.headers, timeout=9)
             response.raise_for_status()
             if endpoint == "job":
                 self.job_last_reading[0] = response.json()
@@ -118,8 +119,9 @@ class OctoPrintAPI:
                 self.printer_error_logged = False
             return response.json()
         except Exception as conn_exc:  # pylint: disable=broad-except
-            log_string = "Failed to update OctoPrint status. " + \
-                               "  Error: %s" % (conn_exc)
+            log_string = "Failed to update OctoPrint status. " + "  Error: %s" % (
+                conn_exc
+            )
             # Only log the first failure
             if endpoint == "job":
                 log_string = "Endpoint: job " + log_string

@@ -6,30 +6,43 @@ https://home-assistant.io/components/climate.tuya/
 """
 
 from homeassistant.components.climate import (
-    ATTR_TEMPERATURE, ENTITY_ID_FORMAT, STATE_AUTO, STATE_COOL, STATE_ECO,
-    STATE_ELECTRIC, STATE_FAN_ONLY, STATE_GAS, STATE_HEAT, STATE_HEAT_PUMP,
-    STATE_HIGH_DEMAND, STATE_PERFORMANCE, SUPPORT_FAN_MODE, SUPPORT_ON_OFF,
-    SUPPORT_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE, ClimateDevice)
+    ATTR_TEMPERATURE,
+    ENTITY_ID_FORMAT,
+    STATE_AUTO,
+    STATE_COOL,
+    STATE_ECO,
+    STATE_ELECTRIC,
+    STATE_FAN_ONLY,
+    STATE_GAS,
+    STATE_HEAT,
+    STATE_HEAT_PUMP,
+    STATE_HIGH_DEMAND,
+    STATE_PERFORMANCE,
+    SUPPORT_FAN_MODE,
+    SUPPORT_ON_OFF,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    ClimateDevice,
+)
 from homeassistant.components.fan import SPEED_LOW, SPEED_MEDIUM, SPEED_HIGH
 from homeassistant.components.tuya import DATA_TUYA, TuyaDevice
 
-from homeassistant.const import (
-    PRECISION_WHOLE, TEMP_CELSIUS, TEMP_FAHRENHEIT)
+from homeassistant.const import PRECISION_WHOLE, TEMP_CELSIUS, TEMP_FAHRENHEIT
 
-DEPENDENCIES = ['tuya']
-DEVICE_TYPE = 'climate'
+DEPENDENCIES = ["tuya"]
+DEVICE_TYPE = "climate"
 
 HA_STATE_TO_TUYA = {
-    STATE_AUTO: 'auto',
-    STATE_COOL: 'cold',
-    STATE_ECO: 'eco',
-    STATE_ELECTRIC: 'electric',
-    STATE_FAN_ONLY: 'wind',
-    STATE_GAS: 'gas',
-    STATE_HEAT: 'hot',
-    STATE_HEAT_PUMP: 'heat_pump',
-    STATE_HIGH_DEMAND: 'high_demand',
-    STATE_PERFORMANCE: 'performance',
+    STATE_AUTO: "auto",
+    STATE_COOL: "cold",
+    STATE_ECO: "eco",
+    STATE_ELECTRIC: "electric",
+    STATE_FAN_ONLY: "wind",
+    STATE_GAS: "gas",
+    STATE_HEAT: "hot",
+    STATE_HEAT_PUMP: "heat_pump",
+    STATE_HIGH_DEMAND: "high_demand",
+    STATE_PERFORMANCE: "performance",
 }
 
 TUYA_STATE_TO_HA = {value: key for key, value in HA_STATE_TO_TUYA.items()}
@@ -42,7 +55,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if discovery_info is None:
         return
     tuya = hass.data[DATA_TUYA]
-    dev_ids = discovery_info.get('dev_ids')
+    dev_ids = discovery_info.get("dev_ids")
     devices = []
     for dev_id in dev_ids:
         device = tuya.get_device_by_id(dev_id)
@@ -85,9 +98,9 @@ class TuyaClimateDevice(TuyaDevice, ClimateDevice):
     def temperature_unit(self):
         """Return the unit of measurement used by the platform."""
         unit = self.tuya.temperature_unit()
-        if unit == 'CELSIUS':
+        if unit == "CELSIUS":
             return TEMP_CELSIUS
-        if unit == 'FAHRENHEIT':
+        if unit == "FAHRENHEIT":
             return TEMP_FAHRENHEIT
         return TEMP_CELSIUS
 

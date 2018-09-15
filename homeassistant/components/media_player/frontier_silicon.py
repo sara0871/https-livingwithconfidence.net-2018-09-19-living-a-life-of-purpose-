@@ -10,47 +10,76 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.media_player import (
-    MEDIA_TYPE_MUSIC, PLATFORM_SCHEMA, SUPPORT_NEXT_TRACK, SUPPORT_PAUSE,
-    SUPPORT_PLAY, SUPPORT_PLAY_MEDIA, SUPPORT_PREVIOUS_TRACK, SUPPORT_SEEK,
-    SUPPORT_SELECT_SOURCE, SUPPORT_STOP, SUPPORT_TURN_OFF, SUPPORT_TURN_ON,
-    SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_VOLUME_STEP,
-    MediaPlayerDevice)
+    MEDIA_TYPE_MUSIC,
+    PLATFORM_SCHEMA,
+    SUPPORT_NEXT_TRACK,
+    SUPPORT_PAUSE,
+    SUPPORT_PLAY,
+    SUPPORT_PLAY_MEDIA,
+    SUPPORT_PREVIOUS_TRACK,
+    SUPPORT_SEEK,
+    SUPPORT_SELECT_SOURCE,
+    SUPPORT_STOP,
+    SUPPORT_TURN_OFF,
+    SUPPORT_TURN_ON,
+    SUPPORT_VOLUME_MUTE,
+    SUPPORT_VOLUME_SET,
+    SUPPORT_VOLUME_STEP,
+    MediaPlayerDevice,
+)
 from homeassistant.const import (
-    CONF_HOST, CONF_PASSWORD, CONF_PORT, STATE_OFF, STATE_PAUSED,
-    STATE_PLAYING, STATE_UNKNOWN)
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_PORT,
+    STATE_OFF,
+    STATE_PAUSED,
+    STATE_PLAYING,
+    STATE_UNKNOWN,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['afsapi==0.0.4']
+REQUIREMENTS = ["afsapi==0.0.4"]
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FRONTIER_SILICON = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | \
-    SUPPORT_VOLUME_MUTE | SUPPORT_VOLUME_STEP | \
-    SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK | SUPPORT_SEEK | \
-    SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_STOP | SUPPORT_TURN_ON | \
-    SUPPORT_TURN_OFF | SUPPORT_SELECT_SOURCE
+SUPPORT_FRONTIER_SILICON = (
+    SUPPORT_PAUSE
+    | SUPPORT_VOLUME_SET
+    | SUPPORT_VOLUME_MUTE
+    | SUPPORT_VOLUME_STEP
+    | SUPPORT_PREVIOUS_TRACK
+    | SUPPORT_NEXT_TRACK
+    | SUPPORT_SEEK
+    | SUPPORT_PLAY_MEDIA
+    | SUPPORT_PLAY
+    | SUPPORT_STOP
+    | SUPPORT_TURN_ON
+    | SUPPORT_TURN_OFF
+    | SUPPORT_SELECT_SOURCE
+)
 
 DEFAULT_PORT = 80
-DEFAULT_PASSWORD = '1234'
-DEVICE_URL = 'http://{0}:{1}/device'
+DEFAULT_PASSWORD = "1234"
+DEVICE_URL = "http://{0}:{1}/device"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-    vol.Optional(CONF_PASSWORD, default=DEFAULT_PASSWORD): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+        vol.Optional(CONF_PASSWORD, default=DEFAULT_PASSWORD): cv.string,
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(
-        hass, config, async_add_entities, discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Frontier Silicon platform."""
     import requests
 
     if discovery_info is not None:
         async_add_entities(
-            [AFSAPIDevice(
-                discovery_info['ssdp_description'], DEFAULT_PASSWORD)], True)
+            [AFSAPIDevice(discovery_info["ssdp_description"], DEFAULT_PASSWORD)], True
+        )
         return True
 
     host = config.get(CONF_HOST)
@@ -59,12 +88,14 @@ def async_setup_platform(
 
     try:
         async_add_entities(
-            [AFSAPIDevice(DEVICE_URL.format(host, port), password)], True)
+            [AFSAPIDevice(DEVICE_URL.format(host, port), password)], True
+        )
         _LOGGER.debug("FSAPI device %s:%s -> %s", host, port, password)
         return True
     except requests.exceptions.RequestException:
-        _LOGGER.error("Could not add the FSAPI device at %s:%s -> %s",
-                      host, port, password)
+        _LOGGER.error(
+            "Could not add the FSAPI device at %s:%s -> %s", host, port, password
+        )
 
     return False
 
@@ -170,10 +201,10 @@ class AFSAPIDevice(MediaPlayerDevice):
 
         status = yield from fs_device.get_play_status()
         self._state = {
-            'playing': STATE_PLAYING,
-            'paused': STATE_PAUSED,
-            'stopped': STATE_OFF,
-            'unknown': STATE_UNKNOWN,
+            "playing": STATE_PLAYING,
+            "paused": STATE_PAUSED,
+            "stopped": STATE_OFF,
+            "unknown": STATE_UNKNOWN,
             None: STATE_OFF,
         }.get(status, STATE_UNKNOWN)
 
@@ -181,7 +212,7 @@ class AFSAPIDevice(MediaPlayerDevice):
             info_name = yield from fs_device.get_play_name()
             info_text = yield from fs_device.get_play_text()
 
-            self._title = ' - '.join(filter(None, [info_name, info_text]))
+            self._title = " - ".join(filter(None, [info_name, info_text]))
             self._artist = yield from fs_device.get_play_artist()
             self._album_name = yield from fs_device.get_play_album()
 
@@ -222,7 +253,7 @@ class AFSAPIDevice(MediaPlayerDevice):
     @asyncio.coroutine
     def async_media_play_pause(self):
         """Send play/pause command."""
-        if 'playing' in self._state:
+        if "playing" in self._state:
             yield from self.fs_device.pause()
         else:
             yield from self.fs_device.play()
@@ -258,13 +289,13 @@ class AFSAPIDevice(MediaPlayerDevice):
     def async_volume_up(self):
         """Send volume up command."""
         volume = yield from self.fs_device.get_volume()
-        yield from self.fs_device.set_volume(volume+1)
+        yield from self.fs_device.set_volume(volume + 1)
 
     @asyncio.coroutine
     def async_volume_down(self):
         """Send volume down command."""
         volume = yield from self.fs_device.get_volume()
-        yield from self.fs_device.set_volume(volume-1)
+        yield from self.fs_device.set_volume(volume - 1)
 
     @asyncio.coroutine
     def async_set_volume_level(self, volume):

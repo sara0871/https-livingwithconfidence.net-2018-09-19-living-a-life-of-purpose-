@@ -6,23 +6,34 @@ https://home-assistant.io/components/switch.ihc/
 import voluptuous as vol
 
 from homeassistant.components.ihc import (
-    validate_name, IHC_DATA, IHC_CONTROLLER, IHC_INFO)
+    validate_name,
+    IHC_DATA,
+    IHC_CONTROLLER,
+    IHC_INFO,
+)
 from homeassistant.components.ihc.ihcdevice import IHCDevice
 from homeassistant.components.switch import SwitchDevice, PLATFORM_SCHEMA
 from homeassistant.const import CONF_ID, CONF_NAME, CONF_SWITCHES
 import homeassistant.helpers.config_validation as cv
 
-DEPENDENCIES = ['ihc']
+DEPENDENCIES = ["ihc"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_SWITCHES, default=[]):
-        vol.All(cv.ensure_list, [
-            vol.All({
-                vol.Required(CONF_ID): cv.positive_int,
-                vol.Optional(CONF_NAME): cv.string,
-            }, validate_name)
-        ])
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_SWITCHES, default=[]): vol.All(
+            cv.ensure_list,
+            [
+                vol.All(
+                    {
+                        vol.Required(CONF_ID): cv.positive_int,
+                        vol.Optional(CONF_NAME): cv.string,
+                    },
+                    validate_name,
+                )
+            ],
+        )
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -32,8 +43,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     devices = []
     if discovery_info:
         for name, device in discovery_info.items():
-            ihc_id = device['ihc_id']
-            product = device['product']
+            ihc_id = device["ihc_id"]
+            product = device["product"]
             switch = IHCSwitch(ihc_controller, name, ihc_id, info, product)
             devices.append(switch)
     else:
@@ -50,8 +61,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class IHCSwitch(IHCDevice, SwitchDevice):
     """IHC Switch."""
 
-    def __init__(self, ihc_controller, name: str, ihc_id: int,
-                 info: bool, product=None) -> None:
+    def __init__(
+        self, ihc_controller, name: str, ihc_id: int, info: bool, product=None
+    ) -> None:
         """Initialize the IHC switch."""
         super().__init__(ihc_controller, name, ihc_id, product)
         self._state = False

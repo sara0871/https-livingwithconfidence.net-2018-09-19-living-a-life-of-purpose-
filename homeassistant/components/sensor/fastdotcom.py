@@ -16,29 +16,35 @@ from homeassistant.helpers.event import track_time_change
 from homeassistant.helpers.restore_state import async_get_last_state
 import homeassistant.util.dt as dt_util
 
-REQUIREMENTS = ['fastdotcom==0.0.3']
+REQUIREMENTS = ["fastdotcom==0.0.3"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_SECOND = 'second'
-CONF_MINUTE = 'minute'
-CONF_HOUR = 'hour'
-CONF_DAY = 'day'
-CONF_MANUAL = 'manual'
+CONF_SECOND = "second"
+CONF_MINUTE = "minute"
+CONF_HOUR = "hour"
+CONF_DAY = "day"
+CONF_MANUAL = "manual"
 
-ICON = 'mdi:speedometer'
+ICON = "mdi:speedometer"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_SECOND, default=[0]):
-        vol.All(cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 59))]),
-    vol.Optional(CONF_MINUTE, default=[0]):
-        vol.All(cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 59))]),
-    vol.Optional(CONF_HOUR):
-        vol.All(cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 23))]),
-    vol.Optional(CONF_DAY):
-        vol.All(cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(1, 31))]),
-    vol.Optional(CONF_MANUAL, default=False): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_SECOND, default=[0]): vol.All(
+            cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 59))]
+        ),
+        vol.Optional(CONF_MINUTE, default=[0]): vol.All(
+            cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 59))]
+        ),
+        vol.Optional(CONF_HOUR): vol.All(
+            cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(0, 23))]
+        ),
+        vol.Optional(CONF_DAY): vol.All(
+            cv.ensure_list, [vol.All(vol.Coerce(int), vol.Range(1, 31))]
+        ),
+        vol.Optional(CONF_MANUAL, default=False): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -52,7 +58,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         data.update(dt_util.now())
         sensor.update()
 
-    hass.services.register(DOMAIN, 'update_fastdotcom', update)
+    hass.services.register(DOMAIN, "update_fastdotcom", update)
 
 
 class SpeedtestSensor(Entity):
@@ -60,10 +66,10 @@ class SpeedtestSensor(Entity):
 
     def __init__(self, speedtest_data):
         """Initialize the sensor."""
-        self._name = 'Fast.com Download'
+        self._name = "Fast.com Download"
         self.speedtest_client = speedtest_data
         self._state = None
-        self._unit_of_measurement = 'Mbit/s'
+        self._unit_of_measurement = "Mbit/s"
 
     @property
     def name(self):
@@ -86,7 +92,7 @@ class SpeedtestSensor(Entity):
         if data is None:
             return
 
-        self._state = data['download']
+        self._state = data["download"]
 
     @asyncio.coroutine
     def async_added_to_hass(self):
@@ -110,12 +116,17 @@ class SpeedtestData:
         self.data = None
         if not config.get(CONF_MANUAL):
             track_time_change(
-                hass, self.update, second=config.get(CONF_SECOND),
-                minute=config.get(CONF_MINUTE), hour=config.get(CONF_HOUR),
-                day=config.get(CONF_DAY))
+                hass,
+                self.update,
+                second=config.get(CONF_SECOND),
+                minute=config.get(CONF_MINUTE),
+                hour=config.get(CONF_HOUR),
+                day=config.get(CONF_DAY),
+            )
 
     def update(self, now):
         """Get the latest data from fast.com."""
         from fastdotcom import fast_com
+
         _LOGGER.info("Executing fast.com speedtest")
-        self.data = {'download': fast_com()}
+        self.data = {"download": fast_com()}

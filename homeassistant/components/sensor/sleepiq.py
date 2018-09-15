@@ -6,8 +6,8 @@ https://home-assistant.io/components/sleepiq/
 """
 from homeassistant.components import sleepiq
 
-DEPENDENCIES = ['sleepiq']
-ICON = 'mdi:hotel'
+DEPENDENCIES = ["sleepiq"]
+ICON = "mdi:hotel"
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):

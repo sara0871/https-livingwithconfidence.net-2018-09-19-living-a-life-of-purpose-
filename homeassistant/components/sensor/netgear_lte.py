@@ -14,20 +14,22 @@ import homeassistant.helpers.config_validation as cv
 
 from ..netgear_lte import DATA_KEY
 
-DEPENDENCIES = ['netgear_lte']
+DEPENDENCIES = ["netgear_lte"]
 
-SENSOR_SMS = 'sms'
-SENSOR_USAGE = 'usage'
+SENSOR_SMS = "sms"
+SENSOR_USAGE = "usage"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_HOST): cv.string,
-    vol.Required(CONF_SENSORS): vol.All(
-        cv.ensure_list, [vol.In([SENSOR_SMS, SENSOR_USAGE])])
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_HOST): cv.string,
+        vol.Required(CONF_SENSORS): vol.All(
+            cv.ensure_list, [vol.In([SENSOR_SMS, SENSOR_USAGE])]
+        ),
+    }
+)
 
 
-async def async_setup_platform(
-        hass, config, async_add_entities, discovery_info):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info):
     """Set up Netgear LTE sensor devices."""
     modem_data = hass.data[DATA_KEY].get_modem_data(config)
 
@@ -88,4 +90,4 @@ class UsageSensor(LTESensor):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return round(self.modem_data.usage / 1024**2, 1)
+        return round(self.modem_data.usage / 1024 ** 2, 1)

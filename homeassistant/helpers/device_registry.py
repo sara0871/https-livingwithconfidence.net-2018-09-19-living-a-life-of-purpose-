@@ -11,14 +11,14 @@ from homeassistant.loader import bind_hass
 
 _LOGGER = logging.getLogger(__name__)
 
-DATA_REGISTRY = 'device_registry'
+DATA_REGISTRY = "device_registry"
 
-STORAGE_KEY = 'core.device_registry'
+STORAGE_KEY = "core.device_registry"
 STORAGE_VERSION = 1
 SAVE_DELAY = 10
 
-CONNECTION_NETWORK_MAC = 'mac'
-CONNECTION_ZIGBEE = 'zigbee'
+CONNECTION_NETWORK_MAC = "mac"
+CONNECTION_ZIGBEE = "zigbee"
 
 
 @attr.s(slots=True, frozen=True)
@@ -48,14 +48,24 @@ class DeviceRegistry:
     def async_get_device(self, identifiers: set, connections: set):
         """Check if device is registered."""
         for device in self.devices.values():
-            if any(iden in device.identifiers for iden in identifiers) or \
-                    any(conn in device.connections for conn in connections):
+            if any(iden in device.identifiers for iden in identifiers) or any(
+                conn in device.connections for conn in connections
+            ):
                 return device
         return None
 
     @callback
-    def async_get_or_create(self, *, config_entry, connections, identifiers,
-                            manufacturer, model, name=None, sw_version=None):
+    def async_get_or_create(
+        self,
+        *,
+        config_entry,
+        connections,
+        identifiers,
+        manufacturer,
+        model,
+        name=None,
+        sw_version=None
+    ):
         """Get device. Create if it doesn't exist."""
         if not identifiers and not connections:
             return None
@@ -75,7 +85,7 @@ class DeviceRegistry:
             manufacturer=manufacturer,
             model=model,
             name=name,
-            sw_version=sw_version
+            sw_version=sw_version,
         )
         self.devices[device.id] = device
 
@@ -91,16 +101,19 @@ class DeviceRegistry:
             self.devices = OrderedDict()
             return
 
-        self.devices = {device['id']: DeviceEntry(
-            config_entries=device['config_entries'],
-            connections={tuple(conn) for conn in device['connections']},
-            identifiers={tuple(iden) for iden in device['identifiers']},
-            manufacturer=device['manufacturer'],
-            model=device['model'],
-            name=device['name'],
-            sw_version=device['sw_version'],
-            id=device['id'],
-        ) for device in devices['devices']}
+        self.devices = {
+            device["id"]: DeviceEntry(
+                config_entries=device["config_entries"],
+                connections={tuple(conn) for conn in device["connections"]},
+                identifiers={tuple(iden) for iden in device["identifiers"]},
+                manufacturer=device["manufacturer"],
+                model=device["model"],
+                name=device["name"],
+                sw_version=device["sw_version"],
+                id=device["id"],
+            )
+            for device in devices["devices"]
+        }
 
     @callback
     def async_schedule_save(self):
@@ -112,17 +125,18 @@ class DeviceRegistry:
         """Return data of device registry to store in a file."""
         data = {}
 
-        data['devices'] = [
+        data["devices"] = [
             {
-                'config_entries': list(entry.config_entries),
-                'connections': list(entry.connections),
-                'identifiers': list(entry.identifiers),
-                'manufacturer': entry.manufacturer,
-                'model': entry.model,
-                'name': entry.name,
-                'sw_version': entry.sw_version,
-                'id': entry.id,
-            } for entry in self.devices.values()
+                "config_entries": list(entry.config_entries),
+                "connections": list(entry.connections),
+                "identifiers": list(entry.identifiers),
+                "manufacturer": entry.manufacturer,
+                "model": entry.model,
+                "name": entry.name,
+                "sw_version": entry.sw_version,
+                "id": entry.id,
+            }
+            for entry in self.devices.values()
         ]
 
         return data
@@ -142,6 +156,7 @@ async def async_get_registry(hass) -> DeviceRegistry:
     task = hass.data.get(DATA_REGISTRY)
 
     if task is None:
+
         async def _load_reg():
             registry = DeviceRegistry(hass)
             await registry.async_load()

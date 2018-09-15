@@ -7,46 +7,91 @@ from collections import defaultdict
 from homeassistant.loader import bind_hass
 import homeassistant.util.dt as dt_util
 from homeassistant.components.media_player import (
-    ATTR_MEDIA_CONTENT_ID, ATTR_MEDIA_CONTENT_TYPE, ATTR_MEDIA_SEEK_POSITION,
-    ATTR_MEDIA_VOLUME_LEVEL, ATTR_MEDIA_VOLUME_MUTED, SERVICE_PLAY_MEDIA,
-    SERVICE_SELECT_SOURCE, ATTR_INPUT_SOURCE)
-from homeassistant.components.notify import (
-    ATTR_MESSAGE, SERVICE_NOTIFY)
-from homeassistant.components.sun import (
-    STATE_ABOVE_HORIZON, STATE_BELOW_HORIZON)
-from homeassistant.components.switch.mysensors import (
-    ATTR_IR_CODE, SERVICE_SEND_IR_CODE)
+    ATTR_MEDIA_CONTENT_ID,
+    ATTR_MEDIA_CONTENT_TYPE,
+    ATTR_MEDIA_SEEK_POSITION,
+    ATTR_MEDIA_VOLUME_LEVEL,
+    ATTR_MEDIA_VOLUME_MUTED,
+    SERVICE_PLAY_MEDIA,
+    SERVICE_SELECT_SOURCE,
+    ATTR_INPUT_SOURCE,
+)
+from homeassistant.components.notify import ATTR_MESSAGE, SERVICE_NOTIFY
+from homeassistant.components.sun import STATE_ABOVE_HORIZON, STATE_BELOW_HORIZON
+from homeassistant.components.switch.mysensors import ATTR_IR_CODE, SERVICE_SEND_IR_CODE
 from homeassistant.components.climate import (
-    ATTR_AUX_HEAT, ATTR_AWAY_MODE, ATTR_FAN_MODE, ATTR_HOLD_MODE,
-    ATTR_HUMIDITY, ATTR_OPERATION_MODE, ATTR_SWING_MODE,
-    SERVICE_SET_AUX_HEAT, SERVICE_SET_AWAY_MODE, SERVICE_SET_HOLD_MODE,
-    SERVICE_SET_FAN_MODE, SERVICE_SET_HUMIDITY, SERVICE_SET_OPERATION_MODE,
-    SERVICE_SET_SWING_MODE, SERVICE_SET_TEMPERATURE, STATE_HEAT, STATE_COOL,
-    STATE_IDLE)
+    ATTR_AUX_HEAT,
+    ATTR_AWAY_MODE,
+    ATTR_FAN_MODE,
+    ATTR_HOLD_MODE,
+    ATTR_HUMIDITY,
+    ATTR_OPERATION_MODE,
+    ATTR_SWING_MODE,
+    SERVICE_SET_AUX_HEAT,
+    SERVICE_SET_AWAY_MODE,
+    SERVICE_SET_HOLD_MODE,
+    SERVICE_SET_FAN_MODE,
+    SERVICE_SET_HUMIDITY,
+    SERVICE_SET_OPERATION_MODE,
+    SERVICE_SET_SWING_MODE,
+    SERVICE_SET_TEMPERATURE,
+    STATE_HEAT,
+    STATE_COOL,
+    STATE_IDLE,
+)
 from homeassistant.components.climate.ecobee import (
-    ATTR_FAN_MIN_ON_TIME, SERVICE_SET_FAN_MIN_ON_TIME,
-    ATTR_RESUME_ALL, SERVICE_RESUME_PROGRAM)
-from homeassistant.components.cover import (
-    ATTR_POSITION, ATTR_TILT_POSITION)
+    ATTR_FAN_MIN_ON_TIME,
+    SERVICE_SET_FAN_MIN_ON_TIME,
+    ATTR_RESUME_ALL,
+    SERVICE_RESUME_PROGRAM,
+)
+from homeassistant.components.cover import ATTR_POSITION, ATTR_TILT_POSITION
 from homeassistant.const import (
-    ATTR_ENTITY_ID, ATTR_OPTION, ATTR_TEMPERATURE, SERVICE_ALARM_ARM_AWAY,
-    SERVICE_ALARM_ARM_HOME, SERVICE_ALARM_DISARM, SERVICE_ALARM_TRIGGER,
-    SERVICE_LOCK, SERVICE_MEDIA_PAUSE, SERVICE_MEDIA_PLAY, SERVICE_MEDIA_STOP,
-    SERVICE_MEDIA_SEEK, SERVICE_TURN_OFF, SERVICE_TURN_ON, SERVICE_UNLOCK,
-    SERVICE_VOLUME_MUTE, SERVICE_VOLUME_SET, SERVICE_OPEN_COVER,
-    SERVICE_CLOSE_COVER, SERVICE_SET_COVER_POSITION,
-    SERVICE_SET_COVER_TILT_POSITION, STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED, STATE_ALARM_TRIGGERED,
-    STATE_CLOSED, STATE_HOME, STATE_LOCKED, STATE_NOT_HOME, STATE_OFF,
-    STATE_ON, STATE_OPEN, STATE_PAUSED, STATE_PLAYING, STATE_UNKNOWN,
-    STATE_UNLOCKED, SERVICE_SELECT_OPTION)
+    ATTR_ENTITY_ID,
+    ATTR_OPTION,
+    ATTR_TEMPERATURE,
+    SERVICE_ALARM_ARM_AWAY,
+    SERVICE_ALARM_ARM_HOME,
+    SERVICE_ALARM_DISARM,
+    SERVICE_ALARM_TRIGGER,
+    SERVICE_LOCK,
+    SERVICE_MEDIA_PAUSE,
+    SERVICE_MEDIA_PLAY,
+    SERVICE_MEDIA_STOP,
+    SERVICE_MEDIA_SEEK,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    SERVICE_UNLOCK,
+    SERVICE_VOLUME_MUTE,
+    SERVICE_VOLUME_SET,
+    SERVICE_OPEN_COVER,
+    SERVICE_CLOSE_COVER,
+    SERVICE_SET_COVER_POSITION,
+    SERVICE_SET_COVER_TILT_POSITION,
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_DISARMED,
+    STATE_ALARM_TRIGGERED,
+    STATE_CLOSED,
+    STATE_HOME,
+    STATE_LOCKED,
+    STATE_NOT_HOME,
+    STATE_OFF,
+    STATE_ON,
+    STATE_OPEN,
+    STATE_PAUSED,
+    STATE_PLAYING,
+    STATE_UNKNOWN,
+    STATE_UNLOCKED,
+    SERVICE_SELECT_OPTION,
+)
 from homeassistant.core import State
 from homeassistant.util.async_ import run_coroutine_threadsafe
 
 _LOGGER = logging.getLogger(__name__)
 
-GROUP_DOMAIN = 'group'
-HASS_DOMAIN = 'homeassistant'
+GROUP_DOMAIN = "group"
+HASS_DOMAIN = "homeassistant"
 
 # Update this dict of lists when new services are added to HA.
 # Each item is a service with a list of required attributes.
@@ -70,7 +115,7 @@ SERVICE_ATTRIBUTES = {
     SERVICE_SEND_IR_CODE: [ATTR_IR_CODE],
     SERVICE_SELECT_OPTION: [ATTR_OPTION],
     SERVICE_SET_COVER_POSITION: [ATTR_POSITION],
-    SERVICE_SET_COVER_TILT_POSITION: [ATTR_TILT_POSITION]
+    SERVICE_SET_COVER_TILT_POSITION: [ATTR_TILT_POSITION],
 }
 
 # Update this dict when new services are added to HA.
@@ -88,7 +133,7 @@ SERVICE_TO_STATE = {
     SERVICE_LOCK: STATE_LOCKED,
     SERVICE_UNLOCK: STATE_UNLOCKED,
     SERVICE_OPEN_COVER: STATE_OPEN,
-    SERVICE_CLOSE_COVER: STATE_CLOSED
+    SERVICE_CLOSE_COVER: STATE_CLOSED,
 }
 
 
@@ -115,21 +160,20 @@ class AsyncTrackStates:
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Add changes states to changes list."""
-        self.states.extend(get_changed_since(self.hass.states.async_all(),
-                                             self.now))
+        self.states.extend(get_changed_since(self.hass.states.async_all(), self.now))
 
 
 def get_changed_since(states, utc_point_in_time):
     """Return list of states that have been changed since utc_point_in_time."""
-    return [state for state in states
-            if state.last_updated >= utc_point_in_time]
+    return [state for state in states if state.last_updated >= utc_point_in_time]
 
 
 @bind_hass
 def reproduce_state(hass, states, blocking=False):
     """Reproduce given state."""
     return run_coroutine_threadsafe(
-        async_reproduce_state(hass, states, blocking), hass.loop).result()
+        async_reproduce_state(hass, states, blocking), hass.loop
+    ).result()
 
 
 @bind_hass
@@ -143,8 +187,9 @@ async def async_reproduce_state(hass, states, blocking=False):
     for state in states:
 
         if hass.states.get(state.entity_id) is None:
-            _LOGGER.warning("reproduce_state: Unable to find entity %s",
-                            state.entity_id)
+            _LOGGER.warning(
+                "reproduce_state: Unable to find entity %s", state.entity_id
+            )
             continue
 
         if state.domain == GROUP_DOMAIN:
@@ -155,31 +200,37 @@ async def async_reproduce_state(hass, states, blocking=False):
         domain_services = hass.services.async_services().get(service_domain)
 
         if not domain_services:
-            _LOGGER.warning(
-                "reproduce_state: Unable to reproduce state %s (1)", state)
+            _LOGGER.warning("reproduce_state: Unable to reproduce state %s (1)", state)
             continue
 
         service = None
         for _service in domain_services.keys():
-            if (_service in SERVICE_ATTRIBUTES and
-                    all(attr in state.attributes
-                        for attr in SERVICE_ATTRIBUTES[_service]) or
-                    _service in SERVICE_TO_STATE and
-                    SERVICE_TO_STATE[_service] == state.state):
+            if (
+                _service in SERVICE_ATTRIBUTES
+                and all(
+                    attr in state.attributes for attr in SERVICE_ATTRIBUTES[_service]
+                )
+                or _service in SERVICE_TO_STATE
+                and SERVICE_TO_STATE[_service] == state.state
+            ):
                 service = _service
-            if (_service in SERVICE_TO_STATE and
-                    SERVICE_TO_STATE[_service] == state.state):
+            if (
+                _service in SERVICE_TO_STATE
+                and SERVICE_TO_STATE[_service] == state.state
+            ):
                 break
 
         if not service:
-            _LOGGER.warning(
-                "reproduce_state: Unable to reproduce state %s (2)", state)
+            _LOGGER.warning("reproduce_state: Unable to reproduce state %s (2)", state)
             continue
 
         # We group service calls for entities by service call
         # json used to create a hashable version of dict with maybe lists in it
-        key = (service_domain, service,
-               json.dumps(dict(state.attributes), sort_keys=True))
+        key = (
+            service_domain,
+            service,
+            json.dumps(dict(state.attributes), sort_keys=True),
+        )
         to_call[key].append(state.entity_id)
 
     domain_tasks = {}
@@ -199,8 +250,9 @@ async def async_reproduce_state(hass, states, blocking=False):
         for coro in coro_list:
             await coro
 
-    execute_tasks = [async_handle_service_calls(coro_list)
-                     for coro_list in domain_tasks.values()]
+    execute_tasks = [
+        async_handle_service_calls(coro_list) for coro_list in domain_tasks.values()
+    ]
     if execute_tasks:
         await asyncio.wait(execute_tasks, loop=hass.loop)
 
@@ -211,12 +263,25 @@ def state_as_number(state):
 
     Raises ValueError if this is not possible.
     """
-    if state.state in (STATE_ON, STATE_LOCKED, STATE_ABOVE_HORIZON,
-                       STATE_OPEN, STATE_HOME, STATE_HEAT, STATE_COOL):
+    if state.state in (
+        STATE_ON,
+        STATE_LOCKED,
+        STATE_ABOVE_HORIZON,
+        STATE_OPEN,
+        STATE_HOME,
+        STATE_HEAT,
+        STATE_COOL,
+    ):
         return 1
-    if state.state in (STATE_OFF, STATE_UNLOCKED, STATE_UNKNOWN,
-                       STATE_BELOW_HORIZON, STATE_CLOSED, STATE_NOT_HOME,
-                       STATE_IDLE):
+    if state.state in (
+        STATE_OFF,
+        STATE_UNLOCKED,
+        STATE_UNKNOWN,
+        STATE_BELOW_HORIZON,
+        STATE_CLOSED,
+        STATE_NOT_HOME,
+        STATE_IDLE,
+    ):
         return 0
 
     return float(state.state)

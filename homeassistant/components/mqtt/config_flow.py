@@ -10,7 +10,7 @@ from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_PORT
 from .const import CONF_BROKER
 
 
-@config_entries.HANDLERS.register('mqtt')
+@config_entries.HANDLERS.register("mqtt")
 class FlowHandler(config_entries.ConfigFlow):
     """Handle a config flow."""
 
@@ -19,9 +19,7 @@ class FlowHandler(config_entries.ConfigFlow):
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
         if self._async_current_entries():
-            return self.async_abort(
-                reason='single_instance_allowed'
-            )
+            return self.async_abort(reason="single_instance_allowed")
 
         return await self.async_step_broker()
 
@@ -31,16 +29,19 @@ class FlowHandler(config_entries.ConfigFlow):
 
         if user_input is not None:
             can_connect = await self.hass.async_add_executor_job(
-                try_connection, user_input[CONF_BROKER], user_input[CONF_PORT],
-                user_input.get(CONF_USERNAME), user_input.get(CONF_PASSWORD))
+                try_connection,
+                user_input[CONF_BROKER],
+                user_input[CONF_PORT],
+                user_input.get(CONF_USERNAME),
+                user_input.get(CONF_PASSWORD),
+            )
 
             if can_connect:
                 return self.async_create_entry(
-                    title=user_input[CONF_BROKER],
-                    data=user_input
+                    title=user_input[CONF_BROKER], data=user_input
                 )
 
-            errors['base'] = 'cannot_connect'
+            errors["base"] = "cannot_connect"
 
         fields = OrderedDict()
         fields[vol.Required(CONF_BROKER)] = str
@@ -49,9 +50,7 @@ class FlowHandler(config_entries.ConfigFlow):
         fields[vol.Optional(CONF_PASSWORD)] = str
 
         return self.async_show_form(
-            step_id='broker',
-            data_schema=vol.Schema(fields),
-            errors=errors,
+            step_id="broker", data_schema=vol.Schema(fields), errors=errors
         )
 
     async def async_step_import(self, user_input):
@@ -61,19 +60,15 @@ class FlowHandler(config_entries.ConfigFlow):
         Instead, we're going to rely on the values that are in config file.
         """
         if self._async_current_entries():
-            return self.async_abort(
-                reason='single_instance_allowed'
-            )
+            return self.async_abort(reason="single_instance_allowed")
 
-        return self.async_create_entry(
-            title='configuration.yaml',
-            data={}
-        )
+        return self.async_create_entry(title="configuration.yaml", data={})
 
 
 def try_connection(broker, port, username, password):
     """Test if we can connect to an MQTT broker."""
     import paho.mqtt.client as mqtt
+
     client = mqtt.Client()
     if username and password:
         client.username_pw_set(username, password)

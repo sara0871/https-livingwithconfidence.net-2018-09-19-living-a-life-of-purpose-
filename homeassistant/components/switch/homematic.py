@@ -12,7 +12,7 @@ from homeassistant.const import STATE_UNKNOWN
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['homematic']
+DEPENDENCIES = ["homematic"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):

@@ -12,44 +12,49 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_NAME, CONF_PASSWORD, CONF_PORT, CONF_USERNAME,
-    EVENT_HOMEASSISTANT_STOP)
+    CONF_NAME,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_USERNAME,
+    EVENT_HOMEASSISTANT_STOP,
+)
 from homeassistant.exceptions import PlatformNotReady
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 
 _LOGGER = logging.getLogger(__name__)
 
-REQUIREMENTS = ['aioimaplib==0.7.13']
+REQUIREMENTS = ["aioimaplib==0.7.13"]
 
-CONF_SERVER = 'server'
-CONF_FOLDER = 'folder'
+CONF_SERVER = "server"
+CONF_FOLDER = "folder"
 
 DEFAULT_PORT = 993
 
-ICON = 'mdi:email-outline'
+ICON = "mdi:email-outline"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Required(CONF_SERVER): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-    vol.Optional(CONF_FOLDER, default='INBOX'): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_NAME): cv.string,
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Required(CONF_SERVER): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+        vol.Optional(CONF_FOLDER, default="INBOX"): cv.string,
+    }
+)
 
 
-async def async_setup_platform(hass,
-                               config,
-                               async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the IMAP platform."""
-    sensor = ImapSensor(config.get(CONF_NAME),
-                        config.get(CONF_USERNAME),
-                        config.get(CONF_PASSWORD),
-                        config.get(CONF_SERVER),
-                        config.get(CONF_PORT),
-                        config.get(CONF_FOLDER))
+    sensor = ImapSensor(
+        config.get(CONF_NAME),
+        config.get(CONF_USERNAME),
+        config.get(CONF_PASSWORD),
+        config.get(CONF_SERVER),
+        config.get(CONF_PORT),
+        config.get(CONF_FOLDER),
+    )
     if not await sensor.connection():
         raise PlatformNotReady
 
@@ -109,12 +114,11 @@ class ImapSensor(Entity):
 
         if self._connection is None:
             try:
-                self._connection = aioimaplib.IMAP4_SSL(
-                    self._server, self._port)
+                self._connection = aioimaplib.IMAP4_SSL(self._server, self._port)
                 await self._connection.wait_hello_from_server()
                 await self._connection.login(self._user, self._password)
                 await self._connection.select(self._folder)
-                self._does_push = self._connection.has_capability('IDLE')
+                self._does_push = self._connection.has_capability("IDLE")
             except (aioimaplib.AioImapException, asyncio.TimeoutError):
                 self._connection = None
 
@@ -154,7 +158,7 @@ class ImapSensor(Entity):
         """Check the number of unread emails."""
         if self._connection:
             await self._connection.noop()
-            _, lines = await self._connection.search('UnSeen UnDeleted')
+            _, lines = await self._connection.search("UnSeen UnDeleted")
             self._unread_count = len(lines[0].split())
 
     def disconnected(self):

@@ -10,28 +10,41 @@ import voluptuous as vol
 
 from homeassistant.components import rfxtrx
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, Light, PLATFORM_SCHEMA)
+    ATTR_BRIGHTNESS,
+    SUPPORT_BRIGHTNESS,
+    Light,
+    PLATFORM_SCHEMA,
+)
 from homeassistant.const import CONF_NAME
 from homeassistant.components.rfxtrx import (
-    CONF_AUTOMATIC_ADD, CONF_FIRE_EVENT, DEFAULT_SIGNAL_REPETITIONS,
-    CONF_SIGNAL_REPETITIONS, CONF_DEVICES)
+    CONF_AUTOMATIC_ADD,
+    CONF_FIRE_EVENT,
+    DEFAULT_SIGNAL_REPETITIONS,
+    CONF_SIGNAL_REPETITIONS,
+    CONF_DEVICES,
+)
 from homeassistant.helpers import config_validation as cv
 
-DEPENDENCIES = ['rfxtrx']
+DEPENDENCIES = ["rfxtrx"]
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_DEVICES, default={}): {
-        cv.string: vol.Schema({
-            vol.Required(CONF_NAME): cv.string,
-            vol.Optional(CONF_FIRE_EVENT, default=False): cv.boolean
-        })
-    },
-    vol.Optional(CONF_AUTOMATIC_ADD, default=False):  cv.boolean,
-    vol.Optional(CONF_SIGNAL_REPETITIONS, default=DEFAULT_SIGNAL_REPETITIONS):
-        vol.Coerce(int),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_DEVICES, default={}): {
+            cv.string: vol.Schema(
+                {
+                    vol.Required(CONF_NAME): cv.string,
+                    vol.Optional(CONF_FIRE_EVENT, default=False): cv.boolean,
+                }
+            )
+        },
+        vol.Optional(CONF_AUTOMATIC_ADD, default=False): cv.boolean,
+        vol.Optional(
+            CONF_SIGNAL_REPETITIONS, default=DEFAULT_SIGNAL_REPETITIONS
+        ): vol.Coerce(int),
+    }
+)
 
 SUPPORT_RFXTRX = SUPPORT_BRIGHTNESS
 
@@ -45,8 +58,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     def light_update(event):
         """Handle light updates from the RFXtrx gateway."""
-        if not isinstance(event.device, rfxtrxmod.LightingDevice) or \
-                not event.device.known_to_be_dimmable:
+        if (
+            not isinstance(event.device, rfxtrxmod.LightingDevice)
+            or not event.device.known_to_be_dimmable
+        ):
             return
 
         new_device = rfxtrx.get_new_device(event, config, RfxtrxLight)
@@ -78,8 +93,8 @@ class RfxtrxLight(rfxtrx.RfxtrxDevice, Light):
         brightness = kwargs.get(ATTR_BRIGHTNESS)
         if brightness is None:
             self._brightness = 255
-            self._send_command('turn_on')
+            self._send_command("turn_on")
         else:
             self._brightness = brightness
-            _brightness = (brightness * 100 // 255)
-            self._send_command('dim', _brightness)
+            _brightness = brightness * 100 // 255
+            self._send_command("dim", _brightness)

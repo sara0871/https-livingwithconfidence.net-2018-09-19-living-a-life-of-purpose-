@@ -13,7 +13,10 @@ import voluptuous as vol
 import attr
 
 from homeassistant.const import (
-    CONF_URL, CONF_USERNAME, CONF_PASSWORD, EVENT_HOMEASSISTANT_STOP,
+    CONF_URL,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.helpers import config_validation as cv
 from homeassistant.util import Throttle
@@ -21,20 +24,30 @@ from homeassistant.util import Throttle
 
 _LOGGER = logging.getLogger(__name__)
 
-REQUIREMENTS = ['huawei-lte-api==1.0.12']
+REQUIREMENTS = ["huawei-lte-api==1.0.12"]
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=10)
 
-DOMAIN = 'huawei_lte'
-DATA_KEY = 'huawei_lte'
+DOMAIN = "huawei_lte"
+DATA_KEY = "huawei_lte"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.All(cv.ensure_list, [vol.Schema({
-        vol.Required(CONF_URL): cv.url,
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-    })])
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.All(
+            cv.ensure_list,
+            [
+                vol.Schema(
+                    {
+                        vol.Required(CONF_URL): cv.url,
+                        vol.Required(CONF_USERNAME): cv.string,
+                        vol.Required(CONF_PASSWORD): cv.string,
+                    }
+                )
+            ],
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 @attr.s
@@ -109,11 +122,7 @@ def _setup_lte(hass, lte_config) -> None:
     username = lte_config[CONF_USERNAME]
     password = lte_config[CONF_PASSWORD]
 
-    connection = AuthorizedConnection(
-        url,
-        username=username,
-        password=password,
-    )
+    connection = AuthorizedConnection(url, username=username, password=password)
     client = Client(connection)
 
     data = RouterData(client)

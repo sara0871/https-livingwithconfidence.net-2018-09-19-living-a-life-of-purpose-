@@ -7,7 +7,11 @@ import voluptuous as vol
 from homeassistant import config_entries, data_entry_flow
 from homeassistant.core import callback
 from homeassistant.const import (
-    CONF_API_KEY, CONF_ELEVATION, CONF_LATITUDE, CONF_LONGITUDE)
+    CONF_API_KEY,
+    CONF_ELEVATION,
+    CONF_LATITUDE,
+    CONF_LONGITUDE,
+)
 from homeassistant.helpers import aiohttp_client, config_validation as cv
 
 from .const import DOMAIN
@@ -17,9 +21,9 @@ from .const import DOMAIN
 def configured_instances(hass):
     """Return a set of configured OpenUV instances."""
     return set(
-        '{0}, {1}'.format(
-            entry.data[CONF_LATITUDE], entry.data[CONF_LONGITUDE])
-        for entry in hass.config_entries.async_entries(DOMAIN))
+        "{0}, {1}".format(entry.data[CONF_LATITUDE], entry.data[CONF_LONGITUDE])
+        for entry in hass.config_entries.async_entries(DOMAIN)
+    )
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -43,22 +47,21 @@ class OpenUvFlowHandler(data_entry_flow.FlowHandler):
         errors = {}
 
         if user_input is not None:
-            identifier = '{0}, {1}'.format(
+            identifier = "{0}, {1}".format(
                 user_input.get(CONF_LATITUDE, self.hass.config.latitude),
-                user_input.get(CONF_LONGITUDE, self.hass.config.longitude))
+                user_input.get(CONF_LONGITUDE, self.hass.config.longitude),
+            )
 
             if identifier in configured_instances(self.hass):
-                errors['base'] = 'identifier_exists'
+                errors["base"] = "identifier_exists"
             else:
                 websession = aiohttp_client.async_get_clientsession(self.hass)
                 api_key_validation = await validate_api_key(
-                    user_input[CONF_API_KEY], websession)
+                    user_input[CONF_API_KEY], websession
+                )
                 if api_key_validation:
-                    return self.async_create_entry(
-                        title=identifier,
-                        data=user_input,
-                    )
-                errors['base'] = 'invalid_api_key'
+                    return self.async_create_entry(title=identifier, data=user_input)
+                errors["base"] = "invalid_api_key"
 
         data_schema = OrderedDict()
         data_schema[vol.Required(CONF_API_KEY)] = str
@@ -67,7 +70,5 @@ class OpenUvFlowHandler(data_entry_flow.FlowHandler):
         data_schema[vol.Optional(CONF_ELEVATION)] = vol.Coerce(float)
 
         return self.async_show_form(
-            step_id='user',
-            data_schema=vol.Schema(data_schema),
-            errors=errors,
+            step_id="user", data_schema=vol.Schema(data_schema), errors=errors
         )

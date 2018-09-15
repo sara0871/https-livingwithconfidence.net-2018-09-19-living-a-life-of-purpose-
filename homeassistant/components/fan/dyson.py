@@ -11,25 +11,31 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.dyson import DYSON_DEVICES
 from homeassistant.components.fan import (
-    DOMAIN, SUPPORT_OSCILLATE, SUPPORT_SET_SPEED, FanEntity)
+    DOMAIN,
+    SUPPORT_OSCILLATE,
+    SUPPORT_SET_SPEED,
+    FanEntity,
+)
 from homeassistant.const import CONF_ENTITY_ID
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_NIGHT_MODE = 'night_mode'
+CONF_NIGHT_MODE = "night_mode"
 
-ATTR_IS_NIGHT_MODE = 'is_night_mode'
-ATTR_IS_AUTO_MODE = 'is_auto_mode'
+ATTR_IS_NIGHT_MODE = "is_night_mode"
+ATTR_IS_AUTO_MODE = "is_auto_mode"
 
-DEPENDENCIES = ['dyson']
-DYSON_FAN_DEVICES = 'dyson_fan_devices'
+DEPENDENCIES = ["dyson"]
+DYSON_FAN_DEVICES = "dyson_fan_devices"
 
-SERVICE_SET_NIGHT_MODE = 'dyson_set_night_mode'
+SERVICE_SET_NIGHT_MODE = "dyson_set_night_mode"
 
-DYSON_SET_NIGHT_MODE_SCHEMA = vol.Schema({
-    vol.Required(CONF_ENTITY_ID): cv.entity_id,
-    vol.Required(CONF_NIGHT_MODE): cv.boolean,
-})
+DYSON_SET_NIGHT_MODE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_ENTITY_ID): cv.entity_id,
+        vol.Required(CONF_NIGHT_MODE): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -41,8 +47,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         hass.data[DYSON_FAN_DEVICES] = []
 
     # Get Dyson Devices from parent component
-    for device in [d for d in hass.data[DYSON_DEVICES] if
-                   isinstance(d, DysonPureCoolLink)]:
+    for device in [
+        d for d in hass.data[DYSON_DEVICES] if isinstance(d, DysonPureCoolLink)
+    ]:
         dyson_entity = DysonPureCoolLinkDevice(hass, device)
         hass.data[DYSON_FAN_DEVICES].append(dyson_entity)
 
@@ -52,11 +59,16 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         """Handle the Dyson services."""
         entity_id = service.data.get(CONF_ENTITY_ID)
         night_mode = service.data.get(CONF_NIGHT_MODE)
-        fan_device = next([fan for fan in hass.data[DYSON_FAN_DEVICES] if
-                           fan.entity_id == entity_id].__iter__(), None)
+        fan_device = next(
+            [
+                fan
+                for fan in hass.data[DYSON_FAN_DEVICES]
+                if fan.entity_id == entity_id
+            ].__iter__(),
+            None,
+        )
         if fan_device is None:
-            _LOGGER.warning("Unable to find Dyson fan device %s",
-                            str(entity_id))
+            _LOGGER.warning("Unable to find Dyson fan device %s", str(entity_id))
             return
 
         if service.service == SERVICE_SET_NIGHT_MODE:
@@ -64,8 +76,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # Register dyson service(s)
     hass.services.register(
-        DOMAIN, SERVICE_SET_NIGHT_MODE, service_handle,
-        schema=DYSON_SET_NIGHT_MODE_SCHEMA)
+        DOMAIN,
+        SERVICE_SET_NIGHT_MODE,
+        service_handle,
+        schema=DYSON_SET_NIGHT_MODE_SCHEMA,
+    )
 
 
 class DysonPureCoolLinkDevice(FanEntity):
@@ -80,16 +95,14 @@ class DysonPureCoolLinkDevice(FanEntity):
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Call when entity is added to hass."""
-        self.hass.async_add_job(
-            self._device.add_message_listener, self.on_message)
+        self.hass.async_add_job(self._device.add_message_listener, self.on_message)
 
     def on_message(self, message):
         """Call when new messages received from the fan."""
         from libpurecoollink.dyson_pure_state import DysonPureCoolState
 
         if isinstance(message, DysonPureCoolState):
-            _LOGGER.debug("Message received for fan device %s: %s", self.name,
-                          message)
+            _LOGGER.debug("Message received for fan device %s: %s", self.name, message)
             self.schedule_update_ha_state()
 
     @property
@@ -111,9 +124,8 @@ class DysonPureCoolLinkDevice(FanEntity):
         if speed == FanSpeed.FAN_SPEED_AUTO.value:
             self._device.set_configuration(fan_mode=FanMode.AUTO)
         else:
-            fan_speed = FanSpeed('{0:04d}'.format(int(speed)))
-            self._device.set_configuration(
-                fan_mode=FanMode.FAN, fan_speed=fan_speed)
+            fan_speed = FanSpeed("{0:04d}".format(int(speed)))
+            self._device.set_configuration(fan_mode=FanMode.FAN, fan_speed=fan_speed)
 
     def turn_on(self, speed: str = None, **kwargs) -> None:
         """Turn on the fan."""
@@ -124,9 +136,10 @@ class DysonPureCoolLinkDevice(FanEntity):
             if speed == FanSpeed.FAN_SPEED_AUTO.value:
                 self._device.set_configuration(fan_mode=FanMode.AUTO)
             else:
-                fan_speed = FanSpeed('{0:04d}'.format(int(speed)))
+                fan_speed = FanSpeed("{0:04d}".format(int(speed)))
                 self._device.set_configuration(
-                    fan_mode=FanMode.FAN, fan_speed=fan_speed)
+                    fan_mode=FanMode.FAN, fan_speed=fan_speed
+                )
         else:
             # Speed not set, just turn on
             self._device.set_configuration(fan_mode=FanMode.FAN)
@@ -142,15 +155,12 @@ class DysonPureCoolLinkDevice(FanEntity):
         """Turn on/off oscillating."""
         from libpurecoollink.const import Oscillation
 
-        _LOGGER.debug("Turn oscillation %s for device %s", oscillating,
-                      self.name)
+        _LOGGER.debug("Turn oscillation %s for device %s", oscillating, self.name)
 
         if oscillating:
-            self._device.set_configuration(
-                oscillation=Oscillation.OSCILLATION_ON)
+            self._device.set_configuration(oscillation=Oscillation.OSCILLATION_ON)
         else:
-            self._device.set_configuration(
-                oscillation=Oscillation.OSCILLATION_OFF)
+            self._device.set_configuration(oscillation=Oscillation.OSCILLATION_OFF)
 
     @property
     def oscillating(self):
@@ -241,5 +251,5 @@ class DysonPureCoolLinkDevice(FanEntity):
         """Return optional state attributes."""
         return {
             ATTR_IS_NIGHT_MODE: self.is_night_mode,
-            ATTR_IS_AUTO_MODE: self.is_auto_mode
-            }
+            ATTR_IS_AUTO_MODE: self.is_auto_mode,
+        }

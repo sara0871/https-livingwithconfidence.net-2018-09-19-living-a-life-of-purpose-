@@ -13,16 +13,9 @@ from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE
 
 _LOGGER = logging.getLogger(__name__)
 
-SPC_TYPE_TO_DEVICE_CLASS = {
-    '0': 'motion',
-    '1': 'opening',
-    '3': 'smoke',
-}
+SPC_TYPE_TO_DEVICE_CLASS = {"0": "motion", "1": "opening", "3": "smoke"}
 
-SPC_INPUT_TO_SENSOR_STATE = {
-    '0': STATE_OFF,
-    '1': STATE_ON,
-}
+SPC_INPUT_TO_SENSOR_STATE = {"0": STATE_OFF, "1": STATE_ON}
 
 
 def _get_device_class(spc_type):
@@ -38,24 +31,25 @@ def _get_sensor_state(spc_input):
 def _create_sensor(hass, zone):
     """Create a SPC sensor."""
     return SpcBinarySensor(
-        zone_id=zone['id'], name=zone['zone_name'],
-        state=_get_sensor_state(zone['input']),
-        device_class=_get_device_class(zone['type']),
-        spc_registry=hass.data[DATA_REGISTRY])
+        zone_id=zone["id"],
+        name=zone["zone_name"],
+        state=_get_sensor_state(zone["input"]),
+        device_class=_get_device_class(zone["type"]),
+        spc_registry=hass.data[DATA_REGISTRY],
+    )
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the SPC binary sensor."""
-    if (discovery_info is None or
-            discovery_info[ATTR_DISCOVER_DEVICES] is None):
+    if discovery_info is None or discovery_info[ATTR_DISCOVER_DEVICES] is None:
         return
 
     async_add_entities(
         _create_sensor(hass, zone)
         for zone in discovery_info[ATTR_DISCOVER_DEVICES]
-        if _get_device_class(zone['type']))
+        if _get_device_class(zone["type"])
+    )
 
 
 class SpcBinarySensor(BinarySensorDevice):

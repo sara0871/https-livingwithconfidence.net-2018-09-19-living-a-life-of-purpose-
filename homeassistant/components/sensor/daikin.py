@@ -10,23 +10,32 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.daikin import (
-    SENSOR_TYPES, SENSOR_TYPE_TEMPERATURE,
-    ATTR_INSIDE_TEMPERATURE, ATTR_OUTSIDE_TEMPERATURE,
-    daikin_api_setup
+    SENSOR_TYPES,
+    SENSOR_TYPE_TEMPERATURE,
+    ATTR_INSIDE_TEMPERATURE,
+    ATTR_OUTSIDE_TEMPERATURE,
+    daikin_api_setup,
 )
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_HOST, CONF_ICON, CONF_NAME, CONF_MONITORED_CONDITIONS, CONF_TYPE
+    CONF_HOST,
+    CONF_ICON,
+    CONF_NAME,
+    CONF_MONITORED_CONDITIONS,
+    CONF_TYPE,
 )
 from homeassistant.helpers.entity import Entity
 from homeassistant.util.unit_system import UnitSystem
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_MONITORED_CONDITIONS, default=list(SENSOR_TYPES)):
-        vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_NAME): cv.string,
+        vol.Optional(CONF_MONITORED_CONDITIONS, default=list(SENSOR_TYPES)): vol.All(
+            cv.ensure_list, [vol.In(SENSOR_TYPES)]
+        ),
+    }
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +43,7 @@ _LOGGER = logging.getLogger(__name__)
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Daikin sensors."""
     if discovery_info is not None:
-        host = discovery_info.get('ip')
+        host = discovery_info.get("ip")
         name = None
         monitored_conditions = discovery_info.get(
             CONF_MONITORED_CONDITIONS, list(SENSOR_TYPES.keys())
@@ -57,8 +66,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class DaikinClimateSensor(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self, api, monitored_state, units: UnitSystem,
-                 name=None) -> None:
+    def __init__(self, api, monitored_state, units: UnitSystem, name=None) -> None:
         """Initialize the sensor."""
         self._api = api
         self._sensor = SENSOR_TYPES.get(monitored_state)
@@ -77,10 +85,10 @@ class DaikinClimateSensor(Entity):
         cast_to_float = False
 
         if key == ATTR_INSIDE_TEMPERATURE:
-            value = self._api.device.values.get('htemp')
+            value = self._api.device.values.get("htemp")
             cast_to_float = True
         elif key == ATTR_OUTSIDE_TEMPERATURE:
-            value = self._api.device.values.get('otemp')
+            value = self._api.device.values.get("otemp")
 
         if value is None:
             _LOGGER.warning("Invalid value requested for key %s", key)

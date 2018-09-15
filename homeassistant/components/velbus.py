@@ -12,25 +12,24 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP, CONF_PORT
 from homeassistant.helpers.discovery import load_platform
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['python-velbus==2.0.19']
+REQUIREMENTS = ["python-velbus==2.0.19"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'velbus'
+DOMAIN = "velbus"
 
 
-VELBUS_MESSAGE = 'velbus.message'
+VELBUS_MESSAGE = "velbus.message"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_PORT): cv.string,
-    })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: vol.Schema({vol.Required(CONF_PORT): cv.string})}, extra=vol.ALLOW_EXTRA
+)
 
 
 async def async_setup(hass, config):
     """Set up the Velbus platform."""
     import velbus
+
     port = config[DOMAIN].get(CONF_PORT)
     controller = velbus.Controller(port)
 
@@ -45,25 +44,19 @@ async def async_setup(hass, config):
 
     def callback():
         modules = controller.get_modules()
-        discovery_info = {
-            'switch': [],
-            'binary_sensor': [],
-            'temp_sensor': []
-        }
+        discovery_info = {"switch": [], "binary_sensor": [], "temp_sensor": []}
         for module in modules:
             for channel in range(1, module.number_of_channels() + 1):
                 for category in discovery_info:
                     if category in module.get_categories(channel):
-                        discovery_info[category].append((
-                            module.get_module_address(),
-                            channel
-                        ))
-        load_platform(hass, 'switch', DOMAIN,
-                      discovery_info['switch'], config)
-        load_platform(hass, 'binary_sensor', DOMAIN,
-                      discovery_info['binary_sensor'], config)
-        load_platform(hass, 'sensor', DOMAIN,
-                      discovery_info['temp_sensor'], config)
+                        discovery_info[category].append(
+                            (module.get_module_address(), channel)
+                        )
+        load_platform(hass, "switch", DOMAIN, discovery_info["switch"], config)
+        load_platform(
+            hass, "binary_sensor", DOMAIN, discovery_info["binary_sensor"], config
+        )
+        load_platform(hass, "sensor", DOMAIN, discovery_info["temp_sensor"], config)
 
     controller.scan(callback)
 

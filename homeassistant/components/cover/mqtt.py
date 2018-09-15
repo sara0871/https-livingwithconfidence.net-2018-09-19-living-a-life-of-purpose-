@@ -11,45 +11,66 @@ import voluptuous as vol
 from homeassistant.core import callback
 from homeassistant.components import mqtt
 from homeassistant.components.cover import (
-    CoverDevice, ATTR_TILT_POSITION, SUPPORT_OPEN_TILT,
-    SUPPORT_CLOSE_TILT, SUPPORT_STOP_TILT, SUPPORT_SET_TILT_POSITION,
-    SUPPORT_OPEN, SUPPORT_CLOSE, SUPPORT_STOP, SUPPORT_SET_POSITION,
-    ATTR_POSITION)
+    CoverDevice,
+    ATTR_TILT_POSITION,
+    SUPPORT_OPEN_TILT,
+    SUPPORT_CLOSE_TILT,
+    SUPPORT_STOP_TILT,
+    SUPPORT_SET_TILT_POSITION,
+    SUPPORT_OPEN,
+    SUPPORT_CLOSE,
+    SUPPORT_STOP,
+    SUPPORT_SET_POSITION,
+    ATTR_POSITION,
+)
 from homeassistant.exceptions import TemplateError
 from homeassistant.const import (
-    CONF_NAME, CONF_VALUE_TEMPLATE, CONF_OPTIMISTIC, STATE_OPEN,
-    STATE_CLOSED, STATE_UNKNOWN)
+    CONF_NAME,
+    CONF_VALUE_TEMPLATE,
+    CONF_OPTIMISTIC,
+    STATE_OPEN,
+    STATE_CLOSED,
+    STATE_UNKNOWN,
+)
 from homeassistant.components.mqtt import (
-    CONF_AVAILABILITY_TOPIC, CONF_STATE_TOPIC, CONF_COMMAND_TOPIC,
-    CONF_PAYLOAD_AVAILABLE, CONF_PAYLOAD_NOT_AVAILABLE, CONF_QOS, CONF_RETAIN,
-    valid_publish_topic, valid_subscribe_topic, MqttAvailability)
+    CONF_AVAILABILITY_TOPIC,
+    CONF_STATE_TOPIC,
+    CONF_COMMAND_TOPIC,
+    CONF_PAYLOAD_AVAILABLE,
+    CONF_PAYLOAD_NOT_AVAILABLE,
+    CONF_QOS,
+    CONF_RETAIN,
+    valid_publish_topic,
+    valid_subscribe_topic,
+    MqttAvailability,
+)
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['mqtt']
+DEPENDENCIES = ["mqtt"]
 
-CONF_TILT_COMMAND_TOPIC = 'tilt_command_topic'
-CONF_TILT_STATUS_TOPIC = 'tilt_status_topic'
-CONF_POSITION_TOPIC = 'set_position_topic'
-CONF_SET_POSITION_TEMPLATE = 'set_position_template'
+CONF_TILT_COMMAND_TOPIC = "tilt_command_topic"
+CONF_TILT_STATUS_TOPIC = "tilt_status_topic"
+CONF_POSITION_TOPIC = "set_position_topic"
+CONF_SET_POSITION_TEMPLATE = "set_position_template"
 
-CONF_PAYLOAD_OPEN = 'payload_open'
-CONF_PAYLOAD_CLOSE = 'payload_close'
-CONF_PAYLOAD_STOP = 'payload_stop'
-CONF_STATE_OPEN = 'state_open'
-CONF_STATE_CLOSED = 'state_closed'
-CONF_TILT_CLOSED_POSITION = 'tilt_closed_value'
-CONF_TILT_OPEN_POSITION = 'tilt_opened_value'
-CONF_TILT_MIN = 'tilt_min'
-CONF_TILT_MAX = 'tilt_max'
-CONF_TILT_STATE_OPTIMISTIC = 'tilt_optimistic'
-CONF_TILT_INVERT_STATE = 'tilt_invert_state'
+CONF_PAYLOAD_OPEN = "payload_open"
+CONF_PAYLOAD_CLOSE = "payload_close"
+CONF_PAYLOAD_STOP = "payload_stop"
+CONF_STATE_OPEN = "state_open"
+CONF_STATE_CLOSED = "state_closed"
+CONF_TILT_CLOSED_POSITION = "tilt_closed_value"
+CONF_TILT_OPEN_POSITION = "tilt_opened_value"
+CONF_TILT_MIN = "tilt_min"
+CONF_TILT_MAX = "tilt_max"
+CONF_TILT_STATE_OPTIMISTIC = "tilt_optimistic"
+CONF_TILT_INVERT_STATE = "tilt_invert_state"
 
-DEFAULT_NAME = 'MQTT Cover'
-DEFAULT_PAYLOAD_OPEN = 'OPEN'
-DEFAULT_PAYLOAD_CLOSE = 'CLOSE'
-DEFAULT_PAYLOAD_STOP = 'STOP'
+DEFAULT_NAME = "MQTT Cover"
+DEFAULT_PAYLOAD_OPEN = "OPEN"
+DEFAULT_PAYLOAD_CLOSE = "CLOSE"
+DEFAULT_PAYLOAD_STOP = "STOP"
 DEFAULT_OPTIMISTIC = False
 DEFAULT_RETAIN = False
 DEFAULT_TILT_CLOSED_POSITION = 0
@@ -59,41 +80,48 @@ DEFAULT_TILT_MAX = 100
 DEFAULT_TILT_OPTIMISTIC = False
 DEFAULT_TILT_INVERT_STATE = False
 
-OPEN_CLOSE_FEATURES = (SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP)
-TILT_FEATURES = (SUPPORT_OPEN_TILT | SUPPORT_CLOSE_TILT | SUPPORT_STOP_TILT |
-                 SUPPORT_SET_TILT_POSITION)
+OPEN_CLOSE_FEATURES = SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
+TILT_FEATURES = (
+    SUPPORT_OPEN_TILT
+    | SUPPORT_CLOSE_TILT
+    | SUPPORT_STOP_TILT
+    | SUPPORT_SET_TILT_POSITION
+)
 
-PLATFORM_SCHEMA = mqtt.MQTT_BASE_PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_COMMAND_TOPIC): valid_publish_topic,
-    vol.Optional(CONF_POSITION_TOPIC): valid_publish_topic,
-    vol.Optional(CONF_SET_POSITION_TEMPLATE): cv.template,
-    vol.Optional(CONF_RETAIN, default=DEFAULT_RETAIN): cv.boolean,
-    vol.Optional(CONF_STATE_TOPIC): valid_subscribe_topic,
-    vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PAYLOAD_OPEN, default=DEFAULT_PAYLOAD_OPEN): cv.string,
-    vol.Optional(CONF_PAYLOAD_CLOSE, default=DEFAULT_PAYLOAD_CLOSE): cv.string,
-    vol.Optional(CONF_PAYLOAD_STOP, default=DEFAULT_PAYLOAD_STOP): cv.string,
-    vol.Optional(CONF_STATE_OPEN, default=STATE_OPEN): cv.string,
-    vol.Optional(CONF_STATE_CLOSED, default=STATE_CLOSED): cv.string,
-    vol.Optional(CONF_OPTIMISTIC, default=DEFAULT_OPTIMISTIC): cv.boolean,
-    vol.Optional(CONF_TILT_COMMAND_TOPIC): valid_publish_topic,
-    vol.Optional(CONF_TILT_STATUS_TOPIC): valid_subscribe_topic,
-    vol.Optional(CONF_TILT_CLOSED_POSITION,
-                 default=DEFAULT_TILT_CLOSED_POSITION): int,
-    vol.Optional(CONF_TILT_OPEN_POSITION,
-                 default=DEFAULT_TILT_OPEN_POSITION): int,
-    vol.Optional(CONF_TILT_MIN, default=DEFAULT_TILT_MIN): int,
-    vol.Optional(CONF_TILT_MAX, default=DEFAULT_TILT_MAX): int,
-    vol.Optional(CONF_TILT_STATE_OPTIMISTIC,
-                 default=DEFAULT_TILT_OPTIMISTIC): cv.boolean,
-    vol.Optional(CONF_TILT_INVERT_STATE,
-                 default=DEFAULT_TILT_INVERT_STATE): cv.boolean,
-}).extend(mqtt.MQTT_AVAILABILITY_SCHEMA.schema)
+PLATFORM_SCHEMA = mqtt.MQTT_BASE_PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_COMMAND_TOPIC): valid_publish_topic,
+        vol.Optional(CONF_POSITION_TOPIC): valid_publish_topic,
+        vol.Optional(CONF_SET_POSITION_TEMPLATE): cv.template,
+        vol.Optional(CONF_RETAIN, default=DEFAULT_RETAIN): cv.boolean,
+        vol.Optional(CONF_STATE_TOPIC): valid_subscribe_topic,
+        vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PAYLOAD_OPEN, default=DEFAULT_PAYLOAD_OPEN): cv.string,
+        vol.Optional(CONF_PAYLOAD_CLOSE, default=DEFAULT_PAYLOAD_CLOSE): cv.string,
+        vol.Optional(CONF_PAYLOAD_STOP, default=DEFAULT_PAYLOAD_STOP): cv.string,
+        vol.Optional(CONF_STATE_OPEN, default=STATE_OPEN): cv.string,
+        vol.Optional(CONF_STATE_CLOSED, default=STATE_CLOSED): cv.string,
+        vol.Optional(CONF_OPTIMISTIC, default=DEFAULT_OPTIMISTIC): cv.boolean,
+        vol.Optional(CONF_TILT_COMMAND_TOPIC): valid_publish_topic,
+        vol.Optional(CONF_TILT_STATUS_TOPIC): valid_subscribe_topic,
+        vol.Optional(
+            CONF_TILT_CLOSED_POSITION, default=DEFAULT_TILT_CLOSED_POSITION
+        ): int,
+        vol.Optional(CONF_TILT_OPEN_POSITION, default=DEFAULT_TILT_OPEN_POSITION): int,
+        vol.Optional(CONF_TILT_MIN, default=DEFAULT_TILT_MIN): int,
+        vol.Optional(CONF_TILT_MAX, default=DEFAULT_TILT_MAX): int,
+        vol.Optional(
+            CONF_TILT_STATE_OPTIMISTIC, default=DEFAULT_TILT_OPTIMISTIC
+        ): cv.boolean,
+        vol.Optional(
+            CONF_TILT_INVERT_STATE, default=DEFAULT_TILT_INVERT_STATE
+        ): cv.boolean,
+    }
+).extend(mqtt.MQTT_AVAILABILITY_SCHEMA.schema)
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the MQTT Cover."""
     if discovery_info is not None:
         config = PLATFORM_SCHEMA(discovery_info)
@@ -105,48 +133,74 @@ async def async_setup_platform(hass, config, async_add_entities,
     if set_position_template is not None:
         set_position_template.hass = hass
 
-    async_add_entities([MqttCover(
-        config.get(CONF_NAME),
-        config.get(CONF_STATE_TOPIC),
-        config.get(CONF_COMMAND_TOPIC),
-        config.get(CONF_AVAILABILITY_TOPIC),
-        config.get(CONF_TILT_COMMAND_TOPIC),
-        config.get(CONF_TILT_STATUS_TOPIC),
-        config.get(CONF_QOS),
-        config.get(CONF_RETAIN),
-        config.get(CONF_STATE_OPEN),
-        config.get(CONF_STATE_CLOSED),
-        config.get(CONF_PAYLOAD_OPEN),
-        config.get(CONF_PAYLOAD_CLOSE),
-        config.get(CONF_PAYLOAD_STOP),
-        config.get(CONF_PAYLOAD_AVAILABLE),
-        config.get(CONF_PAYLOAD_NOT_AVAILABLE),
-        config.get(CONF_OPTIMISTIC),
-        value_template,
-        config.get(CONF_TILT_OPEN_POSITION),
-        config.get(CONF_TILT_CLOSED_POSITION),
-        config.get(CONF_TILT_MIN),
-        config.get(CONF_TILT_MAX),
-        config.get(CONF_TILT_STATE_OPTIMISTIC),
-        config.get(CONF_TILT_INVERT_STATE),
-        config.get(CONF_POSITION_TOPIC),
-        set_position_template,
-    )])
+    async_add_entities(
+        [
+            MqttCover(
+                config.get(CONF_NAME),
+                config.get(CONF_STATE_TOPIC),
+                config.get(CONF_COMMAND_TOPIC),
+                config.get(CONF_AVAILABILITY_TOPIC),
+                config.get(CONF_TILT_COMMAND_TOPIC),
+                config.get(CONF_TILT_STATUS_TOPIC),
+                config.get(CONF_QOS),
+                config.get(CONF_RETAIN),
+                config.get(CONF_STATE_OPEN),
+                config.get(CONF_STATE_CLOSED),
+                config.get(CONF_PAYLOAD_OPEN),
+                config.get(CONF_PAYLOAD_CLOSE),
+                config.get(CONF_PAYLOAD_STOP),
+                config.get(CONF_PAYLOAD_AVAILABLE),
+                config.get(CONF_PAYLOAD_NOT_AVAILABLE),
+                config.get(CONF_OPTIMISTIC),
+                value_template,
+                config.get(CONF_TILT_OPEN_POSITION),
+                config.get(CONF_TILT_CLOSED_POSITION),
+                config.get(CONF_TILT_MIN),
+                config.get(CONF_TILT_MAX),
+                config.get(CONF_TILT_STATE_OPTIMISTIC),
+                config.get(CONF_TILT_INVERT_STATE),
+                config.get(CONF_POSITION_TOPIC),
+                set_position_template,
+            )
+        ]
+    )
 
 
 class MqttCover(MqttAvailability, CoverDevice):
     """Representation of a cover that can be controlled using MQTT."""
 
-    def __init__(self, name, state_topic, command_topic, availability_topic,
-                 tilt_command_topic, tilt_status_topic, qos, retain,
-                 state_open, state_closed, payload_open, payload_close,
-                 payload_stop, payload_available, payload_not_available,
-                 optimistic, value_template, tilt_open_position,
-                 tilt_closed_position, tilt_min, tilt_max, tilt_optimistic,
-                 tilt_invert, position_topic, set_position_template):
+    def __init__(
+        self,
+        name,
+        state_topic,
+        command_topic,
+        availability_topic,
+        tilt_command_topic,
+        tilt_status_topic,
+        qos,
+        retain,
+        state_open,
+        state_closed,
+        payload_open,
+        payload_close,
+        payload_stop,
+        payload_available,
+        payload_not_available,
+        optimistic,
+        value_template,
+        tilt_open_position,
+        tilt_closed_position,
+        tilt_min,
+        tilt_max,
+        tilt_optimistic,
+        tilt_invert,
+        position_topic,
+        set_position_template,
+    ):
         """Initialize the cover."""
-        super().__init__(availability_topic, qos, payload_available,
-                         payload_not_available)
+        super().__init__(
+            availability_topic, qos, payload_available, payload_not_available
+        )
         self._position = None
         self._state = None
         self._name = name
@@ -180,8 +234,7 @@ class MqttCover(MqttAvailability, CoverDevice):
         @callback
         def tilt_updated(topic, payload, qos):
             """Handle tilt updates."""
-            if (payload.isnumeric() and
-                    self._tilt_min <= int(payload) <= self._tilt_max):
+            if payload.isnumeric() and self._tilt_min <= int(payload) <= self._tilt_max:
 
                 level = self.find_percentage_in_range(float(payload))
                 self._tilt_value = level
@@ -191,8 +244,7 @@ class MqttCover(MqttAvailability, CoverDevice):
         def state_message_received(topic, payload, qos):
             """Handle new MQTT state messages."""
             if self._template is not None:
-                payload = self._template.async_render_with_possible_json_value(
-                    payload)
+                payload = self._template.async_render_with_possible_json_value(payload)
 
             if payload == self._state_open:
                 self._state = False
@@ -206,8 +258,8 @@ class MqttCover(MqttAvailability, CoverDevice):
                 self._position = int(payload)
             else:
                 _LOGGER.warning(
-                    "Payload is not True, False, or integer (0-100): %s",
-                    payload)
+                    "Payload is not True, False, or integer (0-100): %s", payload
+                )
                 return
 
             self.async_schedule_update_ha_state()
@@ -217,8 +269,8 @@ class MqttCover(MqttAvailability, CoverDevice):
             self._optimistic = True
         else:
             await mqtt.async_subscribe(
-                self.hass, self._state_topic,
-                state_message_received, self._qos)
+                self.hass, self._state_topic, state_message_received, self._qos
+            )
 
         if self._tilt_status_topic is None:
             self._tilt_optimistic = True
@@ -226,7 +278,8 @@ class MqttCover(MqttAvailability, CoverDevice):
             self._tilt_optimistic = False
             self._tilt_value = STATE_UNKNOWN
             await mqtt.async_subscribe(
-                self.hass, self._tilt_status_topic, tilt_updated, self._qos)
+                self.hass, self._tilt_status_topic, tilt_updated, self._qos
+            )
 
     @property
     def should_poll(self):
@@ -282,8 +335,8 @@ class MqttCover(MqttAvailability, CoverDevice):
         This method is a coroutine.
         """
         mqtt.async_publish(
-            self.hass, self._command_topic, self._payload_open, self._qos,
-            self._retain)
+            self.hass, self._command_topic, self._payload_open, self._qos, self._retain
+        )
         if self._optimistic:
             # Optimistically assume that cover has changed state.
             self._state = False
@@ -295,8 +348,8 @@ class MqttCover(MqttAvailability, CoverDevice):
         This method is a coroutine.
         """
         mqtt.async_publish(
-            self.hass, self._command_topic, self._payload_close, self._qos,
-            self._retain)
+            self.hass, self._command_topic, self._payload_close, self._qos, self._retain
+        )
         if self._optimistic:
             # Optimistically assume that cover has changed state.
             self._state = True
@@ -308,23 +361,31 @@ class MqttCover(MqttAvailability, CoverDevice):
         This method is a coroutine.
         """
         mqtt.async_publish(
-            self.hass, self._command_topic, self._payload_stop, self._qos,
-            self._retain)
+            self.hass, self._command_topic, self._payload_stop, self._qos, self._retain
+        )
 
     async def async_open_cover_tilt(self, **kwargs):
         """Tilt the cover open."""
-        mqtt.async_publish(self.hass, self._tilt_command_topic,
-                           self._tilt_open_position, self._qos,
-                           self._retain)
+        mqtt.async_publish(
+            self.hass,
+            self._tilt_command_topic,
+            self._tilt_open_position,
+            self._qos,
+            self._retain,
+        )
         if self._tilt_optimistic:
             self._tilt_value = self._tilt_open_position
             self.async_schedule_update_ha_state()
 
     async def async_close_cover_tilt(self, **kwargs):
         """Tilt the cover closed."""
-        mqtt.async_publish(self.hass, self._tilt_command_topic,
-                           self._tilt_closed_position, self._qos,
-                           self._retain)
+        mqtt.async_publish(
+            self.hass,
+            self._tilt_command_topic,
+            self._tilt_closed_position,
+            self._qos,
+            self._retain,
+        )
         if self._tilt_optimistic:
             self._tilt_value = self._tilt_closed_position
             self.async_schedule_update_ha_state()
@@ -339,8 +400,9 @@ class MqttCover(MqttAvailability, CoverDevice):
         # The position needs to be between min and max
         level = self.find_in_range_from_percent(position)
 
-        mqtt.async_publish(self.hass, self._tilt_command_topic,
-                           level, self._qos, self._retain)
+        mqtt.async_publish(
+            self.hass, self._tilt_command_topic, level, self._qos, self._retain
+        )
 
     async def async_set_cover_position(self, **kwargs):
         """Move the cover to a specific position."""
@@ -348,14 +410,14 @@ class MqttCover(MqttAvailability, CoverDevice):
             position = kwargs[ATTR_POSITION]
             if self._set_position_template is not None:
                 try:
-                    position = self._set_position_template.async_render(
-                        **kwargs)
+                    position = self._set_position_template.async_render(**kwargs)
                 except TemplateError as ex:
                     _LOGGER.error(ex)
                     self._state = None
 
-            mqtt.async_publish(self.hass, self._position_topic,
-                               position, self._qos, self._retain)
+            mqtt.async_publish(
+                self.hass, self._position_topic, position, self._qos, self._retain
+            )
 
     def find_percentage_in_range(self, position):
         """Find the 0-100% value within the specified range."""

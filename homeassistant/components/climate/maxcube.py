@@ -8,16 +8,19 @@ import socket
 import logging
 
 from homeassistant.components.climate import (
-    ClimateDevice, STATE_AUTO, SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_OPERATION_MODE)
+    ClimateDevice,
+    STATE_AUTO,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_OPERATION_MODE,
+)
 from homeassistant.components.maxcube import DATA_KEY
 from homeassistant.const import TEMP_CELSIUS, ATTR_TEMPERATURE
 
 _LOGGER = logging.getLogger(__name__)
 
-STATE_MANUAL = 'manual'
-STATE_BOOST = 'boost'
-STATE_VACATION = 'vacation'
+STATE_MANUAL = "manual"
+STATE_BOOST = "boost"
+STATE_VACATION = "vacation"
 
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE
 
@@ -28,12 +31,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     for handler in hass.data[DATA_KEY].values():
         cube = handler.cube
         for device in cube.devices:
-            name = '{} {}'.format(
-                cube.room_by_id(device.room_id).name, device.name)
+            name = "{} {}".format(cube.room_by_id(device.room_id).name, device.name)
 
             if cube.is_thermostat(device) or cube.is_wallthermostat(device):
-                devices.append(
-                    MaxCubeClimate(handler, name, device.rf_address))
+                devices.append(MaxCubeClimate(handler, name, device.rf_address))
 
     if devices:
         add_entities(devices)
@@ -45,8 +46,7 @@ class MaxCubeClimate(ClimateDevice):
     def __init__(self, handler, name, rf_address):
         """Initialize MAX! Cube ClimateDevice."""
         self._name = name
-        self._operation_list = [STATE_AUTO, STATE_MANUAL, STATE_BOOST,
-                                STATE_VACATION]
+        self._operation_list = [STATE_AUTO, STATE_MANUAL, STATE_BOOST, STATE_VACATION]
         self._rf_address = rf_address
         self._cubehandle = handler
 
@@ -154,11 +154,12 @@ class MaxCubeClimate(ClimateDevice):
     @staticmethod
     def map_mode_hass_max(operation_mode):
         """Map Home Assistant Operation Modes to MAX! Operation Modes."""
-        from maxcube.device import \
-            MAX_DEVICE_MODE_AUTOMATIC, \
-            MAX_DEVICE_MODE_MANUAL, \
-            MAX_DEVICE_MODE_VACATION, \
-            MAX_DEVICE_MODE_BOOST
+        from maxcube.device import (
+            MAX_DEVICE_MODE_AUTOMATIC,
+            MAX_DEVICE_MODE_MANUAL,
+            MAX_DEVICE_MODE_VACATION,
+            MAX_DEVICE_MODE_BOOST,
+        )
 
         if operation_mode == STATE_AUTO:
             mode = MAX_DEVICE_MODE_AUTOMATIC
@@ -176,11 +177,12 @@ class MaxCubeClimate(ClimateDevice):
     @staticmethod
     def map_mode_max_hass(mode):
         """Map MAX! Operation Modes to Home Assistant Operation Modes."""
-        from maxcube.device import \
-            MAX_DEVICE_MODE_AUTOMATIC, \
-            MAX_DEVICE_MODE_MANUAL, \
-            MAX_DEVICE_MODE_VACATION, \
-            MAX_DEVICE_MODE_BOOST
+        from maxcube.device import (
+            MAX_DEVICE_MODE_AUTOMATIC,
+            MAX_DEVICE_MODE_MANUAL,
+            MAX_DEVICE_MODE_VACATION,
+            MAX_DEVICE_MODE_BOOST,
+        )
 
         if mode == MAX_DEVICE_MODE_AUTOMATIC:
             operation_mode = STATE_AUTO

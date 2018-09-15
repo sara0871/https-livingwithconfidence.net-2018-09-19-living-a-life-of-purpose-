@@ -13,10 +13,14 @@ from homeassistant.components.http import HomeAssistantView
 
 # pylint: disable=unused-import
 from .owntracks import (  # NOQA
-    REQUIREMENTS, PLATFORM_SCHEMA, context_from_config, async_handle_message)
+    REQUIREMENTS,
+    PLATFORM_SCHEMA,
+    context_from_config,
+    async_handle_message,
+)
 
 
-DEPENDENCIES = ['http']
+DEPENDENCIES = ["http"]
 
 
 @asyncio.coroutine
@@ -32,8 +36,8 @@ def async_setup_scanner(hass, config, async_see, discovery_info=None):
 class OwnTracksView(HomeAssistantView):
     """View to handle OwnTracks HTTP requests."""
 
-    url = '/api/owntracks/{user}/{device}'
-    name = 'api:owntracks'
+    url = "/api/owntracks/{user}/{device}"
+    name = "api:owntracks"
 
     def __init__(self, context):
         """Initialize OwnTracks URL endpoints."""
@@ -42,13 +46,13 @@ class OwnTracksView(HomeAssistantView):
     @asyncio.coroutine
     def post(self, request, user, device):
         """Handle an OwnTracks message."""
-        hass = request.app['hass']
+        hass = request.app["hass"]
 
         subscription = self.context.mqtt_topic
-        topic = re.sub('/#$', '', subscription)
+        topic = re.sub("/#$", "", subscription)
 
         message = yield from request.json()
-        message['topic'] = '{}/{}/{}'.format(topic, user, device)
+        message["topic"] = "{}/{}/{}".format(topic, user, device)
 
         try:
             yield from async_handle_message(hass, self.context, message)

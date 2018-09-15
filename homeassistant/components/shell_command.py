@@ -16,15 +16,13 @@ from homeassistant.helpers import config_validation as cv, template
 from homeassistant.helpers.typing import ConfigType, HomeAssistantType
 
 
-DOMAIN = 'shell_command'
+DOMAIN = "shell_command"
 
 _LOGGER = logging.getLogger(__name__)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        cv.slug: cv.string,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: vol.Schema({cv.slug: cv.string})}, extra=vol.ALLOW_EXTRA
+)
 
 
 @asyncio.coroutine
@@ -41,13 +39,13 @@ def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
 
         if cmd in cache:
             prog, args, args_compiled = cache[cmd]
-        elif ' ' not in cmd:
+        elif " " not in cmd:
             prog = cmd
             args = None
             args_compiled = None
             cache[cmd] = prog, args, args_compiled
         else:
-            prog, args = cmd.split(' ', 1)
+            prog, args = cmd.split(" ", 1)
             args_compiled = template.Template(args, hass)
             cache[cmd] = prog, args, args_compiled
 
@@ -70,7 +68,7 @@ def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
                 stdin=None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                )
+            )
         else:
             # Template used. Break into list and use create_subprocess_exec
             # (which uses shell=False) for security
@@ -83,20 +81,29 @@ def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
                 stdin=None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                )
+            )
 
         process = yield from create_process
         stdout_data, stderr_data = yield from process.communicate()
 
         if stdout_data:
-            _LOGGER.debug("Stdout of command: `%s`, return code: %s:\n%s",
-                          cmd, process.returncode, stdout_data)
+            _LOGGER.debug(
+                "Stdout of command: `%s`, return code: %s:\n%s",
+                cmd,
+                process.returncode,
+                stdout_data,
+            )
         if stderr_data:
-            _LOGGER.debug("Stderr of command: `%s`, return code: %s:\n%s",
-                          cmd, process.returncode, stderr_data)
+            _LOGGER.debug(
+                "Stderr of command: `%s`, return code: %s:\n%s",
+                cmd,
+                process.returncode,
+                stderr_data,
+            )
         if process.returncode != 0:
-            _LOGGER.exception("Error running command: `%s`, return code: %s",
-                              cmd, process.returncode)
+            _LOGGER.exception(
+                "Error running command: `%s`, return code: %s", cmd, process.returncode
+            )
 
     for name in conf.keys():
         hass.services.async_register(DOMAIN, name, async_service_handler)

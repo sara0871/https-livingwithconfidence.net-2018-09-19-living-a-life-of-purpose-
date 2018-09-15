@@ -16,29 +16,31 @@ from homeassistant.const import CONF_NAME
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['pygtfs-homeassistant==0.1.3.dev0']
+REQUIREMENTS = ["pygtfs-homeassistant==0.1.3.dev0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_DATA = 'data'
-CONF_DESTINATION = 'destination'
-CONF_ORIGIN = 'origin'
-CONF_OFFSET = 'offset'
+CONF_DATA = "data"
+CONF_DESTINATION = "destination"
+CONF_ORIGIN = "origin"
+CONF_OFFSET = "offset"
 
-DEFAULT_NAME = 'GTFS Sensor'
-DEFAULT_PATH = 'gtfs'
+DEFAULT_NAME = "GTFS Sensor"
+DEFAULT_PATH = "gtfs"
 
-ICON = 'mdi:train'
+ICON = "mdi:train"
 
-TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ORIGIN): cv.string,
-    vol.Required(CONF_DESTINATION): cv.string,
-    vol.Required(CONF_DATA): cv.string,
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_OFFSET, default=0): cv.time_period,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_ORIGIN): cv.string,
+        vol.Required(CONF_DESTINATION): cv.string,
+        vol.Required(CONF_DATA): cv.string,
+        vol.Optional(CONF_NAME): cv.string,
+        vol.Optional(CONF_OFFSET, default=0): cv.time_period,
+    }
+)
 
 
 def get_next_departure(sched, start_station_id, end_station_id, offset):
@@ -47,13 +49,14 @@ def get_next_departure(sched, start_station_id, end_station_id, offset):
     destination_station = sched.stops_by_id(end_station_id)[0]
 
     now = datetime.datetime.now() + offset
-    day_name = now.strftime('%A').lower()
-    now_str = now.strftime('%H:%M:%S')
-    today = now.strftime('%Y-%m-%d')
+    day_name = now.strftime("%A").lower()
+    now_str = now.strftime("%H:%M:%S")
+    today = now.strftime("%Y-%m-%d")
 
     from sqlalchemy.sql import text
 
-    sql_query = text("""
+    sql_query = text(
+        """
     SELECT trip.trip_id, trip.route_id,
            time(origin_stop_time.departure_time),
            time(destination_stop_time.arrival_time),
@@ -90,11 +93,17 @@ def get_next_departure(sched, start_station_id, end_station_id, offset):
     AND calendar.start_date <= :today
     AND calendar.end_date >= :today
     ORDER BY origin_stop_time.departure_time LIMIT 1;
-    """.format(day_name=day_name))
-    result = sched.engine.execute(sql_query, now_str=now_str,
-                                  origin_station_id=origin_station.id,
-                                  end_station_id=destination_station.id,
-                                  today=today)
+    """.format(
+            day_name=day_name
+        )
+    )
+    result = sched.engine.execute(
+        sql_query,
+        now_str=now_str,
+        origin_station_id=origin_station.id,
+        end_station_id=destination_station.id,
+        today=today,
+    )
     item = {}
     for row in result:
         item = row
@@ -102,52 +111,54 @@ def get_next_departure(sched, start_station_id, end_station_id, offset):
     if item == {}:
         return None
 
-    departure_time_string = '{} {}'.format(today, item[2])
-    arrival_time_string = '{} {}'.format(today, item[3])
-    departure_time = datetime.datetime.strptime(departure_time_string,
-                                                TIME_FORMAT)
-    arrival_time = datetime.datetime.strptime(arrival_time_string,
-                                              TIME_FORMAT)
+    departure_time_string = "{} {}".format(today, item[2])
+    arrival_time_string = "{} {}".format(today, item[3])
+    departure_time = datetime.datetime.strptime(departure_time_string, TIME_FORMAT)
+    arrival_time = datetime.datetime.strptime(arrival_time_string, TIME_FORMAT)
 
-    seconds_until = (departure_time-datetime.datetime.now()).total_seconds()
+    seconds_until = (departure_time - datetime.datetime.now()).total_seconds()
     minutes_until = int(seconds_until / 60)
 
     route = sched.routes_by_id(item[1])[0]
 
-    origin_stoptime_arrival_time = '{} {}'.format(today, item[4])
-    origin_stoptime_departure_time = '{} {}'.format(today, item[5])
-    dest_stoptime_arrival_time = '{} {}'.format(today, item[11])
-    dest_stoptime_depart_time = '{} {}'.format(today, item[12])
+    origin_stoptime_arrival_time = "{} {}".format(today, item[4])
+    origin_stoptime_departure_time = "{} {}".format(today, item[5])
+    dest_stoptime_arrival_time = "{} {}".format(today, item[11])
+    dest_stoptime_depart_time = "{} {}".format(today, item[12])
 
     origin_stop_time_dict = {
-        'Arrival Time': origin_stoptime_arrival_time,
-        'Departure Time': origin_stoptime_departure_time,
-        'Drop Off Type': item[6], 'Pickup Type': item[7],
-        'Shape Dist Traveled': item[8], 'Headsign': item[9],
-        'Sequence': item[10]
+        "Arrival Time": origin_stoptime_arrival_time,
+        "Departure Time": origin_stoptime_departure_time,
+        "Drop Off Type": item[6],
+        "Pickup Type": item[7],
+        "Shape Dist Traveled": item[8],
+        "Headsign": item[9],
+        "Sequence": item[10],
     }
 
     destination_stop_time_dict = {
-        'Arrival Time': dest_stoptime_arrival_time,
-        'Departure Time': dest_stoptime_depart_time,
-        'Drop Off Type': item[13], 'Pickup Type': item[14],
-        'Shape Dist Traveled': item[15], 'Headsign': item[16],
-        'Sequence': item[17]
+        "Arrival Time": dest_stoptime_arrival_time,
+        "Departure Time": dest_stoptime_depart_time,
+        "Drop Off Type": item[13],
+        "Pickup Type": item[14],
+        "Shape Dist Traveled": item[15],
+        "Headsign": item[16],
+        "Sequence": item[17],
     }
 
     return {
-        'trip_id': item[0],
-        'trip': sched.trips_by_id(item[0])[0],
-        'route': route,
-        'agency': sched.agencies_by_id(route.agency_id)[0],
-        'origin_station': origin_station,
-        'departure_time': departure_time,
-        'destination_station': destination_station,
-        'arrival_time': arrival_time,
-        'seconds_until_departure': seconds_until,
-        'minutes_until_departure': minutes_until,
-        'origin_stop_time': origin_stop_time_dict,
-        'destination_stop_time': destination_stop_time_dict
+        "trip_id": item[0],
+        "trip": sched.trips_by_id(item[0])[0],
+        "route": route,
+        "agency": sched.agencies_by_id(route.agency_id)[0],
+        "origin_station": origin_station,
+        "departure_time": departure_time,
+        "destination_station": destination_station,
+        "arrival_time": arrival_time,
+        "seconds_until_departure": seconds_until,
+        "minutes_until_departure": minutes_until,
+        "origin_stop_time": origin_stop_time_dict,
+        "destination_stop_time": destination_stop_time_dict,
     }
 
 
@@ -179,8 +190,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if not gtfs.feeds:
         pygtfs.append_feed(gtfs, os.path.join(gtfs_dir, data))
 
-    add_entities([
-        GTFSDepartureSensor(gtfs, name, origin, destination, offset)])
+    add_entities([GTFSDepartureSensor(gtfs, name, origin, destination, offset)])
 
 
 class GTFSDepartureSensor(Entity):
@@ -193,8 +203,8 @@ class GTFSDepartureSensor(Entity):
         self.destination = destination
         self._offset = offset
         self._custom_name = name
-        self._name = ''
-        self._unit_of_measurement = 'min'
+        self._name = ""
+        self._unit_of_measurement = "min"
         self._state = 0
         self._attributes = {}
         self.lock = threading.Lock()
@@ -229,58 +239,58 @@ class GTFSDepartureSensor(Entity):
         """Get the latest data from GTFS and update the states."""
         with self.lock:
             self._departure = get_next_departure(
-                self._pygtfs, self.origin, self.destination, self._offset)
+                self._pygtfs, self.origin, self.destination, self._offset
+            )
             if not self._departure:
                 self._state = 0
-                self._attributes = {'Info': 'No more departures today'}
-                if self._name == '':
-                    self._name = (self._custom_name or DEFAULT_NAME)
+                self._attributes = {"Info": "No more departures today"}
+                if self._name == "":
+                    self._name = self._custom_name or DEFAULT_NAME
                 return
 
-            self._state = self._departure['minutes_until_departure']
+            self._state = self._departure["minutes_until_departure"]
 
-            origin_station = self._departure['origin_station']
-            destination_station = self._departure['destination_station']
-            origin_stop_time = self._departure['origin_stop_time']
-            destination_stop_time = self._departure['destination_stop_time']
-            agency = self._departure['agency']
-            route = self._departure['route']
-            trip = self._departure['trip']
+            origin_station = self._departure["origin_station"]
+            destination_station = self._departure["destination_station"]
+            origin_stop_time = self._departure["origin_stop_time"]
+            destination_stop_time = self._departure["destination_stop_time"]
+            agency = self._departure["agency"]
+            route = self._departure["route"]
+            trip = self._departure["trip"]
 
-            name = '{} {} to {} next departure'
-            self._name = (self._custom_name or
-                          name.format(agency.agency_name,
-                                      origin_station.stop_id,
-                                      destination_station.stop_id))
+            name = "{} {} to {} next departure"
+            self._name = self._custom_name or name.format(
+                agency.agency_name, origin_station.stop_id, destination_station.stop_id
+            )
 
             # Build attributes
             self._attributes = {}
-            self._attributes['offset'] = self._offset.seconds / 60
+            self._attributes["offset"] = self._offset.seconds / 60
 
             def dict_for_table(resource):
                 """Return a dict for the SQLAlchemy resource given."""
-                return dict((col, getattr(resource, col))
-                            for col in resource.__table__.columns.keys())
+                return dict(
+                    (col, getattr(resource, col))
+                    for col in resource.__table__.columns.keys()
+                )
 
             def append_keys(resource, prefix=None):
                 """Properly format key val pairs to append to attributes."""
                 for key, val in resource.items():
-                    if val == "" or val is None or key == 'feed_id':
+                    if val == "" or val is None or key == "feed_id":
                         continue
-                    pretty_key = key.replace('_', ' ')
+                    pretty_key = key.replace("_", " ")
                     pretty_key = pretty_key.title()
-                    pretty_key = pretty_key.replace('Id', 'ID')
-                    pretty_key = pretty_key.replace('Url', 'URL')
-                    if prefix is not None and \
-                       pretty_key.startswith(prefix) is False:
-                        pretty_key = '{} {}'.format(prefix, pretty_key)
+                    pretty_key = pretty_key.replace("Id", "ID")
+                    pretty_key = pretty_key.replace("Url", "URL")
+                    if prefix is not None and pretty_key.startswith(prefix) is False:
+                        pretty_key = "{} {}".format(prefix, pretty_key)
                     self._attributes[pretty_key] = val
 
-            append_keys(dict_for_table(agency), 'Agency')
-            append_keys(dict_for_table(route), 'Route')
-            append_keys(dict_for_table(trip), 'Trip')
-            append_keys(dict_for_table(origin_station), 'Origin Station')
-            append_keys(dict_for_table(destination_station),
-                        'Destination Station')
-            append_keys(origin_stop_time, 'Origin Stop')
-            append_keys(destination_stop_time, 'Destination Stop')
+            append_keys(dict_for_table(agency), "Agency")
+            append_keys(dict_for_table(route), "Route")
+            append_keys(dict_for_table(trip), "Trip")
+            append_keys(dict_for_table(origin_station), "Origin Station")
+            append_keys(dict_for_table(destination_station), "Destination Station")
+            append_keys(origin_stop_time, "Origin Stop")
+            append_keys(destination_stop_time, "Destination Stop")

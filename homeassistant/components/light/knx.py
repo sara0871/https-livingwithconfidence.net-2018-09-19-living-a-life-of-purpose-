@@ -9,36 +9,42 @@ import voluptuous as vol
 
 from homeassistant.components.knx import ATTR_DISCOVER_DEVICES, DATA_KNX
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_HS_COLOR, PLATFORM_SCHEMA, SUPPORT_BRIGHTNESS,
-    SUPPORT_COLOR, Light)
+    ATTR_BRIGHTNESS,
+    ATTR_HS_COLOR,
+    PLATFORM_SCHEMA,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR,
+    Light,
+)
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.color as color_util
 
-CONF_ADDRESS = 'address'
-CONF_STATE_ADDRESS = 'state_address'
-CONF_BRIGHTNESS_ADDRESS = 'brightness_address'
-CONF_BRIGHTNESS_STATE_ADDRESS = 'brightness_state_address'
-CONF_COLOR_ADDRESS = 'color_address'
-CONF_COLOR_STATE_ADDRESS = 'color_state_address'
+CONF_ADDRESS = "address"
+CONF_STATE_ADDRESS = "state_address"
+CONF_BRIGHTNESS_ADDRESS = "brightness_address"
+CONF_BRIGHTNESS_STATE_ADDRESS = "brightness_state_address"
+CONF_COLOR_ADDRESS = "color_address"
+CONF_COLOR_STATE_ADDRESS = "color_state_address"
 
-DEFAULT_NAME = 'KNX Light'
-DEPENDENCIES = ['knx']
+DEFAULT_NAME = "KNX Light"
+DEPENDENCIES = ["knx"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ADDRESS): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_STATE_ADDRESS): cv.string,
-    vol.Optional(CONF_BRIGHTNESS_ADDRESS): cv.string,
-    vol.Optional(CONF_BRIGHTNESS_STATE_ADDRESS): cv.string,
-    vol.Optional(CONF_COLOR_ADDRESS): cv.string,
-    vol.Optional(CONF_COLOR_STATE_ADDRESS): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_ADDRESS): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_STATE_ADDRESS): cv.string,
+        vol.Optional(CONF_BRIGHTNESS_ADDRESS): cv.string,
+        vol.Optional(CONF_BRIGHTNESS_STATE_ADDRESS): cv.string,
+        vol.Optional(CONF_COLOR_ADDRESS): cv.string,
+        vol.Optional(CONF_COLOR_STATE_ADDRESS): cv.string,
+    }
+)
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up lights for KNX platform."""
     if discovery_info is not None:
         async_add_entities_discovery(hass, discovery_info, async_add_entities)
@@ -60,16 +66,17 @@ def async_add_entities_discovery(hass, discovery_info, async_add_entities):
 def async_add_entities_config(hass, config, async_add_entities):
     """Set up light for KNX platform configured within platform."""
     import xknx
+
     light = xknx.devices.Light(
         hass.data[DATA_KNX].xknx,
         name=config.get(CONF_NAME),
         group_address_switch=config.get(CONF_ADDRESS),
         group_address_switch_state=config.get(CONF_STATE_ADDRESS),
         group_address_brightness=config.get(CONF_BRIGHTNESS_ADDRESS),
-        group_address_brightness_state=config.get(
-            CONF_BRIGHTNESS_STATE_ADDRESS),
+        group_address_brightness_state=config.get(CONF_BRIGHTNESS_STATE_ADDRESS),
         group_address_color=config.get(CONF_COLOR_ADDRESS),
-        group_address_color_state=config.get(CONF_COLOR_STATE_ADDRESS))
+        group_address_color_state=config.get(CONF_COLOR_STATE_ADDRESS),
+    )
     hass.data[DATA_KNX].xknx.devices.add(light)
     async_add_entities([KNXLight(hass, light)])
 
@@ -86,9 +93,11 @@ class KNXLight(Light):
     @callback
     def async_register_callbacks(self):
         """Register callbacks to update hass after device was changed."""
+
         async def after_update_callback(device):
             """Call after device was updated."""
             await self.async_update_ha_state()
+
         self.device.register_device_updated_cb(after_update_callback)
 
     @property
@@ -109,9 +118,9 @@ class KNXLight(Light):
     @property
     def brightness(self):
         """Return the brightness of this light between 0..255."""
-        return self.device.current_brightness \
-            if self.device.supports_brightness else \
-            None
+        return (
+            self.device.current_brightness if self.device.supports_brightness else None
+        )
 
     @property
     def hs_color(self):
@@ -162,8 +171,9 @@ class KNXLight(Light):
                 await self.device.set_brightness(int(kwargs[ATTR_BRIGHTNESS]))
         elif ATTR_HS_COLOR in kwargs:
             if self.device.supports_color:
-                await self.device.set_color(color_util.color_hs_to_RGB(
-                    *kwargs[ATTR_HS_COLOR]))
+                await self.device.set_color(
+                    color_util.color_hs_to_RGB(*kwargs[ATTR_HS_COLOR])
+                )
         else:
             await self.device.set_on()
 

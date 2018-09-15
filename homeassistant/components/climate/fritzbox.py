@@ -10,18 +10,28 @@ import requests
 
 from homeassistant.components.fritzbox import DOMAIN as FRITZBOX_DOMAIN
 from homeassistant.components.fritzbox import (
-    ATTR_STATE_DEVICE_LOCKED, ATTR_STATE_BATTERY_LOW, ATTR_STATE_LOCKED)
+    ATTR_STATE_DEVICE_LOCKED,
+    ATTR_STATE_BATTERY_LOW,
+    ATTR_STATE_LOCKED,
+)
 from homeassistant.components.climate import (
-    ATTR_OPERATION_MODE, ClimateDevice, STATE_ECO, STATE_HEAT, STATE_MANUAL,
-    STATE_OFF, STATE_ON, SUPPORT_OPERATION_MODE,
-    SUPPORT_TARGET_TEMPERATURE)
-from homeassistant.const import (
-    ATTR_TEMPERATURE, PRECISION_HALVES, TEMP_CELSIUS)
-DEPENDENCIES = ['fritzbox']
+    ATTR_OPERATION_MODE,
+    ClimateDevice,
+    STATE_ECO,
+    STATE_HEAT,
+    STATE_MANUAL,
+    STATE_OFF,
+    STATE_ON,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+)
+from homeassistant.const import ATTR_TEMPERATURE, PRECISION_HALVES, TEMP_CELSIUS
+
+DEPENDENCIES = ["fritzbox"]
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE)
+SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE
 
 OPERATION_LIST = [STATE_HEAT, STATE_ECO, STATE_OFF, STATE_ON]
 
@@ -94,8 +104,7 @@ class FritzboxThermostat(ClimateDevice):
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
-        if self._target_temperature in (ON_API_TEMPERATURE,
-                                        OFF_API_TEMPERATURE):
+        if self._target_temperature in (ON_API_TEMPERATURE, OFF_API_TEMPERATURE):
             return None
         return self._target_temperature
 

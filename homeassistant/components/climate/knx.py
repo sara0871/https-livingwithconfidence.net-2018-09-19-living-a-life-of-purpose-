@@ -8,60 +8,65 @@ https://home-assistant.io/components/climate.knx/
 import voluptuous as vol
 
 from homeassistant.components.climate import (
-    PLATFORM_SCHEMA, SUPPORT_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE,
-    ClimateDevice)
+    PLATFORM_SCHEMA,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    ClimateDevice,
+)
 from homeassistant.components.knx import ATTR_DISCOVER_DEVICES, DATA_KNX
 from homeassistant.const import ATTR_TEMPERATURE, CONF_NAME, TEMP_CELSIUS
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 
-CONF_SETPOINT_SHIFT_ADDRESS = 'setpoint_shift_address'
-CONF_SETPOINT_SHIFT_STATE_ADDRESS = 'setpoint_shift_state_address'
-CONF_SETPOINT_SHIFT_STEP = 'setpoint_shift_step'
-CONF_SETPOINT_SHIFT_MAX = 'setpoint_shift_max'
-CONF_SETPOINT_SHIFT_MIN = 'setpoint_shift_min'
-CONF_TEMPERATURE_ADDRESS = 'temperature_address'
-CONF_TARGET_TEMPERATURE_ADDRESS = 'target_temperature_address'
-CONF_OPERATION_MODE_ADDRESS = 'operation_mode_address'
-CONF_OPERATION_MODE_STATE_ADDRESS = 'operation_mode_state_address'
-CONF_CONTROLLER_STATUS_ADDRESS = 'controller_status_address'
-CONF_CONTROLLER_STATUS_STATE_ADDRESS = 'controller_status_state_address'
-CONF_OPERATION_MODE_FROST_PROTECTION_ADDRESS = \
-    'operation_mode_frost_protection_address'
-CONF_OPERATION_MODE_NIGHT_ADDRESS = 'operation_mode_night_address'
-CONF_OPERATION_MODE_COMFORT_ADDRESS = 'operation_mode_comfort_address'
+CONF_SETPOINT_SHIFT_ADDRESS = "setpoint_shift_address"
+CONF_SETPOINT_SHIFT_STATE_ADDRESS = "setpoint_shift_state_address"
+CONF_SETPOINT_SHIFT_STEP = "setpoint_shift_step"
+CONF_SETPOINT_SHIFT_MAX = "setpoint_shift_max"
+CONF_SETPOINT_SHIFT_MIN = "setpoint_shift_min"
+CONF_TEMPERATURE_ADDRESS = "temperature_address"
+CONF_TARGET_TEMPERATURE_ADDRESS = "target_temperature_address"
+CONF_OPERATION_MODE_ADDRESS = "operation_mode_address"
+CONF_OPERATION_MODE_STATE_ADDRESS = "operation_mode_state_address"
+CONF_CONTROLLER_STATUS_ADDRESS = "controller_status_address"
+CONF_CONTROLLER_STATUS_STATE_ADDRESS = "controller_status_state_address"
+CONF_OPERATION_MODE_FROST_PROTECTION_ADDRESS = "operation_mode_frost_protection_address"
+CONF_OPERATION_MODE_NIGHT_ADDRESS = "operation_mode_night_address"
+CONF_OPERATION_MODE_COMFORT_ADDRESS = "operation_mode_comfort_address"
 
-DEFAULT_NAME = 'KNX Climate'
+DEFAULT_NAME = "KNX Climate"
 DEFAULT_SETPOINT_SHIFT_STEP = 0.5
 DEFAULT_SETPOINT_SHIFT_MAX = 6
 DEFAULT_SETPOINT_SHIFT_MIN = -6
-DEPENDENCIES = ['knx']
+DEPENDENCIES = ["knx"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Required(CONF_TEMPERATURE_ADDRESS): cv.string,
-    vol.Required(CONF_TARGET_TEMPERATURE_ADDRESS): cv.string,
-    vol.Optional(CONF_SETPOINT_SHIFT_ADDRESS): cv.string,
-    vol.Optional(CONF_SETPOINT_SHIFT_STATE_ADDRESS): cv.string,
-    vol.Optional(CONF_SETPOINT_SHIFT_STEP,
-                 default=DEFAULT_SETPOINT_SHIFT_STEP): vol.All(
-                     float, vol.Range(min=0, max=2)),
-    vol.Optional(CONF_SETPOINT_SHIFT_MAX, default=DEFAULT_SETPOINT_SHIFT_MAX):
-        vol.All(int, vol.Range(min=0, max=32)),
-    vol.Optional(CONF_SETPOINT_SHIFT_MIN, default=DEFAULT_SETPOINT_SHIFT_MIN):
-        vol.All(int, vol.Range(min=-32, max=0)),
-    vol.Optional(CONF_OPERATION_MODE_ADDRESS): cv.string,
-    vol.Optional(CONF_OPERATION_MODE_STATE_ADDRESS): cv.string,
-    vol.Optional(CONF_CONTROLLER_STATUS_ADDRESS): cv.string,
-    vol.Optional(CONF_CONTROLLER_STATUS_STATE_ADDRESS): cv.string,
-    vol.Optional(CONF_OPERATION_MODE_FROST_PROTECTION_ADDRESS): cv.string,
-    vol.Optional(CONF_OPERATION_MODE_NIGHT_ADDRESS): cv.string,
-    vol.Optional(CONF_OPERATION_MODE_COMFORT_ADDRESS): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Required(CONF_TEMPERATURE_ADDRESS): cv.string,
+        vol.Required(CONF_TARGET_TEMPERATURE_ADDRESS): cv.string,
+        vol.Optional(CONF_SETPOINT_SHIFT_ADDRESS): cv.string,
+        vol.Optional(CONF_SETPOINT_SHIFT_STATE_ADDRESS): cv.string,
+        vol.Optional(
+            CONF_SETPOINT_SHIFT_STEP, default=DEFAULT_SETPOINT_SHIFT_STEP
+        ): vol.All(float, vol.Range(min=0, max=2)),
+        vol.Optional(
+            CONF_SETPOINT_SHIFT_MAX, default=DEFAULT_SETPOINT_SHIFT_MAX
+        ): vol.All(int, vol.Range(min=0, max=32)),
+        vol.Optional(
+            CONF_SETPOINT_SHIFT_MIN, default=DEFAULT_SETPOINT_SHIFT_MIN
+        ): vol.All(int, vol.Range(min=-32, max=0)),
+        vol.Optional(CONF_OPERATION_MODE_ADDRESS): cv.string,
+        vol.Optional(CONF_OPERATION_MODE_STATE_ADDRESS): cv.string,
+        vol.Optional(CONF_CONTROLLER_STATUS_ADDRESS): cv.string,
+        vol.Optional(CONF_CONTROLLER_STATUS_STATE_ADDRESS): cv.string,
+        vol.Optional(CONF_OPERATION_MODE_FROST_PROTECTION_ADDRESS): cv.string,
+        vol.Optional(CONF_OPERATION_MODE_NIGHT_ADDRESS): cv.string,
+        vol.Optional(CONF_OPERATION_MODE_COMFORT_ADDRESS): cv.string,
+    }
+)
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up climate(s) for KNX platform."""
     if discovery_info is not None:
         async_add_entities_discovery(hass, discovery_info, async_add_entities)
@@ -88,27 +93,32 @@ def async_add_entities_config(hass, config, async_add_entities):
         hass.data[DATA_KNX].xknx,
         name=config.get(CONF_NAME),
         group_address_temperature=config.get(CONF_TEMPERATURE_ADDRESS),
-        group_address_target_temperature=config.get(
-            CONF_TARGET_TEMPERATURE_ADDRESS),
+        group_address_target_temperature=config.get(CONF_TARGET_TEMPERATURE_ADDRESS),
         group_address_setpoint_shift=config.get(CONF_SETPOINT_SHIFT_ADDRESS),
         group_address_setpoint_shift_state=config.get(
-            CONF_SETPOINT_SHIFT_STATE_ADDRESS),
+            CONF_SETPOINT_SHIFT_STATE_ADDRESS
+        ),
         setpoint_shift_step=config.get(CONF_SETPOINT_SHIFT_STEP),
         setpoint_shift_max=config.get(CONF_SETPOINT_SHIFT_MAX),
         setpoint_shift_min=config.get(CONF_SETPOINT_SHIFT_MIN),
         group_address_operation_mode=config.get(CONF_OPERATION_MODE_ADDRESS),
         group_address_operation_mode_state=config.get(
-            CONF_OPERATION_MODE_STATE_ADDRESS),
-        group_address_controller_status=config.get(
-            CONF_CONTROLLER_STATUS_ADDRESS),
+            CONF_OPERATION_MODE_STATE_ADDRESS
+        ),
+        group_address_controller_status=config.get(CONF_CONTROLLER_STATUS_ADDRESS),
         group_address_controller_status_state=config.get(
-            CONF_CONTROLLER_STATUS_STATE_ADDRESS),
+            CONF_CONTROLLER_STATUS_STATE_ADDRESS
+        ),
         group_address_operation_mode_protection=config.get(
-            CONF_OPERATION_MODE_FROST_PROTECTION_ADDRESS),
+            CONF_OPERATION_MODE_FROST_PROTECTION_ADDRESS
+        ),
         group_address_operation_mode_night=config.get(
-            CONF_OPERATION_MODE_NIGHT_ADDRESS),
+            CONF_OPERATION_MODE_NIGHT_ADDRESS
+        ),
         group_address_operation_mode_comfort=config.get(
-            CONF_OPERATION_MODE_COMFORT_ADDRESS))
+            CONF_OPERATION_MODE_COMFORT_ADDRESS
+        ),
+    )
     hass.data[DATA_KNX].xknx.devices.add(climate)
     async_add_entities([KNXClimate(hass, climate)])
 
@@ -132,9 +142,11 @@ class KNXClimate(ClimateDevice):
 
     def async_register_callbacks(self):
         """Register callbacks to update hass after device was changed."""
+
         async def after_update_callback(device):
             """Call after device was updated."""
             await self.async_update_ha_state()
+
         self.device.register_device_updated_cb(after_update_callback)
 
     @property
@@ -200,13 +212,15 @@ class KNXClimate(ClimateDevice):
     @property
     def operation_list(self):
         """Return the list of available operation modes."""
-        return [operation_mode.value for
-                operation_mode in
-                self.device.get_supported_operation_modes()]
+        return [
+            operation_mode.value
+            for operation_mode in self.device.get_supported_operation_modes()
+        ]
 
     async def async_set_operation_mode(self, operation_mode):
         """Set operation mode."""
         if self.device.supports_operation_mode:
             from xknx.knx import HVACOperationMode
+
             knx_operation_mode = HVACOperationMode(operation_mode)
             await self.device.set_operation_mode(knx_operation_mode)

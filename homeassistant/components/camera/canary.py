@@ -17,17 +17,17 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_aiohttp_proxy_stream
 from homeassistant.util import Throttle
 
-CONF_FFMPEG_ARGUMENTS = 'ffmpeg_arguments'
+CONF_FFMPEG_ARGUMENTS = "ffmpeg_arguments"
 
-DEPENDENCIES = ['canary', 'ffmpeg']
+DEPENDENCIES = ["canary", "ffmpeg"]
 
 _LOGGER = logging.getLogger(__name__)
 
 MIN_TIME_BETWEEN_SESSION_RENEW = timedelta(seconds=90)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_FFMPEG_ARGUMENTS): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Optional(CONF_FFMPEG_ARGUMENTS): cv.string}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -39,8 +39,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         for device in location.devices:
             if device.is_online:
                 devices.append(
-                    CanaryCamera(hass, data, location, device, DEFAULT_TIMEOUT,
-                                 config.get(CONF_FFMPEG_ARGUMENTS)))
+                    CanaryCamera(
+                        hass,
+                        data,
+                        location,
+                        device,
+                        DEFAULT_TIMEOUT,
+                        config.get(CONF_FFMPEG_ARGUMENTS),
+                    )
+                )
 
     add_entities(devices, True)
 
@@ -81,11 +88,16 @@ class CanaryCamera(Camera):
         self.renew_live_stream_session()
 
         from haffmpeg import ImageFrame, IMAGE_JPEG
+
         ffmpeg = ImageFrame(self._ffmpeg.binary, loop=self.hass.loop)
-        image = yield from asyncio.shield(ffmpeg.get_image(
-            self._live_stream_session.live_stream_url,
-            output_format=IMAGE_JPEG,
-            extra_cmd=self._ffmpeg_arguments), loop=self.hass.loop)
+        image = yield from asyncio.shield(
+            ffmpeg.get_image(
+                self._live_stream_session.live_stream_url,
+                output_format=IMAGE_JPEG,
+                extra_cmd=self._ffmpeg_arguments,
+            ),
+            loop=self.hass.loop,
+        )
         return image
 
     @asyncio.coroutine
@@ -95,18 +107,18 @@ class CanaryCamera(Camera):
             return
 
         from haffmpeg import CameraMjpeg
+
         stream = CameraMjpeg(self._ffmpeg.binary, loop=self.hass.loop)
         yield from stream.open_camera(
-            self._live_stream_session.live_stream_url,
-            extra_cmd=self._ffmpeg_arguments)
+            self._live_stream_session.live_stream_url, extra_cmd=self._ffmpeg_arguments
+        )
 
         yield from async_aiohttp_proxy_stream(
-            self.hass, request, stream,
-            'multipart/x-mixed-replace;boundary=ffserver')
+            self.hass, request, stream, "multipart/x-mixed-replace;boundary=ffserver"
+        )
         yield from stream.close()
 
     @Throttle(MIN_TIME_BETWEEN_SESSION_RENEW)
     def renew_live_stream_session(self):
         """Renew live stream session."""
-        self._live_stream_session = self._data.get_live_stream_session(
-            self._device)
+        self._live_stream_session = self._data.get_live_stream_session(self._device)

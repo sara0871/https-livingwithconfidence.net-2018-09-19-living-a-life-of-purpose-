@@ -8,24 +8,27 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA)
+from homeassistant.components.switch import SwitchDevice, PLATFORM_SCHEMA
 from homeassistant.components.zoneminder import DOMAIN as ZONEMINDER_DOMAIN
-from homeassistant.const import (CONF_COMMAND_ON, CONF_COMMAND_OFF)
+from homeassistant.const import CONF_COMMAND_ON, CONF_COMMAND_OFF
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['zoneminder']
+DEPENDENCIES = ["zoneminder"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_COMMAND_ON): cv.string,
-    vol.Required(CONF_COMMAND_OFF): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_COMMAND_ON): cv.string,
+        vol.Required(CONF_COMMAND_OFF): cv.string,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the ZoneMinder switch platform."""
     from zoneminder.monitor import MonitorState
+
     on_state = MonitorState(config.get(CONF_COMMAND_ON))
     off_state = MonitorState(config.get(CONF_COMMAND_OFF))
 
@@ -33,7 +36,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     monitors = zm_client.get_monitors()
     if not monitors:
-        _LOGGER.warning('Could not fetch monitors from ZoneMinder')
+        _LOGGER.warning("Could not fetch monitors from ZoneMinder")
         return
 
     switches = []
@@ -45,7 +48,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class ZMSwitchMonitors(SwitchDevice):
     """Representation of a ZoneMinder switch."""
 
-    icon = 'mdi:record-rec'
+    icon = "mdi:record-rec"
 
     def __init__(self, monitor, on_state, off_state):
         """Initialize the switch."""
@@ -57,7 +60,7 @@ class ZMSwitchMonitors(SwitchDevice):
     @property
     def name(self):
         """Return the name of the switch."""
-        return '{}\'s State'.format(self._monitor.name)
+        return "{}'s State".format(self._monitor.name)
 
     def update(self):
         """Update the switch value."""

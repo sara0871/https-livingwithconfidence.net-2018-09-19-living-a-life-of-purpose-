@@ -9,14 +9,24 @@ from datetime import timedelta
 import voluptuous as vol
 
 from homeassistant.components.climate import (
-    ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_OFF,
-    STATE_AUTO, SUPPORT_AUX_HEAT, SUPPORT_OPERATION_MODE,
-    SUPPORT_TARGET_TEMPERATURE)
+    ClimateDevice,
+    PLATFORM_SCHEMA,
+    STATE_HEAT,
+    STATE_OFF,
+    STATE_AUTO,
+    SUPPORT_AUX_HEAT,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+)
 from homeassistant.const import (
-    TEMP_CELSIUS, CONF_USERNAME, CONF_PASSWORD, ATTR_TEMPERATURE)
+    TEMP_CELSIUS,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    ATTR_TEMPERATURE,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['pyephember==0.2.0']
+REQUIREMENTS = ["pyephember==0.2.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,16 +35,11 @@ SCAN_INTERVAL = timedelta(seconds=120)
 
 OPERATION_LIST = [STATE_AUTO, STATE_HEAT, STATE_OFF]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_USERNAME): cv.string, vol.Required(CONF_PASSWORD): cv.string}
+)
 
-EPH_TO_HA_STATE = {
-    'AUTO': STATE_AUTO,
-    'ON': STATE_HEAT,
-    'OFF': STATE_OFF
-}
+EPH_TO_HA_STATE = {"AUTO": STATE_AUTO, "ON": STATE_HEAT, "OFF": STATE_OFF}
 
 HA_STATE_TO_EPH = {value: key for key, value in EPH_TO_HA_STATE.items()}
 
@@ -64,9 +69,9 @@ class EphEmberThermostat(ClimateDevice):
     def __init__(self, ember, zone):
         """Initialize the thermostat."""
         self._ember = ember
-        self._zone_name = zone['name']
+        self._zone_name = zone["name"]
         self._zone = zone
-        self._hot_water = zone['isHotWater']
+        self._hot_water = zone["isHotWater"]
 
     @property
     def supported_features(self):
@@ -74,9 +79,7 @@ class EphEmberThermostat(ClimateDevice):
         if self._hot_water:
             return SUPPORT_AUX_HEAT | SUPPORT_OPERATION_MODE
 
-        return (SUPPORT_TARGET_TEMPERATURE |
-                SUPPORT_AUX_HEAT |
-                SUPPORT_OPERATION_MODE)
+        return SUPPORT_TARGET_TEMPERATURE | SUPPORT_AUX_HEAT | SUPPORT_OPERATION_MODE
 
     @property
     def name(self):
@@ -91,12 +94,12 @@ class EphEmberThermostat(ClimateDevice):
     @property
     def current_temperature(self):
         """Return the current temperature."""
-        return self._zone['currentTemperature']
+        return self._zone["currentTemperature"]
 
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
-        return self._zone['targetTemperature']
+        return self._zone["targetTemperature"]
 
     @property
     def target_temperature_step(self):
@@ -109,9 +112,7 @@ class EphEmberThermostat(ClimateDevice):
     @property
     def device_state_attributes(self):
         """Show Device Attributes."""
-        attributes = {
-            'currently_active': self._zone['isCurrentlyActive']
-        }
+        attributes = {"currently_active": self._zone["isCurrentlyActive"]}
         return attributes
 
     @property
@@ -136,7 +137,7 @@ class EphEmberThermostat(ClimateDevice):
     @property
     def is_on(self):
         """Return current state."""
-        if self._zone['isCurrentlyActive']:
+        if self._zone["isCurrentlyActive"]:
             return True
 
         return None
@@ -144,12 +145,13 @@ class EphEmberThermostat(ClimateDevice):
     @property
     def is_aux_heat_on(self):
         """Return true if aux heater."""
-        return self._zone['isBoostActive']
+        return self._zone["isBoostActive"]
 
     def turn_aux_heat_on(self):
         """Turn auxiliary heater on."""
         self._ember.activate_boost_by_name(
-            self._zone_name, self._zone['targetTemperature'])
+            self._zone_name, self._zone["targetTemperature"]
+        )
 
     def turn_aux_heat_off(self):
         """Turn auxiliary heater off."""
@@ -170,15 +172,14 @@ class EphEmberThermostat(ClimateDevice):
         if temperature > self.max_temp or temperature < self.min_temp:
             return
 
-        self._ember.set_target_temperture_by_name(self._zone_name,
-                                                  int(temperature))
+        self._ember.set_target_temperture_by_name(self._zone_name, int(temperature))
 
     @property
     def min_temp(self):
         """Return the minimum temperature."""
         # Hot water temp doesn't support being changed
         if self._hot_water:
-            return self._zone['targetTemperature']
+            return self._zone["targetTemperature"]
 
         return 5
 
@@ -186,7 +187,7 @@ class EphEmberThermostat(ClimateDevice):
     def max_temp(self):
         """Return the maximum temperature."""
         if self._hot_water:
-            return self._zone['targetTemperature']
+            return self._zone["targetTemperature"]
 
         return 35
 
@@ -198,6 +199,7 @@ class EphEmberThermostat(ClimateDevice):
     def map_mode_hass_eph(operation_mode):
         """Map from home assistant mode to eph mode."""
         from pyephember.pyephember import ZoneMode
+
         return getattr(ZoneMode, HA_STATE_TO_EPH.get(operation_mode), None)
 
     @staticmethod

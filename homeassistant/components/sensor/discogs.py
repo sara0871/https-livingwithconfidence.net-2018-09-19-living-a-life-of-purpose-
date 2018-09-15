@@ -16,29 +16,30 @@ from homeassistant.helpers.aiohttp_client import SERVER_SOFTWARE
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['discogs_client==2.2.1']
+REQUIREMENTS = ["discogs_client==2.2.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_IDENTITY = 'identity'
+ATTR_IDENTITY = "identity"
 
 CONF_ATTRIBUTION = "Data provided by Discogs"
 
-DEFAULT_NAME = 'Discogs'
+DEFAULT_NAME = "Discogs"
 
-ICON = 'mdi:album'
+ICON = "mdi:album"
 
 SCAN_INTERVAL = timedelta(hours=2)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_TOKEN): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_TOKEN): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Discogs sensor."""
     import discogs_client
 
@@ -82,15 +83,12 @@ class DiscogsSensor(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit this state is expressed in."""
-        return 'records'
+        return "records"
 
     @property
     def device_state_attributes(self):
         """Return the state attributes of the sensor."""
-        return {
-            ATTR_ATTRIBUTION: CONF_ATTRIBUTION,
-            ATTR_IDENTITY: self._identity.name,
-        }
+        return {ATTR_ATTRIBUTION: CONF_ATTRIBUTION, ATTR_IDENTITY: self._identity.name}
 
     @asyncio.coroutine
     def async_update(self):

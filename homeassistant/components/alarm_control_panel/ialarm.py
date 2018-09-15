@@ -11,33 +11,40 @@ import voluptuous as vol
 import homeassistant.components.alarm_control_panel as alarm
 from homeassistant.components.alarm_control_panel import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_HOST, CONF_NAME, CONF_PASSWORD, CONF_USERNAME, STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED)
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_DISARMED,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['pyialarm==0.2']
+REQUIREMENTS = ["pyialarm==0.2"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'iAlarm'
+DEFAULT_NAME = "iAlarm"
 
 
 def no_application_protocol(value):
     """Validate that value is without the application protocol."""
     protocol_separator = "://"
     if not value or protocol_separator in value:
-        raise vol.Invalid(
-            'Invalid host, {} is not allowed'.format(protocol_separator))
+        raise vol.Invalid("Invalid host, {} is not allowed".format(protocol_separator))
 
     return value
 
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): vol.All(cv.string, no_application_protocol),
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): vol.All(cv.string, no_application_protocol),
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -47,7 +54,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     password = config.get(CONF_PASSWORD)
     host = config.get(CONF_HOST)
 
-    url = 'http://{}'.format(host)
+    url = "http://{}".format(host)
     ialarm = IAlarmPanel(name, username, password, url)
     add_entities([ialarm], True)
 
@@ -79,7 +86,7 @@ class IAlarmPanel(alarm.AlarmControlPanel):
     def update(self):
         """Return the state of the device."""
         status = self._client.get_status()
-        _LOGGER.debug('iAlarm status: %s', status)
+        _LOGGER.debug("iAlarm status: %s", status)
         if status:
             status = int(status)
 

@@ -15,7 +15,7 @@ from homeassistant.components.camera import Camera
 from homeassistant.components.doorbird import DOMAIN as DOORBIRD_DOMAIN
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-DEPENDENCIES = ['doorbird']
+DEPENDENCIES = ["doorbird"]
 
 _CAMERA_LAST_VISITOR = "{} Last Ring"
 _CAMERA_LAST_MOTION = "{} Last Motion"
@@ -28,25 +28,29 @@ _TIMEOUT = 10  # seconds
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the DoorBird camera platform."""
     for doorstation in hass.data[DOORBIRD_DOMAIN]:
         device = doorstation.device
-        async_add_entities([
-            DoorBirdCamera(
-                device.live_image_url,
-                _CAMERA_LIVE.format(doorstation.name),
-                _LIVE_INTERVAL),
-            DoorBirdCamera(
-                device.history_image_url(1, 'doorbell'),
-                _CAMERA_LAST_VISITOR.format(doorstation.name),
-                _LAST_VISITOR_INTERVAL),
-            DoorBirdCamera(
-                device.history_image_url(1, 'motionsensor'),
-                _CAMERA_LAST_MOTION.format(doorstation.name),
-                _LAST_MOTION_INTERVAL),
-        ])
+        async_add_entities(
+            [
+                DoorBirdCamera(
+                    device.live_image_url,
+                    _CAMERA_LIVE.format(doorstation.name),
+                    _LIVE_INTERVAL,
+                ),
+                DoorBirdCamera(
+                    device.history_image_url(1, "doorbell"),
+                    _CAMERA_LAST_VISITOR.format(doorstation.name),
+                    _LAST_VISITOR_INTERVAL,
+                ),
+                DoorBirdCamera(
+                    device.history_image_url(1, "motionsensor"),
+                    _CAMERA_LAST_MOTION.format(doorstation.name),
+                    _LAST_MOTION_INTERVAL,
+                ),
+            ]
+        )
 
 
 class DoorBirdCamera(Camera):

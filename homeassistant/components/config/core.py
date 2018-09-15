@@ -15,17 +15,14 @@ def async_setup(hass):
 class CheckConfigView(HomeAssistantView):
     """Hassbian packages endpoint."""
 
-    url = '/api/config/core/check_config'
-    name = 'api:config:core:check_config'
+    url = "/api/config/core/check_config"
+    name = "api:config:core:check_config"
 
     @asyncio.coroutine
     def post(self, request):
         """Validate configuration and return results."""
-        errors = yield from async_check_ha_config_file(request.app['hass'])
+        errors = yield from async_check_ha_config_file(request.app["hass"])
 
-        state = 'invalid' if errors else 'valid'
+        state = "invalid" if errors else "valid"
 
-        return self.json({
-            "result": state,
-            "errors": errors,
-        })
+        return self.json({"result": state, "errors": errors})

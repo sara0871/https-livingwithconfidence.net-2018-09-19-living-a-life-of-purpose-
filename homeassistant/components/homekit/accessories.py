@@ -8,26 +8,33 @@ from pyhap.accessory import Accessory, Bridge
 from pyhap.accessory_driver import AccessoryDriver
 from pyhap.const import CATEGORY_OTHER
 
-from homeassistant.const import (
-    __version__, ATTR_BATTERY_CHARGING, ATTR_BATTERY_LEVEL)
+from homeassistant.const import __version__, ATTR_BATTERY_CHARGING, ATTR_BATTERY_LEVEL
 from homeassistant.core import callback as ha_callback
 from homeassistant.core import split_entity_id
 from homeassistant.helpers.event import (
-    async_track_state_change, track_point_in_utc_time)
+    async_track_state_change,
+    track_point_in_utc_time,
+)
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    BRIDGE_MODEL, BRIDGE_SERIAL_NUMBER, CHAR_BATTERY_LEVEL,
-    CHAR_CHARGING_STATE, CHAR_STATUS_LOW_BATTERY, DEBOUNCE_TIMEOUT,
-    MANUFACTURER, SERV_BATTERY_SERVICE)
-from .util import (
-    convert_to_float, show_setup_message, dismiss_setup_message)
+    BRIDGE_MODEL,
+    BRIDGE_SERIAL_NUMBER,
+    CHAR_BATTERY_LEVEL,
+    CHAR_CHARGING_STATE,
+    CHAR_STATUS_LOW_BATTERY,
+    DEBOUNCE_TIMEOUT,
+    MANUFACTURER,
+    SERV_BATTERY_SERVICE,
+)
+from .util import convert_to_float, show_setup_message, dismiss_setup_message
 
 _LOGGER = logging.getLogger(__name__)
 
 
 def debounce(func):
     """Decorate function to debounce callbacks from HomeKit."""
+
     @ha_callback
     def call_later_listener(self, *args):
         """Handle call_later callback."""
@@ -42,11 +49,14 @@ def debounce(func):
         if debounce_params:
             debounce_params[0]()  # remove listener
         remove_listener = track_point_in_utc_time(
-            self.hass, partial(call_later_listener, self),
-            dt_util.utcnow() + timedelta(seconds=DEBOUNCE_TIMEOUT))
+            self.hass,
+            partial(call_later_listener, self),
+            dt_util.utcnow() + timedelta(seconds=DEBOUNCE_TIMEOUT),
+        )
         self.debounce[func.__name__] = (remove_listener, *args)
-        logger.debug('%s: Start %s timeout', self.entity_id,
-                     func.__name__.replace('set_', ''))
+        logger.debug(
+            "%s: Start %s timeout", self.entity_id, func.__name__.replace("set_", "")
+        )
 
     name = getmodule(func).__name__
     logger = logging.getLogger(name)
@@ -56,14 +66,18 @@ def debounce(func):
 class HomeAccessory(Accessory):
     """Adapter class for Accessory."""
 
-    def __init__(self, hass, driver, name, entity_id, aid, config,
-                 category=CATEGORY_OTHER):
+    def __init__(
+        self, hass, driver, name, entity_id, aid, config, category=CATEGORY_OTHER
+    ):
         """Initialize a Accessory object."""
         super().__init__(driver, name, aid=aid)
         model = split_entity_id(entity_id)[0].replace("_", " ").title()
         self.set_info_service(
-            firmware_revision=__version__, manufacturer=MANUFACTURER,
-            model=model, serial_number=entity_id)
+            firmware_revision=__version__,
+            manufacturer=MANUFACTURER,
+            model=model,
+            serial_number=entity_id,
+        )
         self.category = category
         self.config = config
         self.entity_id = entity_id
@@ -73,19 +87,19 @@ class HomeAccessory(Accessory):
         self._support_battery_charging = True
 
         """Add battery service if available"""
-        battery_level = self.hass.states.get(self.entity_id).attributes \
-            .get(ATTR_BATTERY_LEVEL)
+        battery_level = self.hass.states.get(self.entity_id).attributes.get(
+            ATTR_BATTERY_LEVEL
+        )
         if battery_level is None:
             return
-        _LOGGER.debug('%s: Found battery level attribute', self.entity_id)
+        _LOGGER.debug("%s: Found battery level attribute", self.entity_id)
         self._support_battery_level = True
         serv_battery = self.add_preload_service(SERV_BATTERY_SERVICE)
-        self._char_battery = serv_battery.configure_char(
-            CHAR_BATTERY_LEVEL, value=0)
-        self._char_charging = serv_battery.configure_char(
-            CHAR_CHARGING_STATE, value=2)
+        self._char_battery = serv_battery.configure_char(CHAR_BATTERY_LEVEL, value=0)
+        self._char_charging = serv_battery.configure_char(CHAR_CHARGING_STATE, value=2)
         self._char_low_battery = serv_battery.configure_char(
-            CHAR_STATUS_LOW_BATTERY, value=0)
+            CHAR_STATUS_LOW_BATTERY, value=0
+        )
 
     async def run(self):
         """Handle accessory driver started event.
@@ -94,14 +108,12 @@ class HomeAccessory(Accessory):
         """
         state = self.hass.states.get(self.entity_id)
         self.hass.add_job(self.update_state_callback, None, None, state)
-        async_track_state_change(
-            self.hass, self.entity_id, self.update_state_callback)
+        async_track_state_change(self.hass, self.entity_id, self.update_state_callback)
 
     @ha_callback
-    def update_state_callback(self, entity_id=None, old_state=None,
-                              new_state=None):
+    def update_state_callback(self, entity_id=None, old_state=None, new_state=None):
         """Handle state change listener callback."""
-        _LOGGER.debug('New_state: %s', new_state)
+        _LOGGER.debug("New_state: %s", new_state)
         if new_state is None:
             return
         if self._support_battery_level:
@@ -113,12 +125,10 @@ class HomeAccessory(Accessory):
 
         Only call this function if self._support_battery_level is True.
         """
-        battery_level = convert_to_float(
-            new_state.attributes.get(ATTR_BATTERY_LEVEL))
+        battery_level = convert_to_float(new_state.attributes.get(ATTR_BATTERY_LEVEL))
         self._char_battery.set_value(battery_level)
         self._char_low_battery.set_value(battery_level < 20)
-        _LOGGER.debug('%s: Updated battery level to %d', self.entity_id,
-                      battery_level)
+        _LOGGER.debug("%s: Updated battery level to %d", self.entity_id, battery_level)
         if not self._support_battery_charging:
             return
         charging = new_state.attributes.get(ATTR_BATTERY_CHARGING)
@@ -127,8 +137,7 @@ class HomeAccessory(Accessory):
             return
         hk_charging = 1 if charging is True else 0
         self._char_charging.set_value(hk_charging)
-        _LOGGER.debug('%s: Updated battery charging to %d', self.entity_id,
-                      hk_charging)
+        _LOGGER.debug("%s: Updated battery charging to %d", self.entity_id, hk_charging)
 
     def update_state(self, new_state):
         """Handle state change to update HomeKit value.
@@ -145,8 +154,11 @@ class HomeBridge(Bridge):
         """Initialize a Bridge object."""
         super().__init__(driver, name)
         self.set_info_service(
-            firmware_revision=__version__, manufacturer=MANUFACTURER,
-            model=BRIDGE_MODEL, serial_number=BRIDGE_SERIAL_NUMBER)
+            firmware_revision=__version__,
+            manufacturer=MANUFACTURER,
+            model=BRIDGE_MODEL,
+            serial_number=BRIDGE_SERIAL_NUMBER,
+        )
         self.hass = hass
 
     def setup_message(self):

@@ -11,15 +11,21 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.ring import (
-    CONF_ATTRIBUTION, DEFAULT_ENTITY_NAMESPACE, DATA_RING)
+    CONF_ATTRIBUTION,
+    DEFAULT_ENTITY_NAMESPACE,
+    DATA_RING,
+)
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_ENTITY_NAMESPACE, CONF_MONITORED_CONDITIONS,
-    STATE_UNKNOWN, ATTR_ATTRIBUTION)
+    CONF_ENTITY_NAMESPACE,
+    CONF_MONITORED_CONDITIONS,
+    STATE_UNKNOWN,
+    ATTR_ATTRIBUTION,
+)
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.icon import icon_for_battery_level
 
-DEPENDENCIES = ['ring']
+DEPENDENCIES = ["ring"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,38 +33,55 @@ SCAN_INTERVAL = timedelta(seconds=30)
 
 # Sensor types: Name, category, units, icon, kind
 SENSOR_TYPES = {
-    'battery': [
-        'Battery', ['doorbell', 'stickup_cams'], '%', 'battery-50', None],
-
-    'last_activity': [
-        'Last Activity', ['doorbell', 'stickup_cams'], None, 'history', None],
-
-    'last_ding': [
-        'Last Ding', ['doorbell'], None, 'history', 'ding'],
-
-    'last_motion': [
-        'Last Motion', ['doorbell', 'stickup_cams'], None,
-        'history', 'motion'],
-
-    'volume': [
-        'Volume', ['chime', 'doorbell', 'stickup_cams'], None,
-        'bell-ring', None],
-
-    'wifi_signal_category': [
-        'WiFi Signal Category', ['chime', 'doorbell', 'stickup_cams'], None,
-        'wifi', None],
-
-    'wifi_signal_strength': [
-        'WiFi Signal Strength', ['chime', 'doorbell', 'stickup_cams'], 'dBm',
-        'wifi', None],
+    "battery": ["Battery", ["doorbell", "stickup_cams"], "%", "battery-50", None],
+    "last_activity": [
+        "Last Activity",
+        ["doorbell", "stickup_cams"],
+        None,
+        "history",
+        None,
+    ],
+    "last_ding": ["Last Ding", ["doorbell"], None, "history", "ding"],
+    "last_motion": [
+        "Last Motion",
+        ["doorbell", "stickup_cams"],
+        None,
+        "history",
+        "motion",
+    ],
+    "volume": [
+        "Volume",
+        ["chime", "doorbell", "stickup_cams"],
+        None,
+        "bell-ring",
+        None,
+    ],
+    "wifi_signal_category": [
+        "WiFi Signal Category",
+        ["chime", "doorbell", "stickup_cams"],
+        None,
+        "wifi",
+        None,
+    ],
+    "wifi_signal_strength": [
+        "WiFi Signal Strength",
+        ["chime", "doorbell", "stickup_cams"],
+        "dBm",
+        "wifi",
+        None,
+    ],
 }
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_ENTITY_NAMESPACE, default=DEFAULT_ENTITY_NAMESPACE):
-        cv.string,
-    vol.Required(CONF_MONITORED_CONDITIONS, default=list(SENSOR_TYPES)):
-        vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(
+            CONF_ENTITY_NAMESPACE, default=DEFAULT_ENTITY_NAMESPACE
+        ): cv.string,
+        vol.Required(CONF_MONITORED_CONDITIONS, default=list(SENSOR_TYPES)): vol.All(
+            cv.ensure_list, [vol.In(SENSOR_TYPES)]
+        ),
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -68,15 +91,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     sensors = []
     for sensor_type in config.get(CONF_MONITORED_CONDITIONS):
         for device in ring.chimes:
-            if 'chime' in SENSOR_TYPES[sensor_type][1]:
+            if "chime" in SENSOR_TYPES[sensor_type][1]:
                 sensors.append(RingSensor(hass, device, sensor_type))
 
         for device in ring.doorbells:
-            if 'doorbell' in SENSOR_TYPES[sensor_type][1]:
+            if "doorbell" in SENSOR_TYPES[sensor_type][1]:
                 sensors.append(RingSensor(hass, device, sensor_type))
 
         for device in ring.stickup_cams:
-            if 'stickup_cams' in SENSOR_TYPES[sensor_type][1]:
+            if "stickup_cams" in SENSOR_TYPES[sensor_type][1]:
                 sensors.append(RingSensor(hass, device, sensor_type))
 
     add_entities(sensors, True)
@@ -92,10 +115,11 @@ class RingSensor(Entity):
         self._sensor_type = sensor_type
         self._data = data
         self._extra = None
-        self._icon = 'mdi:{}'.format(SENSOR_TYPES.get(self._sensor_type)[3])
+        self._icon = "mdi:{}".format(SENSOR_TYPES.get(self._sensor_type)[3])
         self._kind = SENSOR_TYPES.get(self._sensor_type)[4]
         self._name = "{0} {1}".format(
-            self._data.name, SENSOR_TYPES.get(self._sensor_type)[0])
+            self._data.name, SENSOR_TYPES.get(self._sensor_type)[0]
+        )
         self._state = STATE_UNKNOWN
         self._tz = str(hass.config.time_zone)
 
@@ -115,27 +139,28 @@ class RingSensor(Entity):
         attrs = {}
 
         attrs[ATTR_ATTRIBUTION] = CONF_ATTRIBUTION
-        attrs['device_id'] = self._data.id
-        attrs['firmware'] = self._data.firmware
-        attrs['kind'] = self._data.kind
-        attrs['timezone'] = self._data.timezone
-        attrs['type'] = self._data.family
-        attrs['wifi_name'] = self._data.wifi_name
+        attrs["device_id"] = self._data.id
+        attrs["firmware"] = self._data.firmware
+        attrs["kind"] = self._data.kind
+        attrs["timezone"] = self._data.timezone
+        attrs["type"] = self._data.family
+        attrs["wifi_name"] = self._data.wifi_name
 
-        if self._extra and self._sensor_type.startswith('last_'):
-            attrs['created_at'] = self._extra['created_at']
-            attrs['answered'] = self._extra['answered']
-            attrs['recording_status'] = self._extra['recording']['status']
-            attrs['category'] = self._extra['kind']
+        if self._extra and self._sensor_type.startswith("last_"):
+            attrs["created_at"] = self._extra["created_at"]
+            attrs["answered"] = self._extra["answered"]
+            attrs["recording_status"] = self._extra["recording"]["status"]
+            attrs["category"] = self._extra["kind"]
 
         return attrs
 
     @property
     def icon(self):
         """Icon to use in the frontend, if any."""
-        if self._sensor_type == 'battery' and self._state is not STATE_UNKNOWN:
-            return icon_for_battery_level(battery_level=int(self._state),
-                                          charging=False)
+        if self._sensor_type == "battery" and self._state is not STATE_UNKNOWN:
+            return icon_for_battery_level(
+                battery_level=int(self._state), charging=False
+            )
         return self._icon
 
     @property
@@ -149,25 +174,25 @@ class RingSensor(Entity):
 
         self._data.update()
 
-        if self._sensor_type == 'volume':
+        if self._sensor_type == "volume":
             self._state = self._data.volume
 
-        if self._sensor_type == 'battery':
+        if self._sensor_type == "battery":
             self._state = self._data.battery_life
 
-        if self._sensor_type.startswith('last_'):
-            history = self._data.history(limit=5,
-                                         timezone=self._tz,
-                                         kind=self._kind,
-                                         enforce_limit=True)
+        if self._sensor_type.startswith("last_"):
+            history = self._data.history(
+                limit=5, timezone=self._tz, kind=self._kind, enforce_limit=True
+            )
             if history:
                 self._extra = history[0]
-                created_at = self._extra['created_at']
-                self._state = '{0:0>2}:{1:0>2}'.format(
-                    created_at.hour, created_at.minute)
+                created_at = self._extra["created_at"]
+                self._state = "{0:0>2}:{1:0>2}".format(
+                    created_at.hour, created_at.minute
+                )
 
-        if self._sensor_type == 'wifi_signal_category':
+        if self._sensor_type == "wifi_signal_category":
             self._state = self._data.wifi_signal_category
 
-        if self._sensor_type == 'wifi_signal_strength':
+        if self._sensor_type == "wifi_signal_strength":
             self._state = self._data.wifi_signal_strength

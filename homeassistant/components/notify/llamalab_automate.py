@@ -8,22 +8,23 @@ import logging
 import requests
 import voluptuous as vol
 
-from homeassistant.components.notify import (
-    BaseNotificationService, PLATFORM_SCHEMA)
+from homeassistant.components.notify import BaseNotificationService, PLATFORM_SCHEMA
 from homeassistant.const import CONF_API_KEY, CONF_DEVICE
 from homeassistant.helpers import config_validation as cv
 
 
 _LOGGER = logging.getLogger(__name__)
-_RESOURCE = 'https://llamalab.com/automate/cloud/message'
+_RESOURCE = "https://llamalab.com/automate/cloud/message"
 
-CONF_TO = 'to'
+CONF_TO = "to"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_API_KEY): cv.string,
-    vol.Required(CONF_TO): cv.string,
-    vol.Optional(CONF_DEVICE): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_API_KEY): cv.string,
+        vol.Required(CONF_TO): cv.string,
+        vol.Optional(CONF_DEVICE): cv.string,
+    }
+)
 
 
 def get_service(hass, config, discovery_info=None):

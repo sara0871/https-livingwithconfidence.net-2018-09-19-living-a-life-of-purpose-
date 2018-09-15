@@ -15,12 +15,30 @@ import voluptuous as vol
 
 from homeassistant import util
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_BRIGHTNESS_PCT, ATTR_COLOR_NAME, ATTR_COLOR_TEMP,
-    ATTR_EFFECT, ATTR_HS_COLOR, ATTR_KELVIN, ATTR_RGB_COLOR, ATTR_TRANSITION,
-    ATTR_XY_COLOR, COLOR_GROUP, DOMAIN, LIGHT_TURN_ON_SCHEMA, PLATFORM_SCHEMA,
-    SUPPORT_BRIGHTNESS, SUPPORT_COLOR, SUPPORT_COLOR_TEMP, SUPPORT_EFFECT,
-    SUPPORT_TRANSITION, VALID_BRIGHTNESS, VALID_BRIGHTNESS_PCT, Light,
-    preprocess_turn_on_alternatives)
+    ATTR_BRIGHTNESS,
+    ATTR_BRIGHTNESS_PCT,
+    ATTR_COLOR_NAME,
+    ATTR_COLOR_TEMP,
+    ATTR_EFFECT,
+    ATTR_HS_COLOR,
+    ATTR_KELVIN,
+    ATTR_RGB_COLOR,
+    ATTR_TRANSITION,
+    ATTR_XY_COLOR,
+    COLOR_GROUP,
+    DOMAIN,
+    LIGHT_TURN_ON_SCHEMA,
+    PLATFORM_SCHEMA,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR,
+    SUPPORT_COLOR_TEMP,
+    SUPPORT_EFFECT,
+    SUPPORT_TRANSITION,
+    VALID_BRIGHTNESS,
+    VALID_BRIGHTNESS_PCT,
+    Light,
+    preprocess_turn_on_alternatives,
+)
 from homeassistant.const import ATTR_ENTITY_ID, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
@@ -30,7 +48,7 @@ import homeassistant.util.color as color_util
 
 _LOGGER = logging.getLogger(__name__)
 
-REQUIREMENTS = ['aiolifx==0.6.3', 'aiolifx_effects==0.1.2']
+REQUIREMENTS = ["aiolifx==0.6.3", "aiolifx_effects==0.1.2"]
 
 UDP_BROADCAST_PORT = 56700
 
@@ -39,109 +57,129 @@ MESSAGE_TIMEOUT = 1.0
 MESSAGE_RETRIES = 8
 UNAVAILABLE_GRACE = 90
 
-CONF_SERVER = 'server'
-CONF_BROADCAST = 'broadcast'
+CONF_SERVER = "server"
+CONF_BROADCAST = "broadcast"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_SERVER, default='0.0.0.0'): cv.string,
-    vol.Optional(CONF_BROADCAST, default='255.255.255.255'): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_SERVER, default="0.0.0.0"): cv.string,
+        vol.Optional(CONF_BROADCAST, default="255.255.255.255"): cv.string,
+    }
+)
 
-SERVICE_LIFX_SET_STATE = 'lifx_set_state'
+SERVICE_LIFX_SET_STATE = "lifx_set_state"
 
-ATTR_INFRARED = 'infrared'
-ATTR_ZONES = 'zones'
-ATTR_POWER = 'power'
+ATTR_INFRARED = "infrared"
+ATTR_ZONES = "zones"
+ATTR_POWER = "power"
 
-LIFX_SET_STATE_SCHEMA = LIGHT_TURN_ON_SCHEMA.extend({
-    ATTR_INFRARED: vol.All(vol.Coerce(int), vol.Clamp(min=0, max=255)),
-    ATTR_ZONES: vol.All(cv.ensure_list, [cv.positive_int]),
-    ATTR_POWER: cv.boolean,
-})
+LIFX_SET_STATE_SCHEMA = LIGHT_TURN_ON_SCHEMA.extend(
+    {
+        ATTR_INFRARED: vol.All(vol.Coerce(int), vol.Clamp(min=0, max=255)),
+        ATTR_ZONES: vol.All(cv.ensure_list, [cv.positive_int]),
+        ATTR_POWER: cv.boolean,
+    }
+)
 
-SERVICE_EFFECT_PULSE = 'lifx_effect_pulse'
-SERVICE_EFFECT_COLORLOOP = 'lifx_effect_colorloop'
-SERVICE_EFFECT_STOP = 'lifx_effect_stop'
+SERVICE_EFFECT_PULSE = "lifx_effect_pulse"
+SERVICE_EFFECT_COLORLOOP = "lifx_effect_colorloop"
+SERVICE_EFFECT_STOP = "lifx_effect_stop"
 
-ATTR_POWER_ON = 'power_on'
-ATTR_MODE = 'mode'
-ATTR_PERIOD = 'period'
-ATTR_CYCLES = 'cycles'
-ATTR_SPREAD = 'spread'
-ATTR_CHANGE = 'change'
+ATTR_POWER_ON = "power_on"
+ATTR_MODE = "mode"
+ATTR_PERIOD = "period"
+ATTR_CYCLES = "cycles"
+ATTR_SPREAD = "spread"
+ATTR_CHANGE = "change"
 
-PULSE_MODE_BLINK = 'blink'
-PULSE_MODE_BREATHE = 'breathe'
-PULSE_MODE_PING = 'ping'
-PULSE_MODE_STROBE = 'strobe'
-PULSE_MODE_SOLID = 'solid'
+PULSE_MODE_BLINK = "blink"
+PULSE_MODE_BREATHE = "breathe"
+PULSE_MODE_PING = "ping"
+PULSE_MODE_STROBE = "strobe"
+PULSE_MODE_SOLID = "solid"
 
-PULSE_MODES = [PULSE_MODE_BLINK, PULSE_MODE_BREATHE, PULSE_MODE_PING,
-               PULSE_MODE_STROBE, PULSE_MODE_SOLID]
+PULSE_MODES = [
+    PULSE_MODE_BLINK,
+    PULSE_MODE_BREATHE,
+    PULSE_MODE_PING,
+    PULSE_MODE_STROBE,
+    PULSE_MODE_SOLID,
+]
 
-LIFX_EFFECT_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-    vol.Optional(ATTR_POWER_ON, default=True): cv.boolean,
-})
+LIFX_EFFECT_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Optional(ATTR_POWER_ON, default=True): cv.boolean,
+    }
+)
 
-LIFX_EFFECT_PULSE_SCHEMA = LIFX_EFFECT_SCHEMA.extend({
-    ATTR_BRIGHTNESS: VALID_BRIGHTNESS,
-    ATTR_BRIGHTNESS_PCT: VALID_BRIGHTNESS_PCT,
-    vol.Exclusive(ATTR_COLOR_NAME, COLOR_GROUP): cv.string,
-    vol.Exclusive(ATTR_RGB_COLOR, COLOR_GROUP):
-        vol.All(vol.ExactSequence((cv.byte, cv.byte, cv.byte)),
-                vol.Coerce(tuple)),
-    vol.Exclusive(ATTR_XY_COLOR, COLOR_GROUP):
-        vol.All(vol.ExactSequence((cv.small_float, cv.small_float)),
-                vol.Coerce(tuple)),
-    vol.Exclusive(ATTR_HS_COLOR, COLOR_GROUP):
-        vol.All(vol.ExactSequence(
-            (vol.All(vol.Coerce(float), vol.Range(min=0, max=360)),
-             vol.All(vol.Coerce(float), vol.Range(min=0, max=100)))),
-                vol.Coerce(tuple)),
-    vol.Exclusive(ATTR_COLOR_TEMP, COLOR_GROUP):
-        vol.All(vol.Coerce(int), vol.Range(min=1)),
-    vol.Exclusive(ATTR_KELVIN, COLOR_GROUP):
-        vol.All(vol.Coerce(int), vol.Range(min=0)),
-    ATTR_PERIOD: vol.All(vol.Coerce(float), vol.Range(min=0.05)),
-    ATTR_CYCLES: vol.All(vol.Coerce(float), vol.Range(min=1)),
-    ATTR_MODE: vol.In(PULSE_MODES),
-})
+LIFX_EFFECT_PULSE_SCHEMA = LIFX_EFFECT_SCHEMA.extend(
+    {
+        ATTR_BRIGHTNESS: VALID_BRIGHTNESS,
+        ATTR_BRIGHTNESS_PCT: VALID_BRIGHTNESS_PCT,
+        vol.Exclusive(ATTR_COLOR_NAME, COLOR_GROUP): cv.string,
+        vol.Exclusive(ATTR_RGB_COLOR, COLOR_GROUP): vol.All(
+            vol.ExactSequence((cv.byte, cv.byte, cv.byte)), vol.Coerce(tuple)
+        ),
+        vol.Exclusive(ATTR_XY_COLOR, COLOR_GROUP): vol.All(
+            vol.ExactSequence((cv.small_float, cv.small_float)), vol.Coerce(tuple)
+        ),
+        vol.Exclusive(ATTR_HS_COLOR, COLOR_GROUP): vol.All(
+            vol.ExactSequence(
+                (
+                    vol.All(vol.Coerce(float), vol.Range(min=0, max=360)),
+                    vol.All(vol.Coerce(float), vol.Range(min=0, max=100)),
+                )
+            ),
+            vol.Coerce(tuple),
+        ),
+        vol.Exclusive(ATTR_COLOR_TEMP, COLOR_GROUP): vol.All(
+            vol.Coerce(int), vol.Range(min=1)
+        ),
+        vol.Exclusive(ATTR_KELVIN, COLOR_GROUP): vol.All(
+            vol.Coerce(int), vol.Range(min=0)
+        ),
+        ATTR_PERIOD: vol.All(vol.Coerce(float), vol.Range(min=0.05)),
+        ATTR_CYCLES: vol.All(vol.Coerce(float), vol.Range(min=1)),
+        ATTR_MODE: vol.In(PULSE_MODES),
+    }
+)
 
-LIFX_EFFECT_COLORLOOP_SCHEMA = LIFX_EFFECT_SCHEMA.extend({
-    ATTR_BRIGHTNESS: VALID_BRIGHTNESS,
-    ATTR_BRIGHTNESS_PCT: VALID_BRIGHTNESS_PCT,
-    ATTR_PERIOD: vol.All(vol.Coerce(float), vol.Clamp(min=0.05)),
-    ATTR_CHANGE: vol.All(vol.Coerce(float), vol.Clamp(min=0, max=360)),
-    ATTR_SPREAD: vol.All(vol.Coerce(float), vol.Clamp(min=0, max=360)),
-    ATTR_TRANSITION: vol.All(vol.Coerce(float), vol.Range(min=0)),
-})
+LIFX_EFFECT_COLORLOOP_SCHEMA = LIFX_EFFECT_SCHEMA.extend(
+    {
+        ATTR_BRIGHTNESS: VALID_BRIGHTNESS,
+        ATTR_BRIGHTNESS_PCT: VALID_BRIGHTNESS_PCT,
+        ATTR_PERIOD: vol.All(vol.Coerce(float), vol.Clamp(min=0.05)),
+        ATTR_CHANGE: vol.All(vol.Coerce(float), vol.Clamp(min=0, max=360)),
+        ATTR_SPREAD: vol.All(vol.Coerce(float), vol.Clamp(min=0, max=360)),
+        ATTR_TRANSITION: vol.All(vol.Coerce(float), vol.Range(min=0)),
+    }
+)
 
-LIFX_EFFECT_STOP_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-})
+LIFX_EFFECT_STOP_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
 
 def aiolifx():
     """Return the aiolifx module."""
     import aiolifx as aiolifx_module
+
     return aiolifx_module
 
 
 def aiolifx_effects():
     """Return the aiolifx_effects module."""
     import aiolifx_effects as aiolifx_effects_module
+
     return aiolifx_effects_module
 
 
-async def async_setup_platform(hass,
-                               config,
-                               async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the LIFX platform."""
-    if sys.platform == 'win32':
-        _LOGGER.warning("The lifx platform is known to not work on Windows. "
-                        "Consider using the lifx_legacy platform instead")
+    if sys.platform == "win32":
+        _LOGGER.warning(
+            "The lifx platform is known to not work on Windows. "
+            "Consider using the lifx_legacy platform instead"
+        )
 
     server_addr = config.get(CONF_SERVER)
 
@@ -150,10 +188,12 @@ async def async_setup_platform(hass,
         hass.loop,
         lifx_manager,
         discovery_interval=DISCOVERY_INTERVAL,
-        broadcast_ip=config.get(CONF_BROADCAST))
+        broadcast_ip=config.get(CONF_BROADCAST),
+    )
 
     coro = hass.loop.create_datagram_endpoint(
-        lambda: lifx_discovery, local_addr=(server_addr, UDP_BROADCAST_PORT))
+        lambda: lifx_discovery, local_addr=(server_addr, UDP_BROADCAST_PORT)
+    )
 
     hass.async_add_job(coro)
 
@@ -169,13 +209,14 @@ async def async_setup_platform(hass,
 
 def lifx_features(bulb):
     """Return a feature map for this bulb, or a default map if unknown."""
-    return aiolifx().products.features_map.get(bulb.product) or \
-        aiolifx().products.features_map.get(1)
+    return aiolifx().products.features_map.get(
+        bulb.product
+    ) or aiolifx().products.features_map.get(1)
 
 
 def find_hsbk(**kwargs):
     """Find the desired color from a number of possible inputs."""
-    hue, saturation, brightness, kelvin = [None]*4
+    hue, saturation, brightness, kelvin = [None] * 4
 
     preprocess_turn_on_alternatives(kwargs)
 
@@ -186,15 +227,16 @@ def find_hsbk(**kwargs):
         kelvin = 3500
 
     if ATTR_COLOR_TEMP in kwargs:
-        kelvin = int(color_util.color_temperature_mired_to_kelvin(
-            kwargs[ATTR_COLOR_TEMP]))
+        kelvin = int(
+            color_util.color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
+        )
         saturation = 0
 
     if ATTR_BRIGHTNESS in kwargs:
         brightness = convert_8_to_16(kwargs[ATTR_BRIGHTNESS])
 
     hsbk = [hue, saturation, brightness, kelvin]
-    return None if hsbk == [None]*4 else hsbk
+    return None if hsbk == [None] * 4 else hsbk
 
 
 def merge_hsbk(base, change):
@@ -219,6 +261,7 @@ class LIFXManager:
 
     def register_set_state(self):
         """Register the LIFX set_state service call."""
+
         async def service_handler(service):
             """Apply a service."""
             tasks = []
@@ -230,29 +273,38 @@ class LIFXManager:
                 await asyncio.wait(tasks, loop=self.hass.loop)
 
         self.hass.services.async_register(
-            DOMAIN, SERVICE_LIFX_SET_STATE, service_handler,
-            schema=LIFX_SET_STATE_SCHEMA)
+            DOMAIN,
+            SERVICE_LIFX_SET_STATE,
+            service_handler,
+            schema=LIFX_SET_STATE_SCHEMA,
+        )
 
     def register_effects(self):
         """Register the LIFX effects as hass service calls."""
+
         async def service_handler(service):
             """Apply a service, i.e. start an effect."""
             entities = self.service_to_entities(service)
             if entities:
-                await self.start_effect(
-                    entities, service.service, **service.data)
+                await self.start_effect(entities, service.service, **service.data)
 
         self.hass.services.async_register(
-            DOMAIN, SERVICE_EFFECT_PULSE, service_handler,
-            schema=LIFX_EFFECT_PULSE_SCHEMA)
+            DOMAIN,
+            SERVICE_EFFECT_PULSE,
+            service_handler,
+            schema=LIFX_EFFECT_PULSE_SCHEMA,
+        )
 
         self.hass.services.async_register(
-            DOMAIN, SERVICE_EFFECT_COLORLOOP, service_handler,
-            schema=LIFX_EFFECT_COLORLOOP_SCHEMA)
+            DOMAIN,
+            SERVICE_EFFECT_COLORLOOP,
+            service_handler,
+            schema=LIFX_EFFECT_COLORLOOP_SCHEMA,
+        )
 
         self.hass.services.async_register(
-            DOMAIN, SERVICE_EFFECT_STOP, service_handler,
-            schema=LIFX_EFFECT_STOP_SCHEMA)
+            DOMAIN, SERVICE_EFFECT_STOP, service_handler, schema=LIFX_EFFECT_STOP_SCHEMA
+        )
 
     async def start_effect(self, entities, service, **kwargs):
         """Start a light effect on entities."""
@@ -290,8 +342,11 @@ class LIFXManager:
         """Return the known entities that a service call mentions."""
         entity_ids = extract_entity_ids(self.hass, service)
         if entity_ids:
-            entities = [entity for entity in self.entities.values()
-                        if entity.entity_id in entity_ids]
+            entities = [
+                entity
+                for entity in self.entities.values()
+                if entity.entity_id in entity_ids
+            ]
         else:
             entities = list(self.entities.values())
 
@@ -415,13 +470,13 @@ class LIFXLight(Light):
     @property
     def min_mireds(self):
         """Return the coldest color_temp that this light supports."""
-        kelvin = lifx_features(self.bulb)['max_kelvin']
+        kelvin = lifx_features(self.bulb)["max_kelvin"]
         return math.floor(color_util.color_temperature_kelvin_to_mired(kelvin))
 
     @property
     def max_mireds(self):
         """Return the warmest color_temp that this light supports."""
-        kelvin = lifx_features(self.bulb)['min_kelvin']
+        kelvin = lifx_features(self.bulb)["min_kelvin"]
         return math.ceil(color_util.color_temperature_kelvin_to_mired(kelvin))
 
     @property
@@ -430,7 +485,7 @@ class LIFXLight(Light):
         support = SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION | SUPPORT_EFFECT
 
         bulb_features = lifx_features(self.bulb)
-        if bulb_features['min_kelvin'] != bulb_features['max_kelvin']:
+        if bulb_features["min_kelvin"] != bulb_features["max_kelvin"]:
             support |= SUPPORT_COLOR_TEMP
 
         return support
@@ -458,7 +513,7 @@ class LIFXLight(Light):
         """Return the name of the currently running effect."""
         effect = self.effects_conductor.effect(self.bulb)
         if effect:
-            return 'lifx_effect_' + effect.name
+            return "lifx_effect_" + effect.name
         return None
 
     async def update_hass(self, now=None):
@@ -478,8 +533,10 @@ class LIFXLight(Light):
         # Transition has ended
         if when > 0:
             self.postponed_update = async_track_point_in_utc_time(
-                self.hass, self.update_hass,
-                util.dt.utcnow() + timedelta(milliseconds=when))
+                self.hass,
+                self.update_hass,
+                util.dt.utcnow() + timedelta(milliseconds=when),
+            )
 
     async def async_turn_on(self, **kwargs):
         """Turn the light on."""
@@ -552,9 +609,7 @@ class LIFXLight(Light):
     async def default_effect(self, **kwargs):
         """Start an effect with default parameters."""
         service = kwargs[ATTR_EFFECT]
-        data = {
-            ATTR_ENTITY_ID: self.entity_id,
-        }
+        data = {ATTR_ENTITY_ID: self.entity_id}
         await self.hass.services.async_call(DOMAIN, service, data)
 
     async def async_update(self):
@@ -569,10 +624,7 @@ class LIFXWhite(LIFXLight):
     @property
     def effect_list(self):
         """Return the list of supported effects for this light."""
-        return [
-            SERVICE_EFFECT_PULSE,
-            SERVICE_EFFECT_STOP,
-        ]
+        return [SERVICE_EFFECT_PULSE, SERVICE_EFFECT_STOP]
 
 
 class LIFXColor(LIFXLight):
@@ -588,11 +640,7 @@ class LIFXColor(LIFXLight):
     @property
     def effect_list(self):
         """Return the list of supported effects for this light."""
-        return [
-            SERVICE_EFFECT_COLORLOOP,
-            SERVICE_EFFECT_PULSE,
-            SERVICE_EFFECT_STOP,
-        ]
+        return [SERVICE_EFFECT_COLORLOOP, SERVICE_EFFECT_PULSE, SERVICE_EFFECT_STOP]
 
     @property
     def hs_color(self):
@@ -634,13 +682,15 @@ class LIFXStrip(LIFXColor):
         # Send new color to each zone
         for index, zone in enumerate(zones):
             zone_hsbk = merge_hsbk(bulb.color_zones[zone], hsbk)
-            apply = 1 if (index == len(zones)-1) else 0
-            set_zone = partial(bulb.set_color_zones,
-                               start_index=zone,
-                               end_index=zone,
-                               color=zone_hsbk,
-                               duration=duration,
-                               apply=apply)
+            apply = 1 if (index == len(zones) - 1) else 0
+            set_zone = partial(
+                bulb.set_color_zones,
+                start_index=zone,
+                end_index=zone,
+                color=zone_hsbk,
+                duration=duration,
+                apply=apply,
+            )
             await ack(set_zone)
 
     async def async_update(self):
@@ -655,9 +705,9 @@ class LIFXStrip(LIFXColor):
         top = 1
         while self.available and zone < top:
             # Each get_color_zones can update 8 zones at once
-            resp = await AwaitAioLIFX().wait(partial(
-                self.bulb.get_color_zones,
-                start_index=zone))
+            resp = await AwaitAioLIFX().wait(
+                partial(self.bulb.get_color_zones, start_index=zone)
+            )
             if resp:
                 zone += 8
                 top = resp.count

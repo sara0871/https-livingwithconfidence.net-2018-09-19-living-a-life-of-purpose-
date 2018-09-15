@@ -12,7 +12,7 @@ from homeassistant.util import dt as dt_util
 from . import models
 
 STORAGE_VERSION = 1
-STORAGE_KEY = 'auth'
+STORAGE_KEY = "auth"
 
 
 class AuthStore:
@@ -47,27 +47,28 @@ class AuthStore:
         return self._users.get(user_id)
 
     async def async_create_user(
-            self, name: Optional[str], is_owner: Optional[bool] = None,
-            is_active: Optional[bool] = None,
-            system_generated: Optional[bool] = None,
-            credentials: Optional[models.Credentials] = None) -> models.User:
+        self,
+        name: Optional[str],
+        is_owner: Optional[bool] = None,
+        is_active: Optional[bool] = None,
+        system_generated: Optional[bool] = None,
+        credentials: Optional[models.Credentials] = None,
+    ) -> models.User:
         """Create a new user."""
         if self._users is None:
             await self._async_load()
             assert self._users is not None
 
-        kwargs = {
-            'name': name
-        }  # type: Dict[str, Any]
+        kwargs = {"name": name}  # type: Dict[str, Any]
 
         if is_owner is not None:
-            kwargs['is_owner'] = is_owner
+            kwargs["is_owner"] = is_owner
 
         if is_active is not None:
-            kwargs['is_active'] = is_active
+            kwargs["is_active"] = is_active
 
         if system_generated is not None:
-            kwargs['system_generated'] = system_generated
+            kwargs["system_generated"] = system_generated
 
         new_user = models.User(**kwargs)
 
@@ -81,8 +82,9 @@ class AuthStore:
         await self.async_link_user(new_user, credentials)
         return new_user
 
-    async def async_link_user(self, user: models.User,
-                              credentials: models.Credentials) -> None:
+    async def async_link_user(
+        self, user: models.User, credentials: models.Credentials
+    ) -> None:
         """Add credentials to an existing user."""
         user.credentials.append(credentials)
         self._async_schedule_save()
@@ -107,8 +109,7 @@ class AuthStore:
         user.is_active = False
         self._async_schedule_save()
 
-    async def async_remove_credentials(
-            self, credentials: models.Credentials) -> None:
+    async def async_remove_credentials(self, credentials: models.Credentials) -> None:
         """Remove credentials."""
         if self._users is None:
             await self._async_load()
@@ -129,23 +130,25 @@ class AuthStore:
         self._async_schedule_save()
 
     async def async_create_refresh_token(
-            self, user: models.User, client_id: Optional[str] = None,
-            client_name: Optional[str] = None,
-            client_icon: Optional[str] = None,
-            token_type: str = models.TOKEN_TYPE_NORMAL,
-            access_token_expiration: timedelta = ACCESS_TOKEN_EXPIRATION) \
-            -> models.RefreshToken:
+        self,
+        user: models.User,
+        client_id: Optional[str] = None,
+        client_name: Optional[str] = None,
+        client_icon: Optional[str] = None,
+        token_type: str = models.TOKEN_TYPE_NORMAL,
+        access_token_expiration: timedelta = ACCESS_TOKEN_EXPIRATION,
+    ) -> models.RefreshToken:
         """Create a new token for a user."""
         kwargs = {
-            'user': user,
-            'client_id': client_id,
-            'token_type': token_type,
-            'access_token_expiration': access_token_expiration
+            "user": user,
+            "client_id": client_id,
+            "token_type": token_type,
+            "access_token_expiration": access_token_expiration,
         }  # type: Dict[str, Any]
         if client_name:
-            kwargs['client_name'] = client_name
+            kwargs["client_name"] = client_name
         if client_icon:
-            kwargs['client_icon'] = client_icon
+            kwargs["client_icon"] = client_icon
 
         refresh_token = models.RefreshToken(**kwargs)
         user.refresh_tokens[refresh_token.id] = refresh_token
@@ -154,7 +157,8 @@ class AuthStore:
         return refresh_token
 
     async def async_remove_refresh_token(
-            self, refresh_token: models.RefreshToken) -> None:
+        self, refresh_token: models.RefreshToken
+    ) -> None:
         """Remove a refresh token."""
         if self._users is None:
             await self._async_load()
@@ -166,7 +170,8 @@ class AuthStore:
                 break
 
     async def async_get_refresh_token(
-            self, token_id: str) -> Optional[models.RefreshToken]:
+        self, token_id: str
+    ) -> Optional[models.RefreshToken]:
         """Get refresh token by id."""
         if self._users is None:
             await self._async_load()
@@ -180,7 +185,8 @@ class AuthStore:
         return None
 
     async def async_get_refresh_token_by_token(
-            self, token: str) -> Optional[models.RefreshToken]:
+        self, token: str
+    ) -> Optional[models.RefreshToken]:
         """Get refresh token by token."""
         if self._users is None:
             await self._async_load()
@@ -197,8 +203,8 @@ class AuthStore:
 
     @callback
     def async_log_refresh_token_usage(
-            self, refresh_token: models.RefreshToken,
-            remote_ip: Optional[str] = None) -> None:
+        self, refresh_token: models.RefreshToken, remote_ip: Optional[str] = None
+    ) -> None:
         """Update refresh token last used information."""
         refresh_token.last_used_at = dt_util.utcnow()
         refresh_token.last_used_ip = remote_ip
@@ -219,61 +225,66 @@ class AuthStore:
             self._users = users
             return
 
-        for user_dict in data['users']:
-            users[user_dict['id']] = models.User(**user_dict)
+        for user_dict in data["users"]:
+            users[user_dict["id"]] = models.User(**user_dict)
 
-        for cred_dict in data['credentials']:
-            users[cred_dict['user_id']].credentials.append(models.Credentials(
-                id=cred_dict['id'],
-                is_new=False,
-                auth_provider_type=cred_dict['auth_provider_type'],
-                auth_provider_id=cred_dict['auth_provider_id'],
-                data=cred_dict['data'],
-            ))
+        for cred_dict in data["credentials"]:
+            users[cred_dict["user_id"]].credentials.append(
+                models.Credentials(
+                    id=cred_dict["id"],
+                    is_new=False,
+                    auth_provider_type=cred_dict["auth_provider_type"],
+                    auth_provider_id=cred_dict["auth_provider_id"],
+                    data=cred_dict["data"],
+                )
+            )
 
-        for rt_dict in data['refresh_tokens']:
+        for rt_dict in data["refresh_tokens"]:
             # Filter out the old keys that don't have jwt_key (pre-0.76)
-            if 'jwt_key' not in rt_dict:
+            if "jwt_key" not in rt_dict:
                 continue
 
-            created_at = dt_util.parse_datetime(rt_dict['created_at'])
+            created_at = dt_util.parse_datetime(rt_dict["created_at"])
             if created_at is None:
                 getLogger(__name__).error(
-                    'Ignoring refresh token %(id)s with invalid created_at '
-                    '%(created_at)s for user_id %(user_id)s', rt_dict)
+                    "Ignoring refresh token %(id)s with invalid created_at "
+                    "%(created_at)s for user_id %(user_id)s",
+                    rt_dict,
+                )
                 continue
 
-            token_type = rt_dict.get('token_type')
+            token_type = rt_dict.get("token_type")
             if token_type is None:
-                if rt_dict['client_id'] is None:
+                if rt_dict["client_id"] is None:
                     token_type = models.TOKEN_TYPE_SYSTEM
                 else:
                     token_type = models.TOKEN_TYPE_NORMAL
 
             # old refresh_token don't have last_used_at (pre-0.78)
-            last_used_at_str = rt_dict.get('last_used_at')
+            last_used_at_str = rt_dict.get("last_used_at")
             if last_used_at_str:
                 last_used_at = dt_util.parse_datetime(last_used_at_str)
             else:
                 last_used_at = None
 
             token = models.RefreshToken(
-                id=rt_dict['id'],
-                user=users[rt_dict['user_id']],
-                client_id=rt_dict['client_id'],
+                id=rt_dict["id"],
+                user=users[rt_dict["user_id"]],
+                client_id=rt_dict["client_id"],
                 # use dict.get to keep backward compatibility
-                client_name=rt_dict.get('client_name'),
-                client_icon=rt_dict.get('client_icon'),
+                client_name=rt_dict.get("client_name"),
+                client_icon=rt_dict.get("client_icon"),
                 token_type=token_type,
                 created_at=created_at,
                 access_token_expiration=timedelta(
-                    seconds=rt_dict['access_token_expiration']),
-                token=rt_dict['token'],
-                jwt_key=rt_dict['jwt_key'],
+                    seconds=rt_dict["access_token_expiration"]
+                ),
+                token=rt_dict["token"],
+                jwt_key=rt_dict["jwt_key"],
                 last_used_at=last_used_at,
-                last_used_ip=rt_dict.get('last_used_ip'),
+                last_used_ip=rt_dict.get("last_used_ip"),
             )
-            users[rt_dict['user_id']].refresh_tokens[token.id] = token
+            users[rt_dict["user_id"]].refresh_tokens[token.id] = token
 
         self._users = users
 
@@ -292,22 +303,22 @@ class AuthStore:
 
         users = [
             {
-                'id': user.id,
-                'is_owner': user.is_owner,
-                'is_active': user.is_active,
-                'name': user.name,
-                'system_generated': user.system_generated,
+                "id": user.id,
+                "is_owner": user.is_owner,
+                "is_active": user.is_active,
+                "name": user.name,
+                "system_generated": user.system_generated,
             }
             for user in self._users.values()
         ]
 
         credentials = [
             {
-                'id': credential.id,
-                'user_id': user.id,
-                'auth_provider_type': credential.auth_provider_type,
-                'auth_provider_id': credential.auth_provider_id,
-                'data': credential.data,
+                "id": credential.id,
+                "user_id": user.id,
+                "auth_provider_type": credential.auth_provider_type,
+                "auth_provider_id": credential.auth_provider_id,
+                "data": credential.data,
             }
             for user in self._users.values()
             for credential in user.credentials
@@ -315,28 +326,27 @@ class AuthStore:
 
         refresh_tokens = [
             {
-                'id': refresh_token.id,
-                'user_id': user.id,
-                'client_id': refresh_token.client_id,
-                'client_name': refresh_token.client_name,
-                'client_icon': refresh_token.client_icon,
-                'token_type': refresh_token.token_type,
-                'created_at': refresh_token.created_at.isoformat(),
-                'access_token_expiration':
-                    refresh_token.access_token_expiration.total_seconds(),
-                'token': refresh_token.token,
-                'jwt_key': refresh_token.jwt_key,
-                'last_used_at':
-                    refresh_token.last_used_at.isoformat()
-                    if refresh_token.last_used_at else None,
-                'last_used_ip': refresh_token.last_used_ip,
+                "id": refresh_token.id,
+                "user_id": user.id,
+                "client_id": refresh_token.client_id,
+                "client_name": refresh_token.client_name,
+                "client_icon": refresh_token.client_icon,
+                "token_type": refresh_token.token_type,
+                "created_at": refresh_token.created_at.isoformat(),
+                "access_token_expiration": refresh_token.access_token_expiration.total_seconds(),
+                "token": refresh_token.token,
+                "jwt_key": refresh_token.jwt_key,
+                "last_used_at": refresh_token.last_used_at.isoformat()
+                if refresh_token.last_used_at
+                else None,
+                "last_used_ip": refresh_token.last_used_ip,
             }
             for user in self._users.values()
             for refresh_token in user.refresh_tokens.values()
         ]
 
         return {
-            'users': users,
-            'credentials': credentials,
-            'refresh_tokens': refresh_tokens,
+            "users": users,
+            "credentials": credentials,
+            "refresh_tokens": refresh_tokens,
         }

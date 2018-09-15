@@ -12,103 +12,115 @@ import voluptuous as vol
 
 from homeassistant.const import CONF_DEVICES, CONF_NAME, CONF_PROTOCOL
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_HS_COLOR, ATTR_EFFECT, ATTR_WHITE_VALUE,
-    EFFECT_COLORLOOP, EFFECT_RANDOM, SUPPORT_BRIGHTNESS, SUPPORT_EFFECT,
-    SUPPORT_COLOR, SUPPORT_WHITE_VALUE, Light, PLATFORM_SCHEMA)
+    ATTR_BRIGHTNESS,
+    ATTR_HS_COLOR,
+    ATTR_EFFECT,
+    ATTR_WHITE_VALUE,
+    EFFECT_COLORLOOP,
+    EFFECT_RANDOM,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_EFFECT,
+    SUPPORT_COLOR,
+    SUPPORT_WHITE_VALUE,
+    Light,
+    PLATFORM_SCHEMA,
+)
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.color as color_util
 
-REQUIREMENTS = ['flux_led==0.21']
+REQUIREMENTS = ["flux_led==0.21"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_AUTOMATIC_ADD = 'automatic_add'
-ATTR_MODE = 'mode'
+CONF_AUTOMATIC_ADD = "automatic_add"
+ATTR_MODE = "mode"
 
-DOMAIN = 'flux_led'
+DOMAIN = "flux_led"
 
-SUPPORT_FLUX_LED = (SUPPORT_BRIGHTNESS | SUPPORT_EFFECT |
-                    SUPPORT_COLOR)
+SUPPORT_FLUX_LED = SUPPORT_BRIGHTNESS | SUPPORT_EFFECT | SUPPORT_COLOR
 
-MODE_RGB = 'rgb'
-MODE_RGBW = 'rgbw'
+MODE_RGB = "rgb"
+MODE_RGBW = "rgbw"
 
 # This mode enables white value to be controlled by brightness.
 # RGB value is ignored when this mode is specified.
-MODE_WHITE = 'w'
+MODE_WHITE = "w"
 
 # List of supported effects which aren't already declared in LIGHT
-EFFECT_RED_FADE = 'red_fade'
-EFFECT_GREEN_FADE = 'green_fade'
-EFFECT_BLUE_FADE = 'blue_fade'
-EFFECT_YELLOW_FADE = 'yellow_fade'
-EFFECT_CYAN_FADE = 'cyan_fade'
-EFFECT_PURPLE_FADE = 'purple_fade'
-EFFECT_WHITE_FADE = 'white_fade'
-EFFECT_RED_GREEN_CROSS_FADE = 'rg_cross_fade'
-EFFECT_RED_BLUE_CROSS_FADE = 'rb_cross_fade'
-EFFECT_GREEN_BLUE_CROSS_FADE = 'gb_cross_fade'
-EFFECT_COLORSTROBE = 'colorstrobe'
-EFFECT_RED_STROBE = 'red_strobe'
-EFFECT_GREEN_STROBE = 'green_strobe'
-EFFECT_BLUE_STROBE = 'blue_strobe'
-EFFECT_YELLOW_STROBE = 'yellow_strobe'
-EFFECT_CYAN_STROBE = 'cyan_strobe'
-EFFECT_PURPLE_STROBE = 'purple_strobe'
-EFFECT_WHITE_STROBE = 'white_strobe'
-EFFECT_COLORJUMP = 'colorjump'
+EFFECT_RED_FADE = "red_fade"
+EFFECT_GREEN_FADE = "green_fade"
+EFFECT_BLUE_FADE = "blue_fade"
+EFFECT_YELLOW_FADE = "yellow_fade"
+EFFECT_CYAN_FADE = "cyan_fade"
+EFFECT_PURPLE_FADE = "purple_fade"
+EFFECT_WHITE_FADE = "white_fade"
+EFFECT_RED_GREEN_CROSS_FADE = "rg_cross_fade"
+EFFECT_RED_BLUE_CROSS_FADE = "rb_cross_fade"
+EFFECT_GREEN_BLUE_CROSS_FADE = "gb_cross_fade"
+EFFECT_COLORSTROBE = "colorstrobe"
+EFFECT_RED_STROBE = "red_strobe"
+EFFECT_GREEN_STROBE = "green_strobe"
+EFFECT_BLUE_STROBE = "blue_strobe"
+EFFECT_YELLOW_STROBE = "yellow_strobe"
+EFFECT_CYAN_STROBE = "cyan_strobe"
+EFFECT_PURPLE_STROBE = "purple_strobe"
+EFFECT_WHITE_STROBE = "white_strobe"
+EFFECT_COLORJUMP = "colorjump"
 
 EFFECT_MAP = {
-    EFFECT_COLORLOOP:             0x25,
-    EFFECT_RED_FADE:              0x26,
-    EFFECT_GREEN_FADE:            0x27,
-    EFFECT_BLUE_FADE:             0x28,
-    EFFECT_YELLOW_FADE:           0x29,
-    EFFECT_CYAN_FADE:             0x2a,
-    EFFECT_PURPLE_FADE:           0x2b,
-    EFFECT_WHITE_FADE:            0x2c,
-    EFFECT_RED_GREEN_CROSS_FADE:  0x2d,
-    EFFECT_RED_BLUE_CROSS_FADE:   0x2e,
+    EFFECT_COLORLOOP: 0x25,
+    EFFECT_RED_FADE: 0x26,
+    EFFECT_GREEN_FADE: 0x27,
+    EFFECT_BLUE_FADE: 0x28,
+    EFFECT_YELLOW_FADE: 0x29,
+    EFFECT_CYAN_FADE: 0x2a,
+    EFFECT_PURPLE_FADE: 0x2b,
+    EFFECT_WHITE_FADE: 0x2c,
+    EFFECT_RED_GREEN_CROSS_FADE: 0x2d,
+    EFFECT_RED_BLUE_CROSS_FADE: 0x2e,
     EFFECT_GREEN_BLUE_CROSS_FADE: 0x2f,
-    EFFECT_COLORSTROBE:           0x30,
-    EFFECT_RED_STROBE:            0x31,
-    EFFECT_GREEN_STROBE:          0x32,
-    EFFECT_BLUE_STROBE:            0x33,
-    EFFECT_YELLOW_STROBE:         0x34,
-    EFFECT_CYAN_STROBE:           0x35,
-    EFFECT_PURPLE_STROBE:         0x36,
-    EFFECT_WHITE_STROBE:          0x37,
-    EFFECT_COLORJUMP:             0x38
+    EFFECT_COLORSTROBE: 0x30,
+    EFFECT_RED_STROBE: 0x31,
+    EFFECT_GREEN_STROBE: 0x32,
+    EFFECT_BLUE_STROBE: 0x33,
+    EFFECT_YELLOW_STROBE: 0x34,
+    EFFECT_CYAN_STROBE: 0x35,
+    EFFECT_PURPLE_STROBE: 0x36,
+    EFFECT_WHITE_STROBE: 0x37,
+    EFFECT_COLORJUMP: 0x38,
 }
 
-FLUX_EFFECT_LIST = [
-    EFFECT_RANDOM,
-    ] + list(EFFECT_MAP)
+FLUX_EFFECT_LIST = [EFFECT_RANDOM] + list(EFFECT_MAP)
 
-DEVICE_SCHEMA = vol.Schema({
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(ATTR_MODE, default=MODE_RGBW):
-        vol.All(cv.string, vol.In([MODE_RGBW, MODE_RGB, MODE_WHITE])),
-    vol.Optional(CONF_PROTOCOL):
-        vol.All(cv.string, vol.In(['ledenet'])),
-})
+DEVICE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_NAME): cv.string,
+        vol.Optional(ATTR_MODE, default=MODE_RGBW): vol.All(
+            cv.string, vol.In([MODE_RGBW, MODE_RGB, MODE_WHITE])
+        ),
+        vol.Optional(CONF_PROTOCOL): vol.All(cv.string, vol.In(["ledenet"])),
+    }
+)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_DEVICES, default={}): {cv.string: DEVICE_SCHEMA},
-    vol.Optional(CONF_AUTOMATIC_ADD, default=False):  cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_DEVICES, default={}): {cv.string: DEVICE_SCHEMA},
+        vol.Optional(CONF_AUTOMATIC_ADD, default=False): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Flux lights."""
     import flux_led
+
     lights = []
     light_ips = []
 
     for ipaddr, device_config in config.get(CONF_DEVICES, {}).items():
         device = {}
-        device['name'] = device_config[CONF_NAME]
-        device['ipaddr'] = ipaddr
+        device["name"] = device_config[CONF_NAME]
+        device["ipaddr"] = ipaddr
         device[CONF_PROTOCOL] = device_config.get(CONF_PROTOCOL)
         device[ATTR_MODE] = device_config[ATTR_MODE]
         light = FluxLight(device)
@@ -123,10 +135,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     scanner = flux_led.BulbScanner()
     scanner.scan(timeout=10)
     for device in scanner.getBulbInfo():
-        ipaddr = device['ipaddr']
+        ipaddr = device["ipaddr"]
         if ipaddr in light_ips:
             continue
-        device['name'] = '{} {}'.format(device['id'], ipaddr)
+        device["name"] = "{} {}".format(device["id"], ipaddr)
         device[ATTR_MODE] = MODE_RGBW
         device[CONF_PROTOCOL] = None
         light = FluxLight(device)
@@ -140,8 +152,8 @@ class FluxLight(Light):
 
     def __init__(self, device):
         """Initialize the light."""
-        self._name = device['name']
-        self._ipaddr = device['ipaddr']
+        self._name = device["name"]
+        self._ipaddr = device["ipaddr"]
         self._protocol = device[CONF_PROTOCOL]
         self._mode = device[ATTR_MODE]
         self._bulb = None
@@ -234,14 +246,16 @@ class FluxLight(Light):
 
         # Show warning if effect set with rgb, brightness, or white level
         if effect and (brightness or white or rgb):
-            _LOGGER.warning("RGB, brightness and white level are ignored when"
-                            " an effect is specified for a flux bulb")
+            _LOGGER.warning(
+                "RGB, brightness and white level are ignored when"
+                " an effect is specified for a flux bulb"
+            )
 
         # Random color effect
         if effect == EFFECT_RANDOM:
-            self._bulb.setRgb(random.randint(0, 255),
-                              random.randint(0, 255),
-                              random.randint(0, 255))
+            self._bulb.setRgb(
+                random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+            )
             return
 
         # Effect selection
@@ -285,8 +299,9 @@ class FluxLight(Light):
             except socket.error:
                 self._disconnect()
                 if not self._error_reported:
-                    _LOGGER.warning("Failed to connect to bulb %s, %s",
-                                    self._ipaddr, self._name)
+                    _LOGGER.warning(
+                        "Failed to connect to bulb %s, %s", self._ipaddr, self._name
+                    )
                     self._error_reported = True
                 return
 

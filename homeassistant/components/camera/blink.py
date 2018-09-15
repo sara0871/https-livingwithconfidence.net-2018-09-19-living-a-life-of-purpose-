@@ -15,7 +15,7 @@ from homeassistant.util import Throttle
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['blink']
+DEPENDENCIES = ["blink"]
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=90)
 

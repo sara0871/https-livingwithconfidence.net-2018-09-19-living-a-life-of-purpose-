@@ -11,47 +11,57 @@ import socket
 import voluptuous as vol
 
 from homeassistant.components.media_player import (
-    DOMAIN, PLATFORM_SCHEMA, SUPPORT_SELECT_SOURCE, SUPPORT_VOLUME_MUTE,
-    SUPPORT_VOLUME_SET, MediaPlayerDevice)
+    DOMAIN,
+    PLATFORM_SCHEMA,
+    SUPPORT_SELECT_SOURCE,
+    SUPPORT_VOLUME_MUTE,
+    SUPPORT_VOLUME_SET,
+    MediaPlayerDevice,
+)
 from homeassistant.const import (
-    ATTR_ENTITY_ID, CONF_HOST, CONF_PORT, STATE_IDLE, STATE_OFF, STATE_ON,
-    STATE_PLAYING, STATE_UNKNOWN)
+    ATTR_ENTITY_ID,
+    CONF_HOST,
+    CONF_PORT,
+    STATE_IDLE,
+    STATE_OFF,
+    STATE_ON,
+    STATE_PLAYING,
+    STATE_UNKNOWN,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['snapcast==2.0.8']
+REQUIREMENTS = ["snapcast==2.0.8"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DATA_KEY = 'snapcast'
+DATA_KEY = "snapcast"
 
-SERVICE_SNAPSHOT = 'snapcast_snapshot'
-SERVICE_RESTORE = 'snapcast_restore'
+SERVICE_SNAPSHOT = "snapcast_snapshot"
+SERVICE_RESTORE = "snapcast_restore"
 
 SUPPORT_SNAPCAST_CLIENT = SUPPORT_VOLUME_MUTE | SUPPORT_VOLUME_SET
-SUPPORT_SNAPCAST_GROUP = SUPPORT_VOLUME_MUTE | SUPPORT_VOLUME_SET |\
-    SUPPORT_SELECT_SOURCE
+SUPPORT_SNAPCAST_GROUP = (
+    SUPPORT_VOLUME_MUTE | SUPPORT_VOLUME_SET | SUPPORT_SELECT_SOURCE
+)
 
-GROUP_PREFIX = 'snapcast_group_'
-GROUP_SUFFIX = 'Snapcast Group'
-CLIENT_PREFIX = 'snapcast_client_'
-CLIENT_SUFFIX = 'Snapcast Client'
+GROUP_PREFIX = "snapcast_group_"
+GROUP_SUFFIX = "Snapcast Group"
+CLIENT_PREFIX = "snapcast_client_"
+CLIENT_SUFFIX = "Snapcast Client"
 
-SERVICE_SCHEMA = vol.Schema({
-    ATTR_ENTITY_ID: cv.entity_ids,
-})
+SERVICE_SCHEMA = vol.Schema({ATTR_ENTITY_ID: cv.entity_ids})
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_PORT): cv.port,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_HOST): cv.string, vol.Optional(CONF_PORT): cv.port}
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Snapcast platform."""
     import snapcast.control
     from snapcast.control.server import CONTROL_PORT
+
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT, CONTROL_PORT)
 
@@ -59,8 +69,9 @@ def async_setup_platform(hass, config, async_add_entities,
     def _handle_service(service):
         """Handle services."""
         entity_ids = service.data.get(ATTR_ENTITY_ID)
-        devices = [device for device in hass.data[DATA_KEY]
-                   if device.entity_id in entity_ids]
+        devices = [
+            device for device in hass.data[DATA_KEY] if device.entity_id in entity_ids
+        ]
         for device in devices:
             if service.service == SERVICE_SNAPSHOT:
                 device.snapshot()
@@ -68,20 +79,22 @@ def async_setup_platform(hass, config, async_add_entities,
                 yield from device.async_restore()
 
     hass.services.async_register(
-        DOMAIN, SERVICE_SNAPSHOT, _handle_service, schema=SERVICE_SCHEMA)
+        DOMAIN, SERVICE_SNAPSHOT, _handle_service, schema=SERVICE_SCHEMA
+    )
     hass.services.async_register(
-        DOMAIN, SERVICE_RESTORE, _handle_service, schema=SERVICE_SCHEMA)
+        DOMAIN, SERVICE_RESTORE, _handle_service, schema=SERVICE_SCHEMA
+    )
 
     try:
         server = yield from snapcast.control.create_server(
-            hass.loop, host, port, reconnect=True)
+            hass.loop, host, port, reconnect=True
+        )
     except socket.gaierror:
-        _LOGGER.error("Could not connect to Snapcast server at %s:%d",
-                      host, port)
+        _LOGGER.error("Could not connect to Snapcast server at %s:%d", host, port)
         return
 
     # Note: Host part is needed, when using multiple snapservers
-    hpid = '{}:{}'.format(host, port)
+    hpid = "{}:{}".format(host, port)
 
     groups = [SnapcastGroupDevice(group, hpid) for group in server.groups]
     clients = [SnapcastClientDevice(client, hpid) for client in server.clients]
@@ -97,16 +110,15 @@ class SnapcastGroupDevice(MediaPlayerDevice):
         """Initialize the Snapcast group device."""
         group.set_callback(self.schedule_update_ha_state)
         self._group = group
-        self._uid = '{}{}_{}'.format(GROUP_PREFIX, uid_part,
-                                     self._group.identifier)
+        self._uid = "{}{}_{}".format(GROUP_PREFIX, uid_part, self._group.identifier)
 
     @property
     def state(self):
         """Return the state of the player."""
         return {
-            'idle': STATE_IDLE,
-            'playing': STATE_PLAYING,
-            'unknown': STATE_UNKNOWN,
+            "idle": STATE_IDLE,
+            "playing": STATE_PLAYING,
+            "unknown": STATE_UNKNOWN,
         }.get(self._group.stream_status, STATE_UNKNOWN)
 
     @property
@@ -117,7 +129,7 @@ class SnapcastGroupDevice(MediaPlayerDevice):
     @property
     def name(self):
         """Return the name of the device."""
-        return '{}{}'.format(GROUP_PREFIX, self._group.identifier)
+        return "{}{}".format(GROUP_PREFIX, self._group.identifier)
 
     @property
     def source(self):
@@ -147,10 +159,8 @@ class SnapcastGroupDevice(MediaPlayerDevice):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
-        name = '{} {}'.format(self._group.friendly_name, GROUP_SUFFIX)
-        return {
-            'friendly_name': name
-        }
+        name = "{} {}".format(self._group.friendly_name, GROUP_SUFFIX)
+        return {"friendly_name": name}
 
     @property
     def should_poll(self):
@@ -194,8 +204,7 @@ class SnapcastClientDevice(MediaPlayerDevice):
         """Initialize the Snapcast client device."""
         client.set_callback(self.schedule_update_ha_state)
         self._client = client
-        self._uid = '{}{}_{}'.format(CLIENT_PREFIX, uid_part,
-                                     self._client.identifier)
+        self._uid = "{}{}_{}".format(CLIENT_PREFIX, uid_part, self._client.identifier)
 
     @property
     def unique_id(self):
@@ -209,7 +218,7 @@ class SnapcastClientDevice(MediaPlayerDevice):
     @property
     def name(self):
         """Return the name of the device."""
-        return '{}{}'.format(CLIENT_PREFIX, self._client.identifier)
+        return "{}{}".format(CLIENT_PREFIX, self._client.identifier)
 
     @property
     def volume_level(self):
@@ -236,10 +245,8 @@ class SnapcastClientDevice(MediaPlayerDevice):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
-        name = '{} {}'.format(self._client.friendly_name, CLIENT_SUFFIX)
-        return {
-            'friendly_name': name
-        }
+        name = "{} {}".format(self._client.friendly_name, CLIENT_SUFFIX)
+        return {"friendly_name": name}
 
     @property
     def should_poll(self):

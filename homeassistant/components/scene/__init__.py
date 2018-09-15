@@ -10,24 +10,22 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.const import (
-    ATTR_ENTITY_ID, CONF_PLATFORM, SERVICE_TURN_ON)
+from homeassistant.const import ATTR_ENTITY_ID, CONF_PLATFORM, SERVICE_TURN_ON
 from homeassistant.loader import bind_hass
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.state import HASS_DOMAIN
 
-DOMAIN = 'scene'
-STATE = 'scening'
-STATES = 'states'
+DOMAIN = "scene"
+STATE = "scening"
+STATES = "states"
 
 
 def _hass_domain_validator(config):
     """Validate platform in config for homeassistant domain."""
     if CONF_PLATFORM not in config:
-        config = {
-            CONF_PLATFORM: HASS_DOMAIN, STATES: config}
+        config = {CONF_PLATFORM: HASS_DOMAIN, STATES: config}
 
     return config
 
@@ -36,12 +34,12 @@ def _platform_validator(config):
     """Validate it is a valid  platform."""
     try:
         platform = importlib.import_module(
-            'homeassistant.components.scene.{}'.format(
-                config[CONF_PLATFORM]))
+            "homeassistant.components.scene.{}".format(config[CONF_PLATFORM])
+        )
     except ImportError:
-        raise vol.Invalid('Invalid platform specified') from None
+        raise vol.Invalid("Invalid platform specified") from None
 
-    if not hasattr(platform, 'PLATFORM_SCHEMA'):
+    if not hasattr(platform, "PLATFORM_SCHEMA"):
         return config
 
     return platform.PLATFORM_SCHEMA(config)
@@ -50,15 +48,13 @@ def _platform_validator(config):
 PLATFORM_SCHEMA = vol.Schema(
     vol.All(
         _hass_domain_validator,
-        vol.Schema({
-            vol.Required(CONF_PLATFORM): str
-        }, extra=vol.ALLOW_EXTRA),
-        _platform_validator
-    ), extra=vol.ALLOW_EXTRA)
+        vol.Schema({vol.Required(CONF_PLATFORM): str}, extra=vol.ALLOW_EXTRA),
+        _platform_validator,
+    ),
+    extra=vol.ALLOW_EXTRA,
+)
 
-SCENE_SERVICE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-})
+SCENE_SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
 
 @bind_hass
@@ -88,8 +84,8 @@ async def async_setup(hass, config):
             await asyncio.wait(tasks, loop=hass.loop)
 
     hass.services.async_register(
-        DOMAIN, SERVICE_TURN_ON, async_handle_scene_service,
-        schema=SCENE_SERVICE_SCHEMA)
+        DOMAIN, SERVICE_TURN_ON, async_handle_scene_service, schema=SCENE_SERVICE_SCHEMA
+    )
 
     return True
 

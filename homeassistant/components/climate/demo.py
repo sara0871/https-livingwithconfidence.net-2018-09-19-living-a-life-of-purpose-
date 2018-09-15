@@ -5,13 +5,23 @@ For more details about this platform, please refer to the documentation
 https://home-assistant.io/components/demo/
 """
 from homeassistant.components.climate import (
-    ClimateDevice, ATTR_TARGET_TEMP_HIGH, ATTR_TARGET_TEMP_LOW,
-    SUPPORT_TARGET_TEMPERATURE, SUPPORT_TARGET_HUMIDITY,
-    SUPPORT_TARGET_HUMIDITY_LOW, SUPPORT_TARGET_HUMIDITY_HIGH,
-    SUPPORT_AWAY_MODE, SUPPORT_HOLD_MODE, SUPPORT_FAN_MODE,
-    SUPPORT_OPERATION_MODE, SUPPORT_AUX_HEAT, SUPPORT_SWING_MODE,
-    SUPPORT_TARGET_TEMPERATURE_HIGH, SUPPORT_TARGET_TEMPERATURE_LOW,
-    SUPPORT_ON_OFF)
+    ClimateDevice,
+    ATTR_TARGET_TEMP_HIGH,
+    ATTR_TARGET_TEMP_LOW,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_TARGET_HUMIDITY,
+    SUPPORT_TARGET_HUMIDITY_LOW,
+    SUPPORT_TARGET_HUMIDITY_HIGH,
+    SUPPORT_AWAY_MODE,
+    SUPPORT_HOLD_MODE,
+    SUPPORT_FAN_MODE,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_AUX_HEAT,
+    SUPPORT_SWING_MODE,
+    SUPPORT_TARGET_TEMPERATURE_HIGH,
+    SUPPORT_TARGET_TEMPERATURE_LOW,
+    SUPPORT_ON_OFF,
+)
 from homeassistant.const import TEMP_CELSIUS, TEMP_FAHRENHEIT, ATTR_TEMPERATURE
 
 SUPPORT_FLAGS = SUPPORT_TARGET_HUMIDITY_LOW | SUPPORT_TARGET_HUMIDITY_HIGH
@@ -19,31 +29,89 @@ SUPPORT_FLAGS = SUPPORT_TARGET_HUMIDITY_LOW | SUPPORT_TARGET_HUMIDITY_HIGH
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Demo climate devices."""
-    add_entities([
-        DemoClimate('HeatPump', 68, TEMP_FAHRENHEIT, None, None, 77,
-                    None, None, None, None, 'heat', None, None,
-                    None, True),
-        DemoClimate('Hvac', 21, TEMP_CELSIUS, True, None, 22, 'On High',
-                    67, 54, 'Off', 'cool', False, None, None, None),
-        DemoClimate('Ecobee', None, TEMP_CELSIUS, None, 'home', 23, 'Auto Low',
-                    None, None, 'Auto', 'auto', None, 24, 21, None)
-    ])
+    add_entities(
+        [
+            DemoClimate(
+                "HeatPump",
+                68,
+                TEMP_FAHRENHEIT,
+                None,
+                None,
+                77,
+                None,
+                None,
+                None,
+                None,
+                "heat",
+                None,
+                None,
+                None,
+                True,
+            ),
+            DemoClimate(
+                "Hvac",
+                21,
+                TEMP_CELSIUS,
+                True,
+                None,
+                22,
+                "On High",
+                67,
+                54,
+                "Off",
+                "cool",
+                False,
+                None,
+                None,
+                None,
+            ),
+            DemoClimate(
+                "Ecobee",
+                None,
+                TEMP_CELSIUS,
+                None,
+                "home",
+                23,
+                "Auto Low",
+                None,
+                None,
+                "Auto",
+                "auto",
+                None,
+                24,
+                21,
+                None,
+            ),
+        ]
+    )
 
 
 class DemoClimate(ClimateDevice):
     """Representation of a demo climate device."""
 
-    def __init__(self, name, target_temperature, unit_of_measurement,
-                 away, hold, current_temperature, current_fan_mode,
-                 target_humidity, current_humidity, current_swing_mode,
-                 current_operation, aux, target_temp_high, target_temp_low,
-                 is_on):
+    def __init__(
+        self,
+        name,
+        target_temperature,
+        unit_of_measurement,
+        away,
+        hold,
+        current_temperature,
+        current_fan_mode,
+        target_humidity,
+        current_humidity,
+        current_swing_mode,
+        current_operation,
+        aux,
+        target_temp_high,
+        target_temp_low,
+        is_on,
+    ):
         """Initialize the climate device."""
         self._name = name
         self._support_flags = SUPPORT_FLAGS
         if target_temperature is not None:
-            self._support_flags = \
-                self._support_flags | SUPPORT_TARGET_TEMPERATURE
+            self._support_flags = self._support_flags | SUPPORT_TARGET_TEMPERATURE
         if away is not None:
             self._support_flags = self._support_flags | SUPPORT_AWAY_MODE
         if hold is not None:
@@ -51,8 +119,7 @@ class DemoClimate(ClimateDevice):
         if current_fan_mode is not None:
             self._support_flags = self._support_flags | SUPPORT_FAN_MODE
         if target_humidity is not None:
-            self._support_flags = \
-                self._support_flags | SUPPORT_TARGET_HUMIDITY
+            self._support_flags = self._support_flags | SUPPORT_TARGET_HUMIDITY
         if current_swing_mode is not None:
             self._support_flags = self._support_flags | SUPPORT_SWING_MODE
         if current_operation is not None:
@@ -60,11 +127,9 @@ class DemoClimate(ClimateDevice):
         if aux is not None:
             self._support_flags = self._support_flags | SUPPORT_AUX_HEAT
         if target_temp_high is not None:
-            self._support_flags = \
-                self._support_flags | SUPPORT_TARGET_TEMPERATURE_HIGH
+            self._support_flags = self._support_flags | SUPPORT_TARGET_TEMPERATURE_HIGH
         if target_temp_low is not None:
-            self._support_flags = \
-                self._support_flags | SUPPORT_TARGET_TEMPERATURE_LOW
+            self._support_flags = self._support_flags | SUPPORT_TARGET_TEMPERATURE_LOW
         if is_on is not None:
             self._support_flags = self._support_flags | SUPPORT_ON_OFF
         self._target_temperature = target_temperature
@@ -78,9 +143,9 @@ class DemoClimate(ClimateDevice):
         self._current_operation = current_operation
         self._aux = aux
         self._current_swing_mode = current_swing_mode
-        self._fan_list = ['On Low', 'On High', 'Auto Low', 'Auto High', 'Off']
-        self._operation_list = ['heat', 'cool', 'auto', 'off']
-        self._swing_list = ['Auto', '1', '2', '3', 'Off']
+        self._fan_list = ["On Low", "On High", "Auto Low", "Auto High", "Off"]
+        self._operation_list = ["heat", "cool", "auto", "off"]
+        self._swing_list = ["Auto", "1", "2", "3", "Off"]
         self._target_temperature_high = target_temp_high
         self._target_temperature_low = target_temp_low
         self._on = is_on
@@ -179,8 +244,10 @@ class DemoClimate(ClimateDevice):
         """Set new target temperatures."""
         if kwargs.get(ATTR_TEMPERATURE) is not None:
             self._target_temperature = kwargs.get(ATTR_TEMPERATURE)
-        if kwargs.get(ATTR_TARGET_TEMP_HIGH) is not None and \
-           kwargs.get(ATTR_TARGET_TEMP_LOW) is not None:
+        if (
+            kwargs.get(ATTR_TARGET_TEMP_HIGH) is not None
+            and kwargs.get(ATTR_TARGET_TEMP_LOW) is not None
+        ):
             self._target_temperature_high = kwargs.get(ATTR_TARGET_TEMP_HIGH)
             self._target_temperature_low = kwargs.get(ATTR_TARGET_TEMP_LOW)
         self.schedule_update_ha_state()

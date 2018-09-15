@@ -8,15 +8,12 @@ from homeassistant.components import ios
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.icon import icon_for_battery_level
 
-DEPENDENCIES = ['ios']
+DEPENDENCIES = ["ios"]
 
-SENSOR_TYPES = {
-    'level': ['Battery Level', '%'],
-    'state': ['Battery State', None]
-}
+SENSOR_TYPES = {"level": ["Battery Level", "%"], "state": ["Battery State", None]}
 
-DEFAULT_ICON_LEVEL = 'mdi:battery'
-DEFAULT_ICON_STATE = 'mdi:power-plug'
+DEFAULT_ICON_LEVEL = "mdi:battery"
+DEFAULT_ICON_STATE = "mdi:power-plug"
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -28,7 +25,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up iOS from a config entry."""
     dev = list()
     for device_name, device in ios.devices(hass).items():
-        for sensor_type in ('level', 'state'):
+        for sensor_type in ("level", "state"):
             dev.append(IOSSensor(sensor_type, device_name, device))
 
     async_add_entities(dev, True)
@@ -89,8 +86,10 @@ class IOSSensor(Entity):
         battery_level = device_battery[ios.ATTR_BATTERY_LEVEL]
         charging = True
         icon_state = DEFAULT_ICON_STATE
-        if battery_state in (ios.ATTR_BATTERY_STATE_FULL,
-                             ios.ATTR_BATTERY_STATE_UNPLUGGED):
+        if battery_state in (
+            ios.ATTR_BATTERY_STATE_FULL,
+            ios.ATTR_BATTERY_STATE_UNPLUGGED,
+        ):
             charging = False
             icon_state = "{}-off".format(DEFAULT_ICON_STATE)
         elif battery_state == ios.ATTR_BATTERY_STATE_UNKNOWN:
@@ -100,8 +99,7 @@ class IOSSensor(Entity):
 
         if self.type == "state":
             return icon_state
-        return icon_for_battery_level(battery_level=battery_level,
-                                      charging=charging)
+        return icon_for_battery_level(battery_level=battery_level, charging=charging)
 
     def update(self):
         """Get the latest state of the sensor."""

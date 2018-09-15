@@ -9,22 +9,26 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.binary_sensor import (
-    BinarySensorDevice, PLATFORM_SCHEMA, DEVICE_CLASSES_SCHEMA)
+    BinarySensorDevice,
+    PLATFORM_SCHEMA,
+    DEVICE_CLASSES_SCHEMA,
+)
 from homeassistant.components import enocean
-from homeassistant.const import (
-    CONF_NAME, CONF_ID, CONF_DEVICE_CLASS)
+from homeassistant.const import CONF_NAME, CONF_ID, CONF_DEVICE_CLASS
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['enocean']
-DEFAULT_NAME = 'EnOcean binary sensor'
+DEPENDENCIES = ["enocean"]
+DEFAULT_NAME = "EnOcean binary sensor"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ID): vol.All(cv.ensure_list, [vol.Coerce(int)]),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_DEVICE_CLASS): DEVICE_CLASSES_SCHEMA,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_ID): vol.All(cv.ensure_list, [vol.Coerce(int)]),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_DEVICE_CLASS): DEVICE_CLASSES_SCHEMA,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -42,7 +46,7 @@ class EnOceanBinarySensor(enocean.EnOceanDevice, BinarySensorDevice):
     def __init__(self, dev_id, devname, device_class):
         """Initialize the EnOcean binary sensor."""
         enocean.EnOceanDevice.__init__(self)
-        self.stype = 'listener'
+        self.stype = "listener"
         self.dev_id = dev_id
         self.which = -1
         self.onoff = -1
@@ -84,7 +88,12 @@ class EnOceanBinarySensor(enocean.EnOceanDevice, BinarySensorDevice):
         elif value2 == 0x15:
             self.which = 10
             self.onoff = 1
-        self.hass.bus.fire('button_pressed', {'id': self.dev_id,
-                                              'pushed': value,
-                                              'which': self.which,
-                                              'onoff': self.onoff})
+        self.hass.bus.fire(
+            "button_pressed",
+            {
+                "id": self.dev_id,
+                "pushed": value,
+                "which": self.which,
+                "onoff": self.onoff,
+            },
+        )

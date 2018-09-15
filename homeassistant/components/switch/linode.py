@@ -9,21 +9,29 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA)
+from homeassistant.components.switch import SwitchDevice, PLATFORM_SCHEMA
 from homeassistant.components.linode import (
-    CONF_NODES, ATTR_CREATED, ATTR_NODE_ID, ATTR_NODE_NAME,
-    ATTR_IPV4_ADDRESS, ATTR_IPV6_ADDRESS, ATTR_MEMORY,
-    ATTR_REGION, ATTR_VCPUS, DATA_LINODE)
+    CONF_NODES,
+    ATTR_CREATED,
+    ATTR_NODE_ID,
+    ATTR_NODE_NAME,
+    ATTR_IPV4_ADDRESS,
+    ATTR_IPV6_ADDRESS,
+    ATTR_MEMORY,
+    ATTR_REGION,
+    ATTR_VCPUS,
+    DATA_LINODE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['linode']
+DEPENDENCIES = ["linode"]
 
-DEFAULT_NAME = 'Node'
+DEFAULT_NAME = "Node"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_NODES): vol.All(cv.ensure_list, [cv.string]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_NODES): vol.All(cv.ensure_list, [cv.string])}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -71,12 +79,12 @@ class LinodeSwitch(SwitchDevice):
 
     def turn_on(self, **kwargs):
         """Boot-up the Node."""
-        if self.data.status != 'running':
+        if self.data.status != "running":
             self.data.boot()
 
     def turn_off(self, **kwargs):
         """Shutdown the nodes."""
-        if self.data.status == 'running':
+        if self.data.status == "running":
             self.data.shutdown()
 
     def update(self):
@@ -87,7 +95,7 @@ class LinodeSwitch(SwitchDevice):
                 if node.id == self._node_id:
                     self.data = node
         if self.data is not None:
-            self._state = self.data.status == 'running'
+            self._state = self.data.status == "running"
             self._attrs = {
                 ATTR_CREATED: self.data.created,
                 ATTR_NODE_ID: self.data.id,

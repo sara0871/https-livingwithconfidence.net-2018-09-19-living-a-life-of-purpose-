@@ -10,10 +10,9 @@ import logging
 import requests
 
 from homeassistant.components.camera import Camera
-from homeassistant.components.skybell import (
-    DOMAIN as SKYBELL_DOMAIN, SkybellDevice)
+from homeassistant.components.skybell import DOMAIN as SKYBELL_DOMAIN, SkybellDevice
 
-DEPENDENCIES = ['skybell']
+DEPENDENCIES = ["skybell"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,8 +54,7 @@ class SkybellCamera(SkybellDevice, Camera):
             self._url = self._device.image
 
             try:
-                self._response = requests.get(
-                    self._url, stream=True, timeout=10)
+                self._response = requests.get(self._url, stream=True, timeout=10)
             except requests.HTTPError as err:
                 _LOGGER.warning("Failed to get camera image: %s", err)
                 self._response = None

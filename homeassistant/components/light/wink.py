@@ -7,14 +7,21 @@ https://home-assistant.io/components/light.wink/
 import asyncio
 
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_COLOR_TEMP, ATTR_HS_COLOR, SUPPORT_BRIGHTNESS,
-    SUPPORT_COLOR_TEMP, SUPPORT_COLOR, Light)
+    ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP,
+    ATTR_HS_COLOR,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR_TEMP,
+    SUPPORT_COLOR,
+    Light,
+)
 from homeassistant.components.wink import DOMAIN, WinkDevice
 from homeassistant.util import color as color_util
-from homeassistant.util.color import \
+from homeassistant.util.color import (
     color_temperature_mired_to_kelvin as mired_to_kelvin
+)
 
-DEPENDENCIES = ['wink']
+DEPENDENCIES = ["wink"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -23,11 +30,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     for light in pywink.get_light_bulbs():
         _id = light.object_id() + light.name()
-        if _id not in hass.data[DOMAIN]['unique_ids']:
+        if _id not in hass.data[DOMAIN]["unique_ids"]:
             add_entities([WinkLight(light, hass)])
     for light in pywink.get_light_groups():
         _id = light.object_id() + light.name()
-        if _id not in hass.data[DOMAIN]['unique_ids']:
+        if _id not in hass.data[DOMAIN]["unique_ids"]:
             add_entities([WinkLight(light, hass)])
 
 
@@ -37,7 +44,7 @@ class WinkLight(WinkDevice, Light):
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Call when entity is added to hass."""
-        self.hass.data[DOMAIN]['entities']['light'].append(self)
+        self.hass.data[DOMAIN]["entities"]["light"].append(self)
 
     @property
     def is_on(self):
@@ -61,7 +68,7 @@ class WinkLight(WinkDevice, Light):
             hue = self.wink.color_hue()
             saturation = self.wink.color_saturation()
             if hue is not None and saturation is not None:
-                return hue*360, saturation*100
+                return hue * 360, saturation * 100
 
         return None
 
@@ -71,7 +78,8 @@ class WinkLight(WinkDevice, Light):
         if not self.wink.supports_temperature():
             return None
         return color_util.color_temperature_kelvin_to_mired(
-            self.wink.color_temperature_kelvin())
+            self.wink.color_temperature_kelvin()
+        )
 
     @property
     def supported_features(self):
@@ -96,16 +104,16 @@ class WinkLight(WinkDevice, Light):
         if hs_color:
             if self.wink.supports_xy_color():
                 xy_color = color_util.color_hs_to_xy(*hs_color)
-                state_kwargs['color_xy'] = xy_color
+                state_kwargs["color_xy"] = xy_color
             if self.wink.supports_hue_saturation():
-                hs_scaled = hs_color[0]/360, hs_color[1]/100
-                state_kwargs['color_hue_saturation'] = hs_scaled
+                hs_scaled = hs_color[0] / 360, hs_color[1] / 100
+                state_kwargs["color_hue_saturation"] = hs_scaled
 
         if color_temp_mired:
-            state_kwargs['color_kelvin'] = mired_to_kelvin(color_temp_mired)
+            state_kwargs["color_kelvin"] = mired_to_kelvin(color_temp_mired)
 
         if brightness:
-            state_kwargs['brightness'] = brightness / 255.0
+            state_kwargs["brightness"] = brightness / 255.0
 
         self.wink.set_state(True, **state_kwargs)
 

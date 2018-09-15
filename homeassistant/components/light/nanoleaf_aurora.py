@@ -9,56 +9,69 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_COLOR_TEMP, ATTR_EFFECT, ATTR_HS_COLOR,
-    PLATFORM_SCHEMA, SUPPORT_BRIGHTNESS, SUPPORT_COLOR, SUPPORT_COLOR_TEMP,
-    SUPPORT_EFFECT, Light)
+    ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP,
+    ATTR_EFFECT,
+    ATTR_HS_COLOR,
+    PLATFORM_SCHEMA,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR,
+    SUPPORT_COLOR_TEMP,
+    SUPPORT_EFFECT,
+    Light,
+)
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import color as color_util
-from homeassistant.util.color import \
+from homeassistant.util.color import (
     color_temperature_mired_to_kelvin as mired_to_kelvin
+)
 from homeassistant.util.json import load_json, save_json
 
-REQUIREMENTS = ['nanoleaf==0.4.1']
+REQUIREMENTS = ["nanoleaf==0.4.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'Aurora'
+DEFAULT_NAME = "Aurora"
 
-DATA_NANOLEAF_AURORA = 'nanoleaf_aurora'
+DATA_NANOLEAF_AURORA = "nanoleaf_aurora"
 
-CONFIG_FILE = '.nanoleaf_aurora.conf'
+CONFIG_FILE = ".nanoleaf_aurora.conf"
 
-ICON = 'mdi:triangle-outline'
+ICON = "mdi:triangle-outline"
 
-SUPPORT_AURORA = (SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP | SUPPORT_EFFECT |
-                  SUPPORT_COLOR)
+SUPPORT_AURORA = (
+    SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP | SUPPORT_EFFECT | SUPPORT_COLOR
+)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Required(CONF_TOKEN): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_TOKEN): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Nanoleaf Aurora device."""
     import nanoleaf
     import nanoleaf.setup
+
     if DATA_NANOLEAF_AURORA not in hass.data:
         hass.data[DATA_NANOLEAF_AURORA] = dict()
 
-    token = ''
+    token = ""
     if discovery_info is not None:
-        host = discovery_info['host']
-        name = discovery_info['hostname']
+        host = discovery_info["host"]
+        name = discovery_info["hostname"]
         # if device already exists via config, skip discovery setup
         if host in hass.data[DATA_NANOLEAF_AURORA]:
             return
         _LOGGER.info("Discovered a new Aurora: %s", discovery_info)
         conf = load_json(hass.config.path(CONFIG_FILE))
-        if conf.get(host, {}).get('token'):
-            token = conf[host]['token']
+        if conf.get(host, {}).get("token"):
+            token = conf[host]["token"]
     else:
         host = config[CONF_HOST]
         name = config[CONF_NAME]
@@ -67,19 +80,21 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if not token:
         token = nanoleaf.setup.generate_auth_token(host)
         if not token:
-            _LOGGER.error("Could not generate the auth token, did you press "
-                          "and hold the power button on %s"
-                          "for 5-7 seconds?", name)
+            _LOGGER.error(
+                "Could not generate the auth token, did you press "
+                "and hold the power button on %s"
+                "for 5-7 seconds?",
+                name,
+            )
             return
         conf = load_json(hass.config.path(CONFIG_FILE))
-        conf[host] = {'token': token}
+        conf[host] = {"token": token}
         save_json(hass.config.path(CONFIG_FILE), conf)
 
     aurora_light = nanoleaf.Aurora(host, token)
 
     if aurora_light.on is None:
-        _LOGGER.error(
-            "Could not connect to Nanoleaf Aurora: %s on %s", name, host)
+        _LOGGER.error("Could not connect to Nanoleaf Aurora: %s on %s", name, host)
         return
 
     hass.data[DATA_NANOLEAF_AURORA][host] = aurora_light
@@ -111,8 +126,7 @@ class AuroraLight(Light):
     def color_temp(self):
         """Return the current color temperature."""
         if self._color_temp is not None:
-            return color_util.color_temperature_kelvin_to_mired(
-                self._color_temp)
+            return color_util.color_temperature_kelvin_to_mired(self._color_temp)
         return None
 
     @property

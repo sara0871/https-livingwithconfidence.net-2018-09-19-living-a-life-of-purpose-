@@ -8,14 +8,14 @@ from aiohttp.web_exceptions import HTTPNotFound
 from aiohttp.web_urldispatcher import StaticResource
 from yarl import URL
 
-_FINGERPRINT = re.compile(r'^(.+)-[a-z0-9]{32}\.(\w+)$', re.IGNORECASE)
+_FINGERPRINT = re.compile(r"^(.+)-[a-z0-9]{32}\.(\w+)$", re.IGNORECASE)
 
 
 class CachingStaticResource(StaticResource):
     """Static Resource handler that will add cache headers."""
 
     async def _handle(self, request):
-        filename = URL(request.match_info['filename']).path
+        filename = URL(request.match_info["filename"]).path
         try:
             # PyLint is wrong about resolve not being a member.
             filepath = self._directory.joinpath(filename).resolve()
@@ -49,8 +49,7 @@ class CachingFileResponse(FileResponse):
         async def sendfile(request, fobj, count):
             """Sendfile that includes a cache header."""
             cache_time = 31 * 86400  # = 1 month
-            self.headers[hdrs.CACHE_CONTROL] = "public, max-age={}".format(
-                cache_time)
+            self.headers[hdrs.CACHE_CONTROL] = "public, max-age={}".format(cache_time)
 
             await orig_sendfile(request, fobj, count)
 
@@ -62,13 +61,12 @@ class CachingFileResponse(FileResponse):
 async def staticresource_middleware(request, handler):
     """Middleware to strip out fingerprint from fingerprinted assets."""
     path = request.path
-    if not path.startswith('/static/') and not path.startswith('/frontend'):
+    if not path.startswith("/static/") and not path.startswith("/frontend"):
         return await handler(request)
 
-    fingerprinted = _FINGERPRINT.match(request.match_info['filename'])
+    fingerprinted = _FINGERPRINT.match(request.match_info["filename"])
 
     if fingerprinted:
-        request.match_info['filename'] = \
-            '{}.{}'.format(*fingerprinted.groups())
+        request.match_info["filename"] = "{}.{}".format(*fingerprinted.groups())
 
     return await handler(request)

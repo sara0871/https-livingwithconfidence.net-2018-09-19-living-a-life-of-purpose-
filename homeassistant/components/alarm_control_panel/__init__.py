@@ -11,25 +11,31 @@ import logging
 import voluptuous as vol
 
 from homeassistant.const import (
-    ATTR_CODE, ATTR_CODE_FORMAT, ATTR_ENTITY_ID, SERVICE_ALARM_TRIGGER,
-    SERVICE_ALARM_DISARM, SERVICE_ALARM_ARM_HOME, SERVICE_ALARM_ARM_AWAY,
-    SERVICE_ALARM_ARM_NIGHT, SERVICE_ALARM_ARM_CUSTOM_BYPASS)
+    ATTR_CODE,
+    ATTR_CODE_FORMAT,
+    ATTR_ENTITY_ID,
+    SERVICE_ALARM_TRIGGER,
+    SERVICE_ALARM_DISARM,
+    SERVICE_ALARM_ARM_HOME,
+    SERVICE_ALARM_ARM_AWAY,
+    SERVICE_ALARM_ARM_NIGHT,
+    SERVICE_ALARM_ARM_CUSTOM_BYPASS,
+)
 from homeassistant.loader import bind_hass
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA  # noqa
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 
-DOMAIN = 'alarm_control_panel'
+DOMAIN = "alarm_control_panel"
 SCAN_INTERVAL = timedelta(seconds=30)
-ATTR_CHANGED_BY = 'changed_by'
+ATTR_CHANGED_BY = "changed_by"
 
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
-ALARM_SERVICE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-    vol.Optional(ATTR_CODE): cv.string,
-})
+ALARM_SERVICE_SCHEMA = vol.Schema(
+    {vol.Optional(ATTR_ENTITY_ID): cv.entity_ids, vol.Optional(ATTR_CODE): cv.string}
+)
 
 
 @bind_hass
@@ -108,33 +114,30 @@ def alarm_arm_custom_bypass(hass, code=None, entity_id=None):
 def async_setup(hass, config):
     """Track states and offer events for sensors."""
     component = hass.data[DOMAIN] = EntityComponent(
-        logging.getLogger(__name__), DOMAIN, hass, SCAN_INTERVAL)
+        logging.getLogger(__name__), DOMAIN, hass, SCAN_INTERVAL
+    )
 
     yield from component.async_setup(config)
 
     component.async_register_entity_service(
-        SERVICE_ALARM_DISARM, ALARM_SERVICE_SCHEMA,
-        'async_alarm_disarm'
+        SERVICE_ALARM_DISARM, ALARM_SERVICE_SCHEMA, "async_alarm_disarm"
     )
     component.async_register_entity_service(
-        SERVICE_ALARM_ARM_HOME, ALARM_SERVICE_SCHEMA,
-        'async_alarm_arm_home'
+        SERVICE_ALARM_ARM_HOME, ALARM_SERVICE_SCHEMA, "async_alarm_arm_home"
     )
     component.async_register_entity_service(
-        SERVICE_ALARM_ARM_AWAY, ALARM_SERVICE_SCHEMA,
-        'async_alarm_arm_away'
+        SERVICE_ALARM_ARM_AWAY, ALARM_SERVICE_SCHEMA, "async_alarm_arm_away"
     )
     component.async_register_entity_service(
-        SERVICE_ALARM_ARM_NIGHT, ALARM_SERVICE_SCHEMA,
-        'async_alarm_arm_night'
+        SERVICE_ALARM_ARM_NIGHT, ALARM_SERVICE_SCHEMA, "async_alarm_arm_night"
     )
     component.async_register_entity_service(
-        SERVICE_ALARM_ARM_CUSTOM_BYPASS, ALARM_SERVICE_SCHEMA,
-        'async_alarm_arm_custom_bypass'
+        SERVICE_ALARM_ARM_CUSTOM_BYPASS,
+        ALARM_SERVICE_SCHEMA,
+        "async_alarm_arm_custom_bypass",
     )
     component.async_register_entity_service(
-        SERVICE_ALARM_TRIGGER, ALARM_SERVICE_SCHEMA,
-        'async_alarm_trigger'
+        SERVICE_ALARM_TRIGGER, ALARM_SERVICE_SCHEMA, "async_alarm_trigger"
     )
 
     return True
@@ -228,14 +231,13 @@ class AlarmControlPanel(Entity):
 
         This method must be run in the event loop and returns a coroutine.
         """
-        return self.hass.async_add_executor_job(
-            self.alarm_arm_custom_bypass, code)
+        return self.hass.async_add_executor_job(self.alarm_arm_custom_bypass, code)
 
     @property
     def state_attributes(self):
         """Return the state attributes."""
         state_attr = {
             ATTR_CODE_FORMAT: self.code_format,
-            ATTR_CHANGED_BY: self.changed_by
+            ATTR_CHANGED_BY: self.changed_by,
         }
         return state_attr

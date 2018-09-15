@@ -12,7 +12,7 @@ from homeassistant.components.sisyphus import DATA_SISYPHUS
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['sisyphus']
+DEPENDENCIES = ["sisyphus"]
 
 SUPPORTED_FEATURES = SUPPORT_BRIGHTNESS
 
@@ -21,8 +21,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up a single Sisyphus table."""
     name = discovery_info[CONF_NAME]
     add_entities(
-        [SisyphusLight(name, hass.data[DATA_SISYPHUS][name])],
-        update_before_add=True)
+        [SisyphusLight(name, hass.data[DATA_SISYPHUS][name])], update_before_add=True
+    )
 
 
 class SisyphusLight(Light):
@@ -40,8 +40,7 @@ class SisyphusLight(Light):
 
     async def async_added_to_hass(self):
         """Add listeners after this object has been initialized."""
-        self._table.add_listener(
-            lambda: self.async_schedule_update_ha_state(False))
+        self._table.add_listener(lambda: self.async_schedule_update_ha_state(False))
 
     @property
     def name(self):

@@ -11,18 +11,20 @@ import voluptuous as vol
 
 from homeassistant.core import callback
 from homeassistant.components import mqtt
-from homeassistant.const import (CONF_PLATFORM, CONF_PAYLOAD)
+from homeassistant.const import CONF_PLATFORM, CONF_PAYLOAD
 import homeassistant.helpers.config_validation as cv
 
-DEPENDENCIES = ['mqtt']
+DEPENDENCIES = ["mqtt"]
 
-CONF_TOPIC = 'topic'
+CONF_TOPIC = "topic"
 
-TRIGGER_SCHEMA = vol.Schema({
-    vol.Required(CONF_PLATFORM): mqtt.DOMAIN,
-    vol.Required(CONF_TOPIC): mqtt.valid_subscribe_topic,
-    vol.Optional(CONF_PAYLOAD): cv.string,
-})
+TRIGGER_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_PLATFORM): mqtt.DOMAIN,
+        vol.Required(CONF_TOPIC): mqtt.valid_subscribe_topic,
+        vol.Optional(CONF_PAYLOAD): cv.string,
+    }
+)
 
 
 @asyncio.coroutine
@@ -36,21 +38,18 @@ def async_trigger(hass, config, action):
         """Listen for MQTT messages."""
         if payload is None or payload == msg_payload:
             data = {
-                'platform': 'mqtt',
-                'topic': msg_topic,
-                'payload': msg_payload,
-                'qos': qos,
+                "platform": "mqtt",
+                "topic": msg_topic,
+                "payload": msg_payload,
+                "qos": qos,
             }
 
             try:
-                data['payload_json'] = json.loads(msg_payload)
+                data["payload_json"] = json.loads(msg_payload)
             except ValueError:
                 pass
 
-            hass.async_run_job(action, {
-                'trigger': data
-            })
+            hass.async_run_job(action, {"trigger": data})
 
-    remove = yield from mqtt.async_subscribe(
-        hass, topic, mqtt_automation_listener)
+    remove = yield from mqtt.async_subscribe(hass, topic, mqtt_automation_listener)
     return remove

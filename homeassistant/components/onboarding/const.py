@@ -1,7 +1,5 @@
 """Constants for the onboarding component."""
-DOMAIN = 'onboarding'
-STEP_USER = 'user'
+DOMAIN = "onboarding"
+STEP_USER = "user"
 
-STEPS = [
-    STEP_USER
-]
+STEPS = [STEP_USER]

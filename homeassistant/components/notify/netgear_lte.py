@@ -8,19 +8,24 @@ import voluptuous as vol
 import attr
 
 from homeassistant.components.notify import (
-    BaseNotificationService, ATTR_TARGET, PLATFORM_SCHEMA)
+    BaseNotificationService,
+    ATTR_TARGET,
+    PLATFORM_SCHEMA,
+)
 from homeassistant.const import CONF_HOST
 import homeassistant.helpers.config_validation as cv
 
 from ..netgear_lte import DATA_KEY
 
 
-DEPENDENCIES = ['netgear_lte']
+DEPENDENCIES = ["netgear_lte"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_HOST): cv.string,
-    vol.Required(ATTR_TARGET): vol.All(cv.ensure_list, [cv.string]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_HOST): cv.string,
+        vol.Required(ATTR_TARGET): vol.All(cv.ensure_list, [cv.string]),
+    }
+)
 
 
 async def async_get_service(hass, config, discovery_info=None):

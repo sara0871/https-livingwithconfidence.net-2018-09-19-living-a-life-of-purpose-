@@ -11,25 +11,34 @@ import voluptuous as vol
 import attr
 import aiohttp
 
-from homeassistant.const import (
-    CONF_HOST, CONF_PASSWORD, EVENT_HOMEASSISTANT_STOP)
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, EVENT_HOMEASSISTANT_STOP
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['eternalegypt==0.0.3']
+REQUIREMENTS = ["eternalegypt==0.0.3"]
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=10)
 
-DOMAIN = 'netgear_lte'
-DATA_KEY = 'netgear_lte'
+DOMAIN = "netgear_lte"
+DATA_KEY = "netgear_lte"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.All(cv.ensure_list, [vol.Schema({
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-    })])
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.All(
+            cv.ensure_list,
+            [
+                vol.Schema(
+                    {
+                        vol.Required(CONF_HOST): cv.string,
+                        vol.Required(CONF_PASSWORD): cv.string,
+                    }
+                )
+            ],
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 @attr.s
@@ -71,7 +80,8 @@ async def async_setup(hass, config):
     """Set up Netgear LTE component."""
     if DATA_KEY not in hass.data:
         websession = async_create_clientsession(
-            hass, cookie_jar=aiohttp.CookieJar(unsafe=True))
+            hass, cookie_jar=aiohttp.CookieJar(unsafe=True)
+        )
         hass.data[DATA_KEY] = LTEData(websession)
 
     tasks = [_setup_lte(hass, conf) for conf in config.get(DOMAIN, [])]

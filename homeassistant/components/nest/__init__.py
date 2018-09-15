@@ -13,63 +13,74 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import (
-    CONF_STRUCTURE, CONF_FILENAME, CONF_BINARY_SENSORS, CONF_SENSORS,
+    CONF_STRUCTURE,
+    CONF_FILENAME,
+    CONF_BINARY_SENSORS,
+    CONF_SENSORS,
     CONF_MONITORED_CONDITIONS,
-    EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP)
+    EVENT_HOMEASSISTANT_START,
+    EVENT_HOMEASSISTANT_STOP,
+)
 from homeassistant.core import callback
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.dispatcher import dispatcher_send, \
-    async_dispatcher_connect
+from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 
 from .const import DOMAIN
 from . import local_auth
 
-REQUIREMENTS = ['python-nest==4.0.3']
+REQUIREMENTS = ["python-nest==4.0.3"]
 
 _CONFIGURING = {}
 _LOGGER = logging.getLogger(__name__)
 
 
-DATA_NEST = 'nest'
-DATA_NEST_CONFIG = 'nest_config'
+DATA_NEST = "nest"
+DATA_NEST_CONFIG = "nest_config"
 
-SIGNAL_NEST_UPDATE = 'nest_update'
+SIGNAL_NEST_UPDATE = "nest_update"
 
-NEST_CONFIG_FILE = 'nest.conf'
-CONF_CLIENT_ID = 'client_id'
-CONF_CLIENT_SECRET = 'client_secret'
+NEST_CONFIG_FILE = "nest.conf"
+CONF_CLIENT_ID = "client_id"
+CONF_CLIENT_SECRET = "client_secret"
 
-ATTR_HOME_MODE = 'home_mode'
-ATTR_STRUCTURE = 'structure'
-ATTR_TRIP_ID = 'trip_id'
-ATTR_ETA = 'eta'
-ATTR_ETA_WINDOW = 'eta_window'
+ATTR_HOME_MODE = "home_mode"
+ATTR_STRUCTURE = "structure"
+ATTR_TRIP_ID = "trip_id"
+ATTR_ETA = "eta"
+ATTR_ETA_WINDOW = "eta_window"
 
-HOME_MODE_AWAY = 'away'
-HOME_MODE_HOME = 'home'
+HOME_MODE_AWAY = "away"
+HOME_MODE_HOME = "home"
 
-SENSOR_SCHEMA = vol.Schema({
-    vol.Optional(CONF_MONITORED_CONDITIONS): vol.All(cv.ensure_list)
-})
+SENSOR_SCHEMA = vol.Schema(
+    {vol.Optional(CONF_MONITORED_CONDITIONS): vol.All(cv.ensure_list)}
+)
 
-AWAY_SCHEMA = vol.Schema({
-    vol.Required(ATTR_HOME_MODE): vol.In([HOME_MODE_AWAY, HOME_MODE_HOME]),
-    vol.Optional(ATTR_STRUCTURE): vol.All(cv.ensure_list, cv.string),
-    vol.Optional(ATTR_TRIP_ID): cv.string,
-    vol.Optional(ATTR_ETA): cv.time_period,
-    vol.Optional(ATTR_ETA_WINDOW): cv.time_period
-})
+AWAY_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_HOME_MODE): vol.In([HOME_MODE_AWAY, HOME_MODE_HOME]),
+        vol.Optional(ATTR_STRUCTURE): vol.All(cv.ensure_list, cv.string),
+        vol.Optional(ATTR_TRIP_ID): cv.string,
+        vol.Optional(ATTR_ETA): cv.time_period,
+        vol.Optional(ATTR_ETA_WINDOW): cv.time_period,
+    }
+)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_CLIENT_ID): cv.string,
-        vol.Required(CONF_CLIENT_SECRET): cv.string,
-        vol.Optional(CONF_STRUCTURE): vol.All(cv.ensure_list, cv.string),
-        vol.Optional(CONF_SENSORS): SENSOR_SCHEMA,
-        vol.Optional(CONF_BINARY_SENSORS): SENSOR_SCHEMA
-    })
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_CLIENT_ID): cv.string,
+                vol.Required(CONF_CLIENT_SECRET): cv.string,
+                vol.Optional(CONF_STRUCTURE): vol.All(cv.ensure_list, cv.string),
+                vol.Optional(CONF_SENSORS): SENSOR_SCHEMA,
+                vol.Optional(CONF_BINARY_SENSORS): SENSOR_SCHEMA,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 def nest_update_event_broker(hass, nest):
@@ -105,12 +116,13 @@ async def async_setup(hass, config):
     filename = config.get(CONF_FILENAME, NEST_CONFIG_FILE)
     access_token_cache_file = hass.config.path(filename)
 
-    hass.async_add_job(hass.config_entries.flow.async_init(
-        DOMAIN, context={'source': config_entries.SOURCE_IMPORT},
-        data={
-            'nest_conf_path': access_token_cache_file,
-        }
-    ))
+    hass.async_add_job(
+        hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_IMPORT},
+            data={"nest_conf_path": access_token_cache_file},
+        )
+    )
 
     # Store config to be used during entry setup
     hass.data[DATA_NEST_CONFIG] = conf
@@ -122,7 +134,7 @@ async def async_setup_entry(hass, entry):
     """Set up Nest from a config entry."""
     from nest import Nest
 
-    nest = Nest(access_token=entry.data['tokens']['access_token'])
+    nest = Nest(access_token=entry.data["tokens"]["access_token"])
 
     _LOGGER.debug("proceeding with setup")
     conf = hass.data.get(DATA_NEST_CONFIG, {})
@@ -130,9 +142,10 @@ async def async_setup_entry(hass, entry):
     if not await hass.async_add_job(hass.data[DATA_NEST].initialize):
         return False
 
-    for component in 'climate', 'camera', 'sensor', 'binary_sensor':
-        hass.async_create_task(hass.config_entries.async_forward_entry_setup(
-            entry, component))
+    for component in "climate", "camera", "sensor", "binary_sensor":
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, component)
+        )
 
     def set_mode(service):
         """
@@ -150,32 +163,36 @@ async def async_setup_entry(hass, entry):
                 _LOGGER.info("Setting mode for %s", structure.name)
                 structure.away = service.data[ATTR_HOME_MODE]
 
-                if service.data[ATTR_HOME_MODE] == HOME_MODE_AWAY \
-                        and ATTR_ETA in service.data:
+                if (
+                    service.data[ATTR_HOME_MODE] == HOME_MODE_AWAY
+                    and ATTR_ETA in service.data
+                ):
                     now = datetime.utcnow()
                     eta_begin = now + service.data[ATTR_ETA]
-                    eta_window = service.data.get(ATTR_ETA_WINDOW,
-                                                  timedelta(minutes=1))
+                    eta_window = service.data.get(ATTR_ETA_WINDOW, timedelta(minutes=1))
                     eta_end = eta_begin + eta_window
                     trip_id = service.data.get(
-                        ATTR_TRIP_ID, "trip_{}".format(int(now.timestamp())))
-                    _LOGGER.info("Setting eta for %s, eta window starts at "
-                                 "%s ends at %s", trip_id, eta_begin, eta_end)
+                        ATTR_TRIP_ID, "trip_{}".format(int(now.timestamp()))
+                    )
+                    _LOGGER.info(
+                        "Setting eta for %s, eta window starts at " "%s ends at %s",
+                        trip_id,
+                        eta_begin,
+                        eta_end,
+                    )
                     structure.set_eta(trip_id, eta_begin, eta_end)
             else:
-                _LOGGER.error("Invalid structure %s",
-                              service.data[ATTR_STRUCTURE])
+                _LOGGER.error("Invalid structure %s", service.data[ATTR_STRUCTURE])
 
-    hass.services.async_register(
-        DOMAIN, 'set_mode', set_mode, schema=AWAY_SCHEMA)
+    hass.services.async_register(DOMAIN, "set_mode", set_mode, schema=AWAY_SCHEMA)
 
     @callback
     def start_up(event):
         """Start Nest update event listener."""
         threading.Thread(
-            name='Nest update listener',
+            name="Nest update listener",
             target=nest_update_event_broker,
-            args=(hass, nest)
+            args=(hass, nest),
         ).start()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, start_up)
@@ -204,6 +221,7 @@ class NestDevice:
     def initialize(self):
         """Initialize Nest."""
         from nest.nest import AuthorizationError, APIError
+
         try:
             # Do not optimize next statement, it is here for initialize
             # persistence Nest API connection.
@@ -212,46 +230,52 @@ class NestDevice:
                 self.local_structure = structure_names
 
         except (AuthorizationError, APIError, socket.error) as err:
-            _LOGGER.error(
-                "Connection error while access Nest web service: %s", err)
+            _LOGGER.error("Connection error while access Nest web service: %s", err)
             return False
         return True
 
     def structures(self):
         """Generate a list of structures."""
         from nest.nest import AuthorizationError, APIError
+
         try:
             for structure in self.nest.structures:
                 if structure.name not in self.local_structure:
-                    _LOGGER.debug("Ignoring structure %s, not in %s",
-                                  structure.name, self.local_structure)
+                    _LOGGER.debug(
+                        "Ignoring structure %s, not in %s",
+                        structure.name,
+                        self.local_structure,
+                    )
                     continue
                 yield structure
 
         except (AuthorizationError, APIError, socket.error) as err:
-            _LOGGER.error(
-                "Connection error while access Nest web service: %s", err)
+            _LOGGER.error("Connection error while access Nest web service: %s", err)
 
     def thermostats(self):
         """Generate a list of thermostats."""
-        return self._devices('thermostats')
+        return self._devices("thermostats")
 
     def smoke_co_alarms(self):
         """Generate a list of smoke co alarms."""
-        return self._devices('smoke_co_alarms')
+        return self._devices("smoke_co_alarms")
 
     def cameras(self):
         """Generate a list of cameras."""
-        return self._devices('cameras')
+        return self._devices("cameras")
 
     def _devices(self, device_type):
         """Generate a list of Nest devices."""
         from nest.nest import AuthorizationError, APIError
+
         try:
             for structure in self.nest.structures:
                 if structure.name not in self.local_structure:
-                    _LOGGER.debug("Ignoring structure %s, not in %s",
-                                  structure.name, self.local_structure)
+                    _LOGGER.debug(
+                        "Ignoring structure %s, not in %s",
+                        structure.name,
+                        self.local_structure,
+                    )
                     continue
 
                 for device in getattr(structure, device_type, []):
@@ -260,16 +284,17 @@ class NestDevice:
                         # it is here for verify Nest API permission.
                         device.name_long
                     except KeyError:
-                        _LOGGER.warning("Cannot retrieve device name for [%s]"
-                                        ", please check your Nest developer "
-                                        "account permission settings.",
-                                        device.serial)
+                        _LOGGER.warning(
+                            "Cannot retrieve device name for [%s]"
+                            ", please check your Nest developer "
+                            "account permission settings.",
+                            device.serial,
+                        )
                         continue
                     yield (structure, device)
 
         except (AuthorizationError, APIError, socket.error) as err:
-            _LOGGER.error(
-                "Connection error while access Nest web service: %s", err)
+            _LOGGER.error("Connection error while access Nest web service: %s", err)
 
 
 class NestSensorDevice(Entity):
@@ -283,13 +308,15 @@ class NestSensorDevice(Entity):
         if device is not None:
             # device specific
             self.device = device
-            self._name = "{} {}".format(self.device.name_long,
-                                        self.variable.replace('_', ' '))
+            self._name = "{} {}".format(
+                self.device.name_long, self.variable.replace("_", " ")
+            )
         else:
             # structure only
             self.device = structure
-            self._name = "{} {}".format(self.structure.name,
-                                        self.variable.replace('_', ' '))
+            self._name = "{} {}".format(
+                self.structure.name, self.variable.replace("_", " ")
+            )
 
         self._state = None
         self._unit = None
@@ -315,9 +342,9 @@ class NestSensorDevice(Entity):
 
     async def async_added_to_hass(self):
         """Register update signal handler."""
+
         async def async_update_state():
             """Update sensor state."""
             await self.async_update_ha_state(True)
 
-        async_dispatcher_connect(self.hass, SIGNAL_NEST_UPDATE,
-                                 async_update_state)
+        async_dispatcher_connect(self.hass, SIGNAL_NEST_UPDATE, async_update_state)

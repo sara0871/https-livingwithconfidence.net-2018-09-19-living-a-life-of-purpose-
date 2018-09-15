@@ -11,10 +11,25 @@ import voluptuous as vol
 
 from homeassistant import core as ha
 from homeassistant.const import (
-    ATTR_ENTITY_ID, CONF_ICON, CONF_NAME, STATE_CLOSED, STATE_HOME,
-    STATE_NOT_HOME, STATE_OFF, STATE_ON, STATE_OPEN, STATE_LOCKED,
-    STATE_UNLOCKED, STATE_OK, STATE_PROBLEM, STATE_UNKNOWN,
-    ATTR_ASSUMED_STATE, SERVICE_RELOAD, ATTR_NAME, ATTR_ICON)
+    ATTR_ENTITY_ID,
+    CONF_ICON,
+    CONF_NAME,
+    STATE_CLOSED,
+    STATE_HOME,
+    STATE_NOT_HOME,
+    STATE_OFF,
+    STATE_ON,
+    STATE_OPEN,
+    STATE_LOCKED,
+    STATE_UNLOCKED,
+    STATE_OK,
+    STATE_PROBLEM,
+    STATE_UNKNOWN,
+    ATTR_ASSUMED_STATE,
+    SERVICE_RELOAD,
+    ATTR_NAME,
+    ATTR_ICON,
+)
 from homeassistant.core import callback
 from homeassistant.loader import bind_hass
 from homeassistant.helpers.entity import Entity, async_generate_entity_id
@@ -23,50 +38,52 @@ from homeassistant.helpers.event import async_track_state_change
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util.async_ import run_coroutine_threadsafe
 
-DOMAIN = 'group'
+DOMAIN = "group"
 
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
-CONF_ENTITIES = 'entities'
-CONF_VIEW = 'view'
-CONF_CONTROL = 'control'
+CONF_ENTITIES = "entities"
+CONF_VIEW = "view"
+CONF_CONTROL = "control"
 
-ATTR_ADD_ENTITIES = 'add_entities'
-ATTR_AUTO = 'auto'
-ATTR_CONTROL = 'control'
-ATTR_ENTITIES = 'entities'
-ATTR_OBJECT_ID = 'object_id'
-ATTR_ORDER = 'order'
-ATTR_VIEW = 'view'
-ATTR_VISIBLE = 'visible'
+ATTR_ADD_ENTITIES = "add_entities"
+ATTR_AUTO = "auto"
+ATTR_CONTROL = "control"
+ATTR_ENTITIES = "entities"
+ATTR_OBJECT_ID = "object_id"
+ATTR_ORDER = "order"
+ATTR_VIEW = "view"
+ATTR_VISIBLE = "visible"
 
-SERVICE_SET_VISIBILITY = 'set_visibility'
-SERVICE_SET = 'set'
-SERVICE_REMOVE = 'remove'
+SERVICE_SET_VISIBILITY = "set_visibility"
+SERVICE_SET = "set"
+SERVICE_REMOVE = "remove"
 
-CONTROL_TYPES = vol.In(['hidden', None])
+CONTROL_TYPES = vol.In(["hidden", None])
 
-SET_VISIBILITY_SERVICE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-    vol.Required(ATTR_VISIBLE): cv.boolean
-})
+SET_VISIBILITY_SERVICE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Required(ATTR_VISIBLE): cv.boolean,
+    }
+)
 
 RELOAD_SERVICE_SCHEMA = vol.Schema({})
 
-SET_SERVICE_SCHEMA = vol.Schema({
-    vol.Required(ATTR_OBJECT_ID): cv.slug,
-    vol.Optional(ATTR_NAME): cv.string,
-    vol.Optional(ATTR_VIEW): cv.boolean,
-    vol.Optional(ATTR_ICON): cv.string,
-    vol.Optional(ATTR_CONTROL): CONTROL_TYPES,
-    vol.Optional(ATTR_VISIBLE): cv.boolean,
-    vol.Exclusive(ATTR_ENTITIES, 'entities'): cv.entity_ids,
-    vol.Exclusive(ATTR_ADD_ENTITIES, 'entities'): cv.entity_ids,
-})
+SET_SERVICE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_OBJECT_ID): cv.slug,
+        vol.Optional(ATTR_NAME): cv.string,
+        vol.Optional(ATTR_VIEW): cv.boolean,
+        vol.Optional(ATTR_ICON): cv.string,
+        vol.Optional(ATTR_CONTROL): CONTROL_TYPES,
+        vol.Optional(ATTR_VISIBLE): cv.boolean,
+        vol.Exclusive(ATTR_ENTITIES, "entities"): cv.entity_ids,
+        vol.Exclusive(ATTR_ADD_ENTITIES, "entities"): cv.entity_ids,
+    }
+)
 
-REMOVE_SERVICE_SCHEMA = vol.Schema({
-    vol.Required(ATTR_OBJECT_ID): cv.slug,
-})
+REMOVE_SERVICE_SCHEMA = vol.Schema({vol.Required(ATTR_OBJECT_ID): cv.slug})
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -79,22 +96,29 @@ def _conf_preprocess(value):
     return value
 
 
-GROUP_SCHEMA = vol.Schema({
-    vol.Optional(CONF_ENTITIES): vol.Any(cv.entity_ids, None),
-    CONF_VIEW: cv.boolean,
-    CONF_NAME: cv.string,
-    CONF_ICON: cv.icon,
-    CONF_CONTROL: CONTROL_TYPES,
-})
+GROUP_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_ENTITIES): vol.Any(cv.entity_ids, None),
+        CONF_VIEW: cv.boolean,
+        CONF_NAME: cv.string,
+        CONF_ICON: cv.icon,
+        CONF_CONTROL: CONTROL_TYPES,
+    }
+)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({cv.match_all: vol.All(_conf_preprocess, GROUP_SCHEMA)})
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: vol.Schema({cv.match_all: vol.All(_conf_preprocess, GROUP_SCHEMA)})},
+    extra=vol.ALLOW_EXTRA,
+)
 
 # List of ON/OFF state tuples for groupable states
-_GROUP_TYPES = [(STATE_ON, STATE_OFF), (STATE_HOME, STATE_NOT_HOME),
-                (STATE_OPEN, STATE_CLOSED), (STATE_LOCKED, STATE_UNLOCKED),
-                (STATE_PROBLEM, STATE_OK)]
+_GROUP_TYPES = [
+    (STATE_ON, STATE_OFF),
+    (STATE_HOME, STATE_NOT_HOME),
+    (STATE_OPEN, STATE_CLOSED),
+    (STATE_LOCKED, STATE_UNLOCKED),
+    (STATE_PROBLEM, STATE_OK),
+]
 
 
 def _get_group_on_off(state):
@@ -141,21 +165,49 @@ def set_visibility(hass, entity_id=None, visible=True):
 
 
 @bind_hass
-def set_group(hass, object_id, name=None, entity_ids=None, visible=None,
-              icon=None, view=None, control=None, add=None):
+def set_group(
+    hass,
+    object_id,
+    name=None,
+    entity_ids=None,
+    visible=None,
+    icon=None,
+    view=None,
+    control=None,
+    add=None,
+):
     """Create/Update a group."""
     hass.add_job(
-        async_set_group, hass, object_id, name, entity_ids, visible, icon,
-        view, control, add)
+        async_set_group,
+        hass,
+        object_id,
+        name,
+        entity_ids,
+        visible,
+        icon,
+        view,
+        control,
+        add,
+    )
 
 
 @callback
 @bind_hass
-def async_set_group(hass, object_id, name=None, entity_ids=None, visible=None,
-                    icon=None, view=None, control=None, add=None):
+def async_set_group(
+    hass,
+    object_id,
+    name=None,
+    entity_ids=None,
+    visible=None,
+    icon=None,
+    view=None,
+    control=None,
+    add=None,
+):
     """Create/Update a group."""
     data = {
-        key: value for key, value in [
+        key: value
+        for key, value in [
             (ATTR_OBJECT_ID, object_id),
             (ATTR_NAME, name),
             (ATTR_ENTITIES, entity_ids),
@@ -164,7 +216,8 @@ def async_set_group(hass, object_id, name=None, entity_ids=None, visible=None,
             (ATTR_VIEW, view),
             (ATTR_CONTROL, control),
             (ATTR_ADD_ENTITIES, add),
-        ] if value is not None
+        ]
+        if value is not None
     }
 
     hass.async_add_job(hass.services.async_call(DOMAIN, SERVICE_SET, data))
@@ -207,9 +260,10 @@ def expand_entity_ids(hass, entity_ids):
                     child_entities = list(child_entities)
                     child_entities.remove(entity_id)
                 found_ids.extend(
-                    ent_id for ent_id
-                    in expand_entity_ids(hass, child_entities)
-                    if ent_id not in found_ids)
+                    ent_id
+                    for ent_id in expand_entity_ids(hass, child_entities)
+                    if ent_id not in found_ids
+                )
 
             else:
                 if entity_id not in found_ids:
@@ -237,10 +291,9 @@ def get_entity_ids(hass, entity_id, domain_filter=None):
     if not domain_filter:
         return entity_ids
 
-    domain_filter = domain_filter.lower() + '.'
+    domain_filter = domain_filter.lower() + "."
 
-    return [ent_id for ent_id in entity_ids
-            if ent_id.startswith(domain_filter)]
+    return [ent_id for ent_id in entity_ids if ent_id.startswith(domain_filter)]
 
 
 async def async_setup(hass, config):
@@ -264,8 +317,8 @@ async def async_setup(hass, config):
         await component.async_add_entities(auto)
 
     hass.services.async_register(
-        DOMAIN, SERVICE_RELOAD, reload_service_handler,
-        schema=RELOAD_SERVICE_SCHEMA)
+        DOMAIN, SERVICE_RELOAD, reload_service_handler, schema=RELOAD_SERVICE_SCHEMA
+    )
 
     async def groups_service_handler(service):
         """Handle dynamic group service functions."""
@@ -275,15 +328,21 @@ async def async_setup(hass, config):
 
         # new group
         if service.service == SERVICE_SET and group is None:
-            entity_ids = service.data.get(ATTR_ENTITIES) or \
-                service.data.get(ATTR_ADD_ENTITIES) or None
+            entity_ids = (
+                service.data.get(ATTR_ENTITIES)
+                or service.data.get(ATTR_ADD_ENTITIES)
+                or None
+            )
 
-            extra_arg = {attr: service.data[attr] for attr in (
-                ATTR_VISIBLE, ATTR_ICON, ATTR_VIEW, ATTR_CONTROL
-            ) if service.data.get(attr) is not None}
+            extra_arg = {
+                attr: service.data[attr]
+                for attr in (ATTR_VISIBLE, ATTR_ICON, ATTR_VIEW, ATTR_CONTROL)
+                if service.data.get(attr) is not None
+            }
 
             await Group.async_create_group(
-                hass, service.data.get(ATTR_NAME, object_id),
+                hass,
+                service.data.get(ATTR_NAME, object_id),
                 object_id=object_id,
                 entity_ids=entity_ids,
                 user_defined=False,
@@ -292,8 +351,7 @@ async def async_setup(hass, config):
             return
 
         if group is None:
-            _LOGGER.warning("%s:Group '%s' doesn't exist!",
-                            service.service, object_id)
+            _LOGGER.warning("%s:Group '%s' doesn't exist!", service.service, object_id)
             return
 
         # update group
@@ -339,20 +397,19 @@ async def async_setup(hass, config):
             await component.async_remove_entity(entity_id)
 
     hass.services.async_register(
-        DOMAIN, SERVICE_SET, groups_service_handler,
-        schema=SET_SERVICE_SCHEMA)
+        DOMAIN, SERVICE_SET, groups_service_handler, schema=SET_SERVICE_SCHEMA
+    )
 
     hass.services.async_register(
-        DOMAIN, SERVICE_REMOVE, groups_service_handler,
-        schema=REMOVE_SERVICE_SCHEMA)
+        DOMAIN, SERVICE_REMOVE, groups_service_handler, schema=REMOVE_SERVICE_SCHEMA
+    )
 
     async def visibility_service_handler(service):
         """Change visibility of a group."""
         visible = service.data.get(ATTR_VISIBLE)
 
         tasks = []
-        for group in component.async_extract_from_service(service,
-                                                          expand_group=False):
+        for group in component.async_extract_from_service(service, expand_group=False):
             group.visible = visible
             tasks.append(group.async_update_ha_state())
 
@@ -360,8 +417,11 @@ async def async_setup(hass, config):
             await asyncio.wait(tasks, loop=hass.loop)
 
     hass.services.async_register(
-        DOMAIN, SERVICE_SET_VISIBILITY, visibility_service_handler,
-        schema=SET_VISIBILITY_SERVICE_SCHEMA)
+        DOMAIN,
+        SERVICE_SET_VISIBILITY,
+        visibility_service_handler,
+        schema=SET_VISIBILITY_SERVICE_SCHEMA,
+    )
 
     return True
 
@@ -378,15 +438,31 @@ async def _async_process_config(hass, config, component):
         # Don't create tasks and await them all. The order is important as
         # groups get a number based on creation order.
         await Group.async_create_group(
-            hass, name, entity_ids, icon=icon, view=view,
-            control=control, object_id=object_id)
+            hass,
+            name,
+            entity_ids,
+            icon=icon,
+            view=view,
+            control=control,
+            object_id=object_id,
+        )
 
 
 class Group(Entity):
     """Track a group of entity ids."""
 
-    def __init__(self, hass, name, order=None, visible=True, icon=None,
-                 view=False, control=None, user_defined=True, entity_ids=None):
+    def __init__(
+        self,
+        hass,
+        name,
+        order=None,
+        visible=True,
+        icon=None,
+        view=False,
+        control=None,
+        user_defined=True,
+        entity_ids=None,
+    ):
         """Initialize a group.
 
         This Object has factory function for creation.
@@ -410,40 +486,70 @@ class Group(Entity):
         self._async_unsub_state_changed = None
 
     @staticmethod
-    def create_group(hass, name, entity_ids=None, user_defined=True,
-                     visible=True, icon=None, view=False, control=None,
-                     object_id=None):
+    def create_group(
+        hass,
+        name,
+        entity_ids=None,
+        user_defined=True,
+        visible=True,
+        icon=None,
+        view=False,
+        control=None,
+        object_id=None,
+    ):
         """Initialize a group."""
         return run_coroutine_threadsafe(
             Group.async_create_group(
-                hass, name, entity_ids, user_defined, visible, icon, view,
-                control, object_id),
-            hass.loop).result()
+                hass,
+                name,
+                entity_ids,
+                user_defined,
+                visible,
+                icon,
+                view,
+                control,
+                object_id,
+            ),
+            hass.loop,
+        ).result()
 
     @staticmethod
-    async def async_create_group(hass, name, entity_ids=None,
-                                 user_defined=True, visible=True, icon=None,
-                                 view=False, control=None, object_id=None):
+    async def async_create_group(
+        hass,
+        name,
+        entity_ids=None,
+        user_defined=True,
+        visible=True,
+        icon=None,
+        view=False,
+        control=None,
+        object_id=None,
+    ):
         """Initialize a group.
 
         This method must be run in the event loop.
         """
         group = Group(
-            hass, name,
+            hass,
+            name,
             order=len(hass.states.async_entity_ids(DOMAIN)),
-            visible=visible, icon=icon, view=view, control=control,
-            user_defined=user_defined, entity_ids=entity_ids
+            visible=visible,
+            icon=icon,
+            view=view,
+            control=control,
+            user_defined=user_defined,
+            entity_ids=entity_ids,
         )
 
         group.entity_id = async_generate_entity_id(
-            ENTITY_ID_FORMAT, object_id or name, hass=hass)
+            ENTITY_ID_FORMAT, object_id or name, hass=hass
+        )
 
         # If called before the platform async_setup is called (test cases)
         component = hass.data.get(DOMAIN)
 
         if component is None:
-            component = hass.data[DOMAIN] = \
-                EntityComponent(_LOGGER, DOMAIN, hass)
+            component = hass.data[DOMAIN] = EntityComponent(_LOGGER, DOMAIN, hass)
 
         await component.async_add_entities([group], True)
 
@@ -489,10 +595,7 @@ class Group(Entity):
     @property
     def state_attributes(self):
         """Return the state attributes for the group."""
-        data = {
-            ATTR_ENTITY_ID: self.tracking,
-            ATTR_ORDER: self._order,
-        }
+        data = {ATTR_ENTITY_ID: self.tracking, ATTR_ORDER: self._order}
         if not self.user_defined:
             data[ATTR_AUTO] = True
         if self.view:
@@ -560,8 +663,7 @@ class Group(Entity):
             self._async_unsub_state_changed()
             self._async_unsub_state_changed = None
 
-    async def _async_state_changed_listener(self, entity_id, old_state,
-                                            new_state):
+    async def _async_state_changed_listener(self, entity_id, old_state, new_state):
         """Respond to a member state changing.
 
         This method must be run in the event loop.
@@ -607,8 +709,7 @@ class Group(Entity):
                 states = self._tracking_states
 
                 for state in states:
-                    gr_on, gr_off = \
-                        _get_group_on_off(state.state)
+                    gr_on, gr_off = _get_group_on_off(state.state)
                     if gr_on is not None:
                         break
             else:
@@ -621,9 +722,10 @@ class Group(Entity):
         if gr_on is None:
             return
 
-        if tr_state is None or ((gr_state == gr_on and
-                                 tr_state.state == gr_off) or
-                                tr_state.state not in (gr_on, gr_off)):
+        if tr_state is None or (
+            (gr_state == gr_on and tr_state.state == gr_off)
+            or tr_state.state not in (gr_on, gr_off)
+        ):
             if states is None:
                 states = self._tracking_states
 
@@ -635,14 +737,17 @@ class Group(Entity):
         elif tr_state.state in (gr_on, gr_off):
             self._state = tr_state.state
 
-        if tr_state is None or self._assumed_state and \
-           not tr_state.attributes.get(ATTR_ASSUMED_STATE):
+        if (
+            tr_state is None
+            or self._assumed_state
+            and not tr_state.attributes.get(ATTR_ASSUMED_STATE)
+        ):
             if states is None:
                 states = self._tracking_states
 
             self._assumed_state = any(
-                state.attributes.get(ATTR_ASSUMED_STATE) for state
-                in states)
+                state.attributes.get(ATTR_ASSUMED_STATE) for state in states
+            )
 
         elif tr_state.attributes.get(ATTR_ASSUMED_STATE):
             self._assumed_state = True

@@ -11,15 +11,20 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 
 from homeassistant.components.ring import (
-    CONF_ATTRIBUTION, DEFAULT_ENTITY_NAMESPACE, DATA_RING)
+    CONF_ATTRIBUTION,
+    DEFAULT_ENTITY_NAMESPACE,
+    DATA_RING,
+)
 
 from homeassistant.const import (
-    ATTR_ATTRIBUTION, CONF_ENTITY_NAMESPACE, CONF_MONITORED_CONDITIONS)
+    ATTR_ATTRIBUTION,
+    CONF_ENTITY_NAMESPACE,
+    CONF_MONITORED_CONDITIONS,
+)
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDevice, PLATFORM_SCHEMA)
+from homeassistant.components.binary_sensor import BinarySensorDevice, PLATFORM_SCHEMA
 
-DEPENDENCIES = ['ring']
+DEPENDENCIES = ["ring"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,16 +32,20 @@ SCAN_INTERVAL = timedelta(seconds=10)
 
 # Sensor types: Name, category, device_class
 SENSOR_TYPES = {
-    'ding': ['Ding', ['doorbell'], 'occupancy'],
-    'motion': ['Motion', ['doorbell', 'stickup_cams'], 'motion'],
+    "ding": ["Ding", ["doorbell"], "occupancy"],
+    "motion": ["Motion", ["doorbell", "stickup_cams"], "motion"],
 }
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_ENTITY_NAMESPACE, default=DEFAULT_ENTITY_NAMESPACE):
-        cv.string,
-    vol.Required(CONF_MONITORED_CONDITIONS, default=list(SENSOR_TYPES)):
-        vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(
+            CONF_ENTITY_NAMESPACE, default=DEFAULT_ENTITY_NAMESPACE
+        ): cv.string,
+        vol.Required(CONF_MONITORED_CONDITIONS, default=list(SENSOR_TYPES)): vol.All(
+            cv.ensure_list, [vol.In(SENSOR_TYPES)]
+        ),
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -46,16 +55,12 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     sensors = []
     for sensor_type in config.get(CONF_MONITORED_CONDITIONS):
         for device in ring.doorbells:
-            if 'doorbell' in SENSOR_TYPES[sensor_type][1]:
-                sensors.append(RingBinarySensor(hass,
-                                                device,
-                                                sensor_type))
+            if "doorbell" in SENSOR_TYPES[sensor_type][1]:
+                sensors.append(RingBinarySensor(hass, device, sensor_type))
 
         for device in ring.stickup_cams:
-            if 'stickup_cams' in SENSOR_TYPES[sensor_type][1]:
-                sensors.append(RingBinarySensor(hass,
-                                                device,
-                                                sensor_type))
+            if "stickup_cams" in SENSOR_TYPES[sensor_type][1]:
+                sensors.append(RingBinarySensor(hass, device, sensor_type))
     add_entities(sensors, True)
     return True
 
@@ -68,8 +73,9 @@ class RingBinarySensor(BinarySensorDevice):
         super(RingBinarySensor, self).__init__()
         self._sensor_type = sensor_type
         self._data = data
-        self._name = "{0} {1}".format(self._data.name,
-                                      SENSOR_TYPES.get(self._sensor_type)[0])
+        self._name = "{0} {1}".format(
+            self._data.name, SENSOR_TYPES.get(self._sensor_type)[0]
+        )
         self._device_class = SENSOR_TYPES.get(self._sensor_type)[2]
         self._state = None
 
@@ -94,13 +100,13 @@ class RingBinarySensor(BinarySensorDevice):
         attrs = {}
         attrs[ATTR_ATTRIBUTION] = CONF_ATTRIBUTION
 
-        attrs['device_id'] = self._data.id
-        attrs['firmware'] = self._data.firmware
-        attrs['timezone'] = self._data.timezone
+        attrs["device_id"] = self._data.id
+        attrs["firmware"] = self._data.firmware
+        attrs["timezone"] = self._data.timezone
 
         if self._data.alert and self._data.alert_expires_at:
-            attrs['expires_at'] = self._data.alert_expires_at
-            attrs['state'] = self._data.alert.get('state')
+            attrs["expires_at"] = self._data.alert_expires_at
+            attrs["state"] = self._data.alert.get("state")
 
         return attrs
 
@@ -109,8 +115,9 @@ class RingBinarySensor(BinarySensorDevice):
         self._data.check_alerts()
 
         if self._data.alert:
-            if self._sensor_type == self._data.alert.get('kind') and \
-               self._data.account_id == self._data.alert.get('doorbot_id'):
+            if self._sensor_type == self._data.alert.get(
+                "kind"
+            ) and self._data.account_id == self._data.alert.get("doorbot_id"):
                 self._state = True
         else:
             self._state = False

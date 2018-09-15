@@ -9,7 +9,10 @@ import logging
 from math import floor
 
 from homeassistant.components.volvooncall import (
-    VolvoEntity, RESOURCES, CONF_SCANDINAVIAN_MILES)
+    VolvoEntity,
+    RESOURCES,
+    CONF_SCANDINAVIAN_MILES,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,18 +35,18 @@ class VolvoSensor(VolvoEntity):
         if val is None:
             return val
 
-        if self._attribute == 'odometer':
+        if self._attribute == "odometer":
             val /= 1000  # m -> km
 
-        if 'mil' in self.unit_of_measurement:
+        if "mil" in self.unit_of_measurement:
             val /= 10  # km -> mil
 
-        if self._attribute == 'average_fuel_consumption':
+        if self._attribute == "average_fuel_consumption":
             val /= 10  # L/1000km -> L/100km
-            if 'mil' in self.unit_of_measurement:
+            if "mil" in self.unit_of_measurement:
                 return round(val, 2)
             return round(val, 1)
-        if self._attribute == 'distance_to_empty':
+        if self._attribute == "distance_to_empty":
             return int(floor(val))
         return int(round(val))
 
@@ -51,10 +54,10 @@ class VolvoSensor(VolvoEntity):
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         unit = RESOURCES[self._attribute][3]
-        if self._state.config[CONF_SCANDINAVIAN_MILES] and 'km' in unit:
-            if self._attribute == 'average_fuel_consumption':
-                return 'L/mil'
-            return unit.replace('km', 'mil')
+        if self._state.config[CONF_SCANDINAVIAN_MILES] and "km" in unit:
+            if self._attribute == "average_fuel_consumption":
+                return "L/mil"
+            return unit.replace("km", "mil")
         return unit
 
     @property

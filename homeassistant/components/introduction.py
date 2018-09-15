@@ -9,18 +9,17 @@ import logging
 
 import voluptuous as vol
 
-DOMAIN = 'introduction'
+DOMAIN = "introduction"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({}),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 
 
 @asyncio.coroutine
 def async_setup(hass, config=None):
     """Set up the introduction component."""
     log = logging.getLogger(__name__)
-    log.info("""
+    log.info(
+        """
 
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -46,9 +45,11 @@ def async_setup(hass, config=None):
         disable it in configuration.yaml.
 
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    """)
+    """
+    )
 
-    hass.components.persistent_notification.async_create("""
+    hass.components.persistent_notification.async_create(
+        """
 Here are some resources to get started:
 
  - [Configuring Home Assistant](https://home-assistant.io/getting-started/configuration/)
@@ -58,6 +59,8 @@ Here are some resources to get started:
 
 To not see this card popup in the future, edit your config in
 `configuration.yaml` and disable the `introduction` component.
-""", 'Welcome Home!')  # noqa
+""",
+        "Welcome Home!",
+    )  # noqa
 
     return True

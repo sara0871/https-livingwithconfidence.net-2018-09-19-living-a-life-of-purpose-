@@ -11,33 +11,33 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['pyfttt==0.3']
+REQUIREMENTS = ["pyfttt==0.3"]
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_EVENT = 'event'
-ATTR_VALUE1 = 'value1'
-ATTR_VALUE2 = 'value2'
-ATTR_VALUE3 = 'value3'
+ATTR_EVENT = "event"
+ATTR_VALUE1 = "value1"
+ATTR_VALUE2 = "value2"
+ATTR_VALUE3 = "value3"
 
-CONF_KEY = 'key'
+CONF_KEY = "key"
 
-DOMAIN = 'ifttt'
+DOMAIN = "ifttt"
 
-SERVICE_TRIGGER = 'trigger'
+SERVICE_TRIGGER = "trigger"
 
-SERVICE_TRIGGER_SCHEMA = vol.Schema({
-    vol.Required(ATTR_EVENT): cv.string,
-    vol.Optional(ATTR_VALUE1): cv.string,
-    vol.Optional(ATTR_VALUE2): cv.string,
-    vol.Optional(ATTR_VALUE3): cv.string,
-})
+SERVICE_TRIGGER_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_EVENT): cv.string,
+        vol.Optional(ATTR_VALUE1): cv.string,
+        vol.Optional(ATTR_VALUE2): cv.string,
+        vol.Optional(ATTR_VALUE3): cv.string,
+    }
+)
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_KEY): cv.string,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: vol.Schema({vol.Required(CONF_KEY): cv.string})}, extra=vol.ALLOW_EXTRA
+)
 
 
 def trigger(hass, event, value1=None, value2=None, value3=None):
@@ -64,11 +64,13 @@ def setup(hass, config):
 
         try:
             import pyfttt
+
             pyfttt.send_event(key, event, value1, value2, value3)
         except requests.exceptions.RequestException:
             _LOGGER.exception("Error communicating with IFTTT")
 
-    hass.services.register(DOMAIN, SERVICE_TRIGGER, trigger_service,
-                           schema=SERVICE_TRIGGER_SCHEMA)
+    hass.services.register(
+        DOMAIN, SERVICE_TRIGGER, trigger_service, schema=SERVICE_TRIGGER_SCHEMA
+    )
 
     return True

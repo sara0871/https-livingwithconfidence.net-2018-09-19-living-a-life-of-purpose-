@@ -7,41 +7,41 @@ https://home-assistant.io/components/climate.homematic/
 import logging
 
 from homeassistant.components.climate import (
-    STATE_AUTO, SUPPORT_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE,
-    ClimateDevice)
+    STATE_AUTO,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    ClimateDevice,
+)
 from homeassistant.components.homematic import (
-    ATTR_DISCOVER_DEVICES, HM_ATTRIBUTE_SUPPORT, HMDevice)
+    ATTR_DISCOVER_DEVICES,
+    HM_ATTRIBUTE_SUPPORT,
+    HMDevice,
+)
 from homeassistant.const import ATTR_TEMPERATURE, STATE_UNKNOWN, TEMP_CELSIUS
 
-DEPENDENCIES = ['homematic']
+DEPENDENCIES = ["homematic"]
 
 _LOGGER = logging.getLogger(__name__)
 
-STATE_MANUAL = 'manual'
-STATE_BOOST = 'boost'
-STATE_COMFORT = 'comfort'
-STATE_LOWERING = 'lowering'
+STATE_MANUAL = "manual"
+STATE_BOOST = "boost"
+STATE_COMFORT = "comfort"
+STATE_LOWERING = "lowering"
 
 HM_STATE_MAP = {
-    'AUTO_MODE': STATE_AUTO,
-    'MANU_MODE': STATE_MANUAL,
-    'BOOST_MODE': STATE_BOOST,
-    'COMFORT_MODE': STATE_COMFORT,
-    'LOWERING_MODE': STATE_LOWERING
+    "AUTO_MODE": STATE_AUTO,
+    "MANU_MODE": STATE_MANUAL,
+    "BOOST_MODE": STATE_BOOST,
+    "COMFORT_MODE": STATE_COMFORT,
+    "LOWERING_MODE": STATE_LOWERING,
 }
 
-HM_TEMP_MAP = [
-    'ACTUAL_TEMPERATURE',
-    'TEMPERATURE',
-]
+HM_TEMP_MAP = ["ACTUAL_TEMPERATURE", "TEMPERATURE"]
 
-HM_HUMI_MAP = [
-    'ACTUAL_HUMIDITY',
-    'HUMIDITY',
-]
+HM_HUMI_MAP = ["ACTUAL_HUMIDITY", "HUMIDITY"]
 
-HM_CONTROL_MODE = 'CONTROL_MODE'
-HM_IP_CONTROL_MODE = 'SET_POINT_MODE'
+HM_CONTROL_MODE = "CONTROL_MODE"
+HM_IP_CONTROL_MODE = "SET_POINT_MODE"
 
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE
 
@@ -78,9 +78,9 @@ class HMThermostat(HMDevice, ClimateDevice):
         if HM_CONTROL_MODE not in self._data:
             return None
 
-        set_point_mode = self._data.get('SET_POINT_MODE', -1)
-        control_mode = self._data.get('CONTROL_MODE', -1)
-        boost_mode = self._data.get('BOOST_MODE', False)
+        set_point_mode = self._data.get("SET_POINT_MODE", -1)
+        control_mode = self._data.get("CONTROL_MODE", -1)
+        boost_mode = self._data.get("BOOST_MODE", False)
 
         # boost mode is active
         if boost_mode:
@@ -159,8 +159,10 @@ class HMThermostat(HMDevice, ClimateDevice):
         self._state = next(iter(self._hmdevice.WRITENODE.keys()))
         self._data[self._state] = STATE_UNKNOWN
 
-        if HM_CONTROL_MODE in self._hmdevice.ATTRIBUTENODE or \
-                HM_IP_CONTROL_MODE in self._hmdevice.ATTRIBUTENODE:
+        if (
+            HM_CONTROL_MODE in self._hmdevice.ATTRIBUTENODE
+            or HM_IP_CONTROL_MODE in self._hmdevice.ATTRIBUTENODE
+        ):
             self._data[HM_CONTROL_MODE] = STATE_UNKNOWN
 
         for node in self._hmdevice.SENSORNODE.keys():

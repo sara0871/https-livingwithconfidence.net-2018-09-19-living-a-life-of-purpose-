@@ -11,43 +11,56 @@ import voluptuous as vol
 
 from homeassistant.core import callback
 from homeassistant.components.mqtt import (
-    CONF_STATE_TOPIC, CONF_COMMAND_TOPIC, CONF_AVAILABILITY_TOPIC,
-    CONF_PAYLOAD_AVAILABLE, CONF_PAYLOAD_NOT_AVAILABLE, CONF_QOS, CONF_RETAIN,
-    MqttAvailability)
+    CONF_STATE_TOPIC,
+    CONF_COMMAND_TOPIC,
+    CONF_AVAILABILITY_TOPIC,
+    CONF_PAYLOAD_AVAILABLE,
+    CONF_PAYLOAD_NOT_AVAILABLE,
+    CONF_QOS,
+    CONF_RETAIN,
+    MqttAvailability,
+)
 from homeassistant.components.switch import SwitchDevice
 from homeassistant.const import (
-    CONF_NAME, CONF_OPTIMISTIC, CONF_VALUE_TEMPLATE, CONF_PAYLOAD_OFF,
-    CONF_PAYLOAD_ON, CONF_ICON, STATE_ON)
+    CONF_NAME,
+    CONF_OPTIMISTIC,
+    CONF_VALUE_TEMPLATE,
+    CONF_PAYLOAD_OFF,
+    CONF_PAYLOAD_ON,
+    CONF_ICON,
+    STATE_ON,
+)
 from homeassistant.components import mqtt
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.restore_state import async_get_last_state
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['mqtt']
+DEPENDENCIES = ["mqtt"]
 
-DEFAULT_NAME = 'MQTT Switch'
-DEFAULT_PAYLOAD_ON = 'ON'
-DEFAULT_PAYLOAD_OFF = 'OFF'
+DEFAULT_NAME = "MQTT Switch"
+DEFAULT_PAYLOAD_ON = "ON"
+DEFAULT_PAYLOAD_OFF = "OFF"
 DEFAULT_OPTIMISTIC = False
-CONF_UNIQUE_ID = 'unique_id'
+CONF_UNIQUE_ID = "unique_id"
 CONF_STATE_ON = "state_on"
 CONF_STATE_OFF = "state_off"
 
-PLATFORM_SCHEMA = mqtt.MQTT_RW_PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_ICON): cv.icon,
-    vol.Optional(CONF_PAYLOAD_ON, default=DEFAULT_PAYLOAD_ON): cv.string,
-    vol.Optional(CONF_PAYLOAD_OFF, default=DEFAULT_PAYLOAD_OFF): cv.string,
-    vol.Optional(CONF_STATE_ON): cv.string,
-    vol.Optional(CONF_STATE_OFF): cv.string,
-    vol.Optional(CONF_UNIQUE_ID): cv.string,
-    vol.Optional(CONF_OPTIMISTIC, default=DEFAULT_OPTIMISTIC): cv.boolean,
-}).extend(mqtt.MQTT_AVAILABILITY_SCHEMA.schema)
+PLATFORM_SCHEMA = mqtt.MQTT_RW_PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_ICON): cv.icon,
+        vol.Optional(CONF_PAYLOAD_ON, default=DEFAULT_PAYLOAD_ON): cv.string,
+        vol.Optional(CONF_PAYLOAD_OFF, default=DEFAULT_PAYLOAD_OFF): cv.string,
+        vol.Optional(CONF_STATE_ON): cv.string,
+        vol.Optional(CONF_STATE_OFF): cv.string,
+        vol.Optional(CONF_UNIQUE_ID): cv.string,
+        vol.Optional(CONF_OPTIMISTIC, default=DEFAULT_OPTIMISTIC): cv.boolean,
+    }
+).extend(mqtt.MQTT_AVAILABILITY_SCHEMA.schema)
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the MQTT switch."""
     if discovery_info is not None:
         config = PLATFORM_SCHEMA(discovery_info)
@@ -56,38 +69,56 @@ async def async_setup_platform(hass, config, async_add_entities,
     if value_template is not None:
         value_template.hass = hass
 
-    async_add_entities([MqttSwitch(
-        config.get(CONF_NAME),
-        config.get(CONF_ICON),
-        config.get(CONF_STATE_TOPIC),
-        config.get(CONF_COMMAND_TOPIC),
-        config.get(CONF_AVAILABILITY_TOPIC),
-        config.get(CONF_QOS),
-        config.get(CONF_RETAIN),
-        config.get(CONF_PAYLOAD_ON),
-        config.get(CONF_PAYLOAD_OFF),
-        config.get(CONF_STATE_ON),
-        config.get(CONF_STATE_OFF),
-        config.get(CONF_OPTIMISTIC),
-        config.get(CONF_PAYLOAD_AVAILABLE),
-        config.get(CONF_PAYLOAD_NOT_AVAILABLE),
-        config.get(CONF_UNIQUE_ID),
-        value_template,
-    )])
+    async_add_entities(
+        [
+            MqttSwitch(
+                config.get(CONF_NAME),
+                config.get(CONF_ICON),
+                config.get(CONF_STATE_TOPIC),
+                config.get(CONF_COMMAND_TOPIC),
+                config.get(CONF_AVAILABILITY_TOPIC),
+                config.get(CONF_QOS),
+                config.get(CONF_RETAIN),
+                config.get(CONF_PAYLOAD_ON),
+                config.get(CONF_PAYLOAD_OFF),
+                config.get(CONF_STATE_ON),
+                config.get(CONF_STATE_OFF),
+                config.get(CONF_OPTIMISTIC),
+                config.get(CONF_PAYLOAD_AVAILABLE),
+                config.get(CONF_PAYLOAD_NOT_AVAILABLE),
+                config.get(CONF_UNIQUE_ID),
+                value_template,
+            )
+        ]
+    )
 
 
 class MqttSwitch(MqttAvailability, SwitchDevice):
     """Representation of a switch that can be toggled using MQTT."""
 
-    def __init__(self, name, icon,
-                 state_topic, command_topic, availability_topic,
-                 qos, retain, payload_on, payload_off, state_on,
-                 state_off, optimistic, payload_available,
-                 payload_not_available, unique_id: Optional[str],
-                 value_template):
+    def __init__(
+        self,
+        name,
+        icon,
+        state_topic,
+        command_topic,
+        availability_topic,
+        qos,
+        retain,
+        payload_on,
+        payload_off,
+        state_on,
+        state_off,
+        optimistic,
+        payload_available,
+        payload_not_available,
+        unique_id: Optional[str],
+        value_template,
+    ):
         """Initialize the MQTT switch."""
-        super().__init__(availability_topic, qos, payload_available,
-                         payload_not_available)
+        super().__init__(
+            availability_topic, qos, payload_available, payload_not_available
+        )
         self._state = False
         self._name = name
         self._icon = icon
@@ -111,8 +142,7 @@ class MqttSwitch(MqttAvailability, SwitchDevice):
         def state_message_received(topic, payload, qos):
             """Handle new MQTT state messages."""
             if self._template is not None:
-                payload = self._template.async_render_with_possible_json_value(
-                    payload)
+                payload = self._template.async_render_with_possible_json_value(payload)
             if payload == self._state_on:
                 self._state = True
             elif payload == self._state_off:
@@ -125,12 +155,11 @@ class MqttSwitch(MqttAvailability, SwitchDevice):
             self._optimistic = True
         else:
             await mqtt.async_subscribe(
-                self.hass, self._state_topic, state_message_received,
-                self._qos)
+                self.hass, self._state_topic, state_message_received, self._qos
+            )
 
         if self._optimistic:
-            last_state = await async_get_last_state(self.hass,
-                                                    self.entity_id)
+            last_state = await async_get_last_state(self.hass, self.entity_id)
             if last_state:
                 self._state = last_state.state == STATE_ON
 
@@ -170,8 +199,8 @@ class MqttSwitch(MqttAvailability, SwitchDevice):
         This method is a coroutine.
         """
         mqtt.async_publish(
-            self.hass, self._command_topic, self._payload_on, self._qos,
-            self._retain)
+            self.hass, self._command_topic, self._payload_on, self._qos, self._retain
+        )
         if self._optimistic:
             # Optimistically assume that switch has changed state.
             self._state = True
@@ -183,8 +212,8 @@ class MqttSwitch(MqttAvailability, SwitchDevice):
         This method is a coroutine.
         """
         mqtt.async_publish(
-            self.hass, self._command_topic, self._payload_off, self._qos,
-            self._retain)
+            self.hass, self._command_topic, self._payload_off, self._qos, self._retain
+        )
         if self._optimistic:
             # Optimistically assume that switch has changed state.
             self._state = False

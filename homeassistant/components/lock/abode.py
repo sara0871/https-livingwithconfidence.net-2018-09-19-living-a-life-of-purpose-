@@ -10,7 +10,7 @@ from homeassistant.components.abode import AbodeDevice, DOMAIN as ABODE_DOMAIN
 from homeassistant.components.lock import LockDevice
 
 
-DEPENDENCIES = ['abode']
+DEPENDENCIES = ["abode"]
 
 _LOGGER = logging.getLogger(__name__)
 

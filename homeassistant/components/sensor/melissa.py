@@ -10,7 +10,7 @@ from homeassistant.components.melissa import DATA_MELISSA
 from homeassistant.const import TEMP_CELSIUS
 from homeassistant.helpers.entity import Entity
 
-DEPENDENCIES = ['melissa']
+DEPENDENCIES = ["melissa"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     devices = api.fetch_devices().values()
 
     for device in devices:
-        if device['type'] == 'melissa':
+        if device["type"] == "melissa":
             sensors.append(MelissaTemperatureSensor(device, api))
             sensors.append(MelissaHumiditySensor(device, api))
     add_entities(sensors)
@@ -31,18 +31,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class MelissaSensor(Entity):
     """Representation of a Melissa Sensor."""
 
-    _type = 'generic'
+    _type = "generic"
 
     def __init__(self, device, api):
         """Initialize the sensor."""
         self._api = api
         self._state = None
-        self._name = '{0} {1}'.format(
-            device['name'],
-            self._type
-        )
-        self._serial = device['serial_number']
-        self._data = device['controller_log']
+        self._name = "{0} {1}".format(device["name"], self._type)
+        self._serial = device["serial_number"]
+        self._data = device["controller_log"]
 
     @property
     def name(self):
@@ -62,7 +59,7 @@ class MelissaSensor(Entity):
 class MelissaTemperatureSensor(MelissaSensor):
     """Representation of a Melissa temperature Sensor."""
 
-    _type = 'temperature'
+    _type = "temperature"
     _unit = TEMP_CELSIUS
 
     @property
@@ -74,7 +71,7 @@ class MelissaTemperatureSensor(MelissaSensor):
         """Fetch new state data for the sensor."""
         super().update()
         try:
-            self._state = self._data[self._serial]['temp']
+            self._state = self._data[self._serial]["temp"]
         except KeyError:
             _LOGGER.warning("Unable to get temperature for %s", self.entity_id)
 
@@ -82,8 +79,8 @@ class MelissaTemperatureSensor(MelissaSensor):
 class MelissaHumiditySensor(MelissaSensor):
     """Representation of a Melissa humidity Sensor."""
 
-    _type = 'humidity'
-    _unit = '%'
+    _type = "humidity"
+    _unit = "%"
 
     @property
     def unit_of_measurement(self):
@@ -94,6 +91,6 @@ class MelissaHumiditySensor(MelissaSensor):
         """Fetch new state data for the sensor."""
         super().update()
         try:
-            self._state = self._data[self._serial]['humidity']
+            self._state = self._data[self._serial]["humidity"]
         except KeyError:
             _LOGGER.warning("Unable to get humidity for %s", self.entity_id)

@@ -7,7 +7,7 @@ https://home-assistant.io/components/binary_sensor.blink/
 from homeassistant.components.blink import DOMAIN
 from homeassistant.components.binary_sensor import BinarySensorDevice
 
-DEPENDENCIES = ['blink']
+DEPENDENCIES = ["blink"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -28,7 +28,7 @@ class BlinkCameraMotionSensor(BinarySensorDevice):
 
     def __init__(self, name, data):
         """Initialize the sensor."""
-        self._name = 'blink_' + name + '_motion_enabled'
+        self._name = "blink_" + name + "_motion_enabled"
         self._camera_name = name
         self.data = data
         self._state = self.data.cameras[self._camera_name].armed
@@ -54,7 +54,7 @@ class BlinkSystemSensor(BinarySensorDevice):
 
     def __init__(self, data):
         """Initialize the sensor."""
-        self._name = 'blink armed status'
+        self._name = "blink armed status"
         self.data = data
         self._state = self.data.arm
 

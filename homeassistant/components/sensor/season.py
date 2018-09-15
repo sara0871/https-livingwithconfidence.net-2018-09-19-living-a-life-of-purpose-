@@ -14,30 +14,32 @@ from homeassistant.const import CONF_TYPE
 from homeassistant.helpers.entity import Entity
 from homeassistant import util
 
-REQUIREMENTS = ['ephem==3.7.6.0']
+REQUIREMENTS = ["ephem==3.7.6.0"]
 
 _LOGGER = logging.getLogger(__name__)
 
-NORTHERN = 'northern'
-SOUTHERN = 'southern'
-EQUATOR = 'equator'
-STATE_SPRING = 'spring'
-STATE_SUMMER = 'summer'
-STATE_AUTUMN = 'autumn'
-STATE_WINTER = 'winter'
-TYPE_ASTRONOMICAL = 'astronomical'
-TYPE_METEOROLOGICAL = 'meteorological'
+NORTHERN = "northern"
+SOUTHERN = "southern"
+EQUATOR = "equator"
+STATE_SPRING = "spring"
+STATE_SUMMER = "summer"
+STATE_AUTUMN = "autumn"
+STATE_WINTER = "winter"
+TYPE_ASTRONOMICAL = "astronomical"
+TYPE_METEOROLOGICAL = "meteorological"
 VALID_TYPES = [TYPE_ASTRONOMICAL, TYPE_METEOROLOGICAL]
 
-HEMISPHERE_SEASON_SWAP = {STATE_WINTER: STATE_SUMMER,
-                          STATE_SPRING: STATE_AUTUMN,
-                          STATE_AUTUMN: STATE_SPRING,
-                          STATE_SUMMER: STATE_WINTER}
+HEMISPHERE_SEASON_SWAP = {
+    STATE_WINTER: STATE_SUMMER,
+    STATE_SPRING: STATE_AUTUMN,
+    STATE_AUTUMN: STATE_SPRING,
+    STATE_SUMMER: STATE_WINTER,
+}
 
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_TYPE, default=TYPE_ASTRONOMICAL): vol.In(VALID_TYPES)
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Optional(CONF_TYPE, default=TYPE_ASTRONOMICAL): vol.In(VALID_TYPES)}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -66,7 +68,7 @@ def get_season(date, hemisphere, season_tracking_type):
     """Calculate the current season."""
     import ephem
 
-    if hemisphere == 'equator':
+    if hemisphere == "equator":
         return None
 
     if season_tracking_type == TYPE_ASTRONOMICAL:

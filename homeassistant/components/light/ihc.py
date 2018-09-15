@@ -6,26 +6,41 @@ https://home-assistant.io/components/light.ihc/
 import voluptuous as vol
 
 from homeassistant.components.ihc import (
-    validate_name, IHC_DATA, IHC_CONTROLLER, IHC_INFO)
+    validate_name,
+    IHC_DATA,
+    IHC_CONTROLLER,
+    IHC_INFO,
+)
 from homeassistant.components.ihc.const import CONF_DIMMABLE
 from homeassistant.components.ihc.ihcdevice import IHCDevice
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS, PLATFORM_SCHEMA, Light)
+    ATTR_BRIGHTNESS,
+    SUPPORT_BRIGHTNESS,
+    PLATFORM_SCHEMA,
+    Light,
+)
 from homeassistant.const import CONF_ID, CONF_NAME, CONF_LIGHTS
 import homeassistant.helpers.config_validation as cv
 
-DEPENDENCIES = ['ihc']
+DEPENDENCIES = ["ihc"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_LIGHTS, default=[]):
-        vol.All(cv.ensure_list, [
-            vol.All({
-                vol.Required(CONF_ID): cv.positive_int,
-                vol.Optional(CONF_NAME): cv.string,
-                vol.Optional(CONF_DIMMABLE, default=False): cv.boolean,
-            }, validate_name)
-        ])
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_LIGHTS, default=[]): vol.All(
+            cv.ensure_list,
+            [
+                vol.All(
+                    {
+                        vol.Required(CONF_ID): cv.positive_int,
+                        vol.Optional(CONF_NAME): cv.string,
+                        vol.Optional(CONF_DIMMABLE, default=False): cv.boolean,
+                    },
+                    validate_name,
+                )
+            ],
+        )
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -35,11 +50,12 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     devices = []
     if discovery_info:
         for name, device in discovery_info.items():
-            ihc_id = device['ihc_id']
-            product_cfg = device['product_cfg']
-            product = device['product']
-            light = IhcLight(ihc_controller, name, ihc_id, info,
-                             product_cfg[CONF_DIMMABLE], product)
+            ihc_id = device["ihc_id"]
+            product_cfg = device["product_cfg"]
+            product = device["product"]
+            light = IhcLight(
+                ihc_controller, name, ihc_id, info, product_cfg[CONF_DIMMABLE], product
+            )
             devices.append(light)
     else:
         lights = config[CONF_LIGHTS]
@@ -61,8 +77,15 @@ class IhcLight(IHCDevice, Light):
     an on/off (boolean) resource
     """
 
-    def __init__(self, ihc_controller, name, ihc_id: int, info: bool,
-                 dimmable=False, product=None) -> None:
+    def __init__(
+        self,
+        ihc_controller,
+        name,
+        ihc_id: int,
+        info: bool,
+        dimmable=False,
+        product=None,
+    ) -> None:
         """Initialize the light."""
         super().__init__(ihc_controller, name, ihc_id, info, product)
         self._brightness = 0
@@ -97,7 +120,8 @@ class IhcLight(IHCDevice, Light):
 
         if self._dimmable:
             self.ihc_controller.set_runtime_value_int(
-                self.ihc_id, int(brightness * 100 / 255))
+                self.ihc_id, int(brightness * 100 / 255)
+            )
         else:
             self.ihc_controller.set_runtime_value_bool(self.ihc_id, True)
 

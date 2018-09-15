@@ -11,40 +11,49 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_HOST, CONF_MONITORED_VARIABLES, CONF_NAME, CONF_PASSWORD, CONF_PORT,
-    CONF_USERNAME, STATE_IDLE)
+    CONF_HOST,
+    CONF_MONITORED_VARIABLES,
+    CONF_NAME,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_USERNAME,
+    STATE_IDLE,
+)
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 from homeassistant.exceptions import PlatformNotReady
 
-REQUIREMENTS = ['transmissionrpc==0.11']
+REQUIREMENTS = ["transmissionrpc==0.11"]
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'Transmission'
+DEFAULT_NAME = "Transmission"
 DEFAULT_PORT = 9091
 
 SENSOR_TYPES = {
-    'active_torrents': ['Active Torrents', None],
-    'current_status': ['Status', None],
-    'download_speed': ['Down Speed', 'MB/s'],
-    'paused_torrents': ['Paused Torrents', None],
-    'total_torrents': ['Total Torrents', None],
-    'upload_speed': ['Up Speed', 'MB/s'],
+    "active_torrents": ["Active Torrents", None],
+    "current_status": ["Status", None],
+    "download_speed": ["Down Speed", "MB/s"],
+    "paused_torrents": ["Paused Torrents", None],
+    "total_torrents": ["Total Torrents", None],
+    "upload_speed": ["Up Speed", "MB/s"],
 }
 
 SCAN_INTERVAL = timedelta(minutes=2)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_MONITORED_VARIABLES, default=['torrents']):
-        vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)]),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-    vol.Optional(CONF_USERNAME): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_MONITORED_VARIABLES, default=["torrents"]): vol.All(
+            cv.ensure_list, [vol.In(SENSOR_TYPES)]
+        ),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+        vol.Optional(CONF_USERNAME): cv.string,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -60,15 +69,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     try:
         transmission = transmissionrpc.Client(
-            host, port=port, user=username, password=password)
+            host, port=port, user=username, password=password
+        )
         transmission_api = TransmissionData(transmission)
     except TransmissionError as error:
         if str(error).find("401: Unauthorized"):
             _LOGGER.error("Credentials for Transmission client are not valid")
             return
 
-        _LOGGER.warning(
-            "Unable to connect to Transmission client: %s:%s", host, port)
+        _LOGGER.warning("Unable to connect to Transmission client: %s:%s", host, port)
         raise PlatformNotReady
 
     dev = []
@@ -94,7 +103,7 @@ class TransmissionSensor(Entity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return '{} {}'.format(self.client_name, self._name)
+        return "{} {}".format(self.client_name, self._name)
 
     @property
     def state(self):
@@ -116,35 +125,35 @@ class TransmissionSensor(Entity):
         self._transmission_api.update()
         self._data = self._transmission_api.data
 
-        if self.type == 'current_status':
+        if self.type == "current_status":
             if self._data:
                 upload = self._data.uploadSpeed
                 download = self._data.downloadSpeed
                 if upload > 0 and download > 0:
-                    self._state = 'Up/Down'
+                    self._state = "Up/Down"
                 elif upload > 0 and download == 0:
-                    self._state = 'Seeding'
+                    self._state = "Seeding"
                 elif upload == 0 and download > 0:
-                    self._state = 'Downloading'
+                    self._state = "Downloading"
                 else:
                     self._state = STATE_IDLE
             else:
                 self._state = None
 
         if self._data:
-            if self.type == 'download_speed':
+            if self.type == "download_speed":
                 mb_spd = float(self._data.downloadSpeed)
                 mb_spd = mb_spd / 1024 / 1024
                 self._state = round(mb_spd, 2 if mb_spd < 0.1 else 1)
-            elif self.type == 'upload_speed':
+            elif self.type == "upload_speed":
                 mb_spd = float(self._data.uploadSpeed)
                 mb_spd = mb_spd / 1024 / 1024
                 self._state = round(mb_spd, 2 if mb_spd < 0.1 else 1)
-            elif self.type == 'active_torrents':
+            elif self.type == "active_torrents":
                 self._state = self._data.activeTorrentCount
-            elif self.type == 'paused_torrents':
+            elif self.type == "paused_torrents":
                 self._state = self._data.pausedTorrentCount
-            elif self.type == 'total_torrents':
+            elif self.type == "total_torrents":
                 self._state = self._data.torrentCount
 
 

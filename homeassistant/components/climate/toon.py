@@ -8,8 +8,15 @@ For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/climate.toon/
 """
 from homeassistant.components.climate import (
-    ATTR_TEMPERATURE, STATE_COOL, STATE_ECO, STATE_HEAT, STATE_PERFORMANCE,
-    SUPPORT_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE, ClimateDevice)
+    ATTR_TEMPERATURE,
+    STATE_COOL,
+    STATE_ECO,
+    STATE_HEAT,
+    STATE_PERFORMANCE,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    ClimateDevice,
+)
 import homeassistant.components.toon as toon_main
 from homeassistant.const import TEMP_CELSIUS
 
@@ -26,19 +33,14 @@ class ThermostatDevice(ClimateDevice):
 
     def __init__(self, hass):
         """Initialize the Toon climate device."""
-        self._name = 'Toon van Eneco'
+        self._name = "Toon van Eneco"
         self.hass = hass
         self.thermos = hass.data[toon_main.TOON_HANDLE]
 
         self._state = None
         self._temperature = None
         self._setpoint = None
-        self._operation_list = [
-            STATE_PERFORMANCE,
-            STATE_HEAT,
-            STATE_ECO,
-            STATE_COOL,
-        ]
+        self._operation_list = [STATE_PERFORMANCE, STATE_HEAT, STATE_ECO, STATE_COOL]
 
     @property
     def supported_features(self):
@@ -58,7 +60,7 @@ class ThermostatDevice(ClimateDevice):
     @property
     def current_operation(self):
         """Return current operation i.e. comfort, home, away."""
-        state = self.thermos.get_data('state')
+        state = self.thermos.get_data("state")
         return state
 
     @property
@@ -69,12 +71,12 @@ class ThermostatDevice(ClimateDevice):
     @property
     def current_temperature(self):
         """Return the current temperature."""
-        return self.thermos.get_data('temp')
+        return self.thermos.get_data("temp")
 
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
-        return self.thermos.get_data('setpoint')
+        return self.thermos.get_data("setpoint")
 
     def set_temperature(self, **kwargs):
         """Change the setpoint of the thermostat."""
@@ -84,10 +86,10 @@ class ThermostatDevice(ClimateDevice):
     def set_operation_mode(self, operation_mode):
         """Set new operation mode."""
         toonlib_values = {
-            STATE_PERFORMANCE: 'Comfort',
-            STATE_HEAT: 'Home',
-            STATE_ECO: 'Away',
-            STATE_COOL: 'Sleep',
+            STATE_PERFORMANCE: "Comfort",
+            STATE_HEAT: "Home",
+            STATE_ECO: "Away",
+            STATE_COOL: "Sleep",
         }
 
         self.thermos.set_state(toonlib_values[operation_mode])

@@ -14,26 +14,40 @@ import voluptuous as vol
 
 # Import the device class from the component that you want to support
 from homeassistant.components.climate import (
-    ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE,
-    SUPPORT_TARGET_TEMPERATURE, SUPPORT_AWAY_MODE)
-from homeassistant.const import (CONF_HOST, CONF_USERNAME, CONF_PASSWORD,
-                                 CONF_PORT, TEMP_CELSIUS, CONF_NAME)
+    ClimateDevice,
+    PLATFORM_SCHEMA,
+    STATE_HEAT,
+    STATE_IDLE,
+    ATTR_TEMPERATURE,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_AWAY_MODE,
+)
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_PORT,
+    TEMP_CELSIUS,
+    CONF_NAME,
+)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['oemthermostat==1.1']
+REQUIREMENTS = ["oemthermostat==1.1"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_AWAY_TEMP = 'away_temp'
+CONF_AWAY_TEMP = "away_temp"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_NAME, default="Thermostat"): cv.string,
-    vol.Optional(CONF_PORT, default=80): cv.port,
-    vol.Inclusive(CONF_USERNAME, 'authentication'): cv.string,
-    vol.Inclusive(CONF_PASSWORD, 'authentication'): cv.string,
-    vol.Optional(CONF_AWAY_TEMP, default=14): vol.Coerce(float)
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_NAME, default="Thermostat"): cv.string,
+        vol.Optional(CONF_PORT, default=80): cv.port,
+        vol.Inclusive(CONF_USERNAME, "authentication"): cv.string,
+        vol.Inclusive(CONF_PASSWORD, "authentication"): cv.string,
+        vol.Optional(CONF_AWAY_TEMP, default=14): vol.Coerce(float),
+    }
+)
 
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_AWAY_MODE
 
@@ -50,12 +64,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     away_temp = config.get(CONF_AWAY_TEMP)
 
     try:
-        therm = Thermostat(
-            host, port=port, username=username, password=password)
+        therm = Thermostat(host, port=port, username=username, password=password)
     except (ValueError, AssertionError, requests.RequestException):
         return False
 
-    add_entities((ThermostatDevice(hass, therm, name, away_temp), ), True)
+    add_entities((ThermostatDevice(hass, therm, name, away_temp),), True)
 
 
 class ThermostatDevice(ClimateDevice):

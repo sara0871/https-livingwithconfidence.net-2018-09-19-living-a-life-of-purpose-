@@ -7,21 +7,27 @@ at https://home-assistant.io/components/fan.zha/
 import logging
 from homeassistant.components import zha
 from homeassistant.components.fan import (
-    DOMAIN, FanEntity, SPEED_OFF, SPEED_LOW, SPEED_MEDIUM, SPEED_HIGH,
-    SUPPORT_SET_SPEED)
+    DOMAIN,
+    FanEntity,
+    SPEED_OFF,
+    SPEED_LOW,
+    SPEED_MEDIUM,
+    SPEED_HIGH,
+    SUPPORT_SET_SPEED,
+)
 
-DEPENDENCIES = ['zha']
+DEPENDENCIES = ["zha"]
 
 _LOGGER = logging.getLogger(__name__)
 
 # Additional speeds in zigbee's ZCL
 # Spec is unclear as to what this value means. On King Of Fans HBUniversal
 # receiver, this means Very High.
-SPEED_ON = 'on'
+SPEED_ON = "on"
 # The fan speed is self-regulated
-SPEED_AUTO = 'auto'
+SPEED_AUTO = "auto"
 # When the heated/cooled space is occupied, the fan is always on
-SPEED_SMART = 'smart'
+SPEED_SMART = "smart"
 
 SPEED_LIST = [
     SPEED_OFF,
@@ -30,15 +36,14 @@ SPEED_LIST = [
     SPEED_HIGH,
     SPEED_ON,
     SPEED_AUTO,
-    SPEED_SMART
+    SPEED_SMART,
 ]
 
 VALUE_TO_SPEED = {i: speed for i, speed in enumerate(SPEED_LIST)}
 SPEED_TO_VALUE = {speed: i for i, speed in enumerate(SPEED_LIST)}
 
 
-async def async_setup_platform(hass, config, async_add_entities,
-                               discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Zigbee Home Automation fans."""
     discovery_info = zha.get_discovery_info(hass, discovery_info)
     if discovery_info is None:
@@ -88,9 +93,10 @@ class ZhaFan(zha.Entity, FanEntity):
     async def async_set_speed(self, speed: str) -> None:
         """Set the speed of the fan."""
         from zigpy.exceptions import DeliveryError
+
         try:
             await self._endpoint.fan.write_attributes(
-                {'fan_mode': SPEED_TO_VALUE[speed]}
+                {"fan_mode": SPEED_TO_VALUE[speed]}
             )
         except DeliveryError as ex:
             _LOGGER.error("%s: Could not set speed: %s", self.entity_id, ex)
@@ -101,10 +107,13 @@ class ZhaFan(zha.Entity, FanEntity):
 
     async def async_update(self):
         """Retrieve latest state."""
-        result = await zha.safe_read(self._endpoint.fan, ['fan_mode'],
-                                     allow_cache=False,
-                                     only_cache=(not self._initialized))
-        new_value = result.get('fan_mode', None)
+        result = await zha.safe_read(
+            self._endpoint.fan,
+            ["fan_mode"],
+            allow_cache=False,
+            only_cache=(not self._initialized),
+        )
+        new_value = result.get("fan_mode", None)
         self._state = VALUE_TO_SPEED.get(new_value, None)
 
     @property

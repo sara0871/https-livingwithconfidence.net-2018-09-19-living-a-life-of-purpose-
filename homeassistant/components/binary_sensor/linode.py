@@ -9,22 +9,29 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.binary_sensor import (
-    BinarySensorDevice, PLATFORM_SCHEMA)
+from homeassistant.components.binary_sensor import BinarySensorDevice, PLATFORM_SCHEMA
 from homeassistant.components.linode import (
-    CONF_NODES, ATTR_CREATED, ATTR_NODE_ID, ATTR_NODE_NAME,
-    ATTR_IPV4_ADDRESS, ATTR_IPV6_ADDRESS, ATTR_MEMORY,
-    ATTR_REGION, ATTR_VCPUS, DATA_LINODE)
+    CONF_NODES,
+    ATTR_CREATED,
+    ATTR_NODE_ID,
+    ATTR_NODE_NAME,
+    ATTR_IPV4_ADDRESS,
+    ATTR_IPV6_ADDRESS,
+    ATTR_MEMORY,
+    ATTR_REGION,
+    ATTR_VCPUS,
+    DATA_LINODE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'Node'
-DEFAULT_DEVICE_CLASS = 'moving'
-DEPENDENCIES = ['linode']
+DEFAULT_NAME = "Node"
+DEFAULT_DEVICE_CLASS = "moving"
+DEPENDENCIES = ["linode"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_NODES): vol.All(cv.ensure_list, [cv.string]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Required(CONF_NODES): vol.All(cv.ensure_list, [cv.string])}
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -83,7 +90,7 @@ class LinodeBinarySensor(BinarySensorDevice):
                 if node.id == self._node_id:
                     self.data = node
         if self.data is not None:
-            self._state = self.data.status == 'running'
+            self._state = self.data.status == "running"
             self._attrs = {
                 ATTR_CREATED: self.data.created,
                 ATTR_NODE_ID: self.data.id,

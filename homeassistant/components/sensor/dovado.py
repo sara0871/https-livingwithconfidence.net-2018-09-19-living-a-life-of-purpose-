@@ -15,43 +15,44 @@ from homeassistant.util import Throttle
 from homeassistant.util import slugify
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import (
-    CONF_USERNAME, CONF_PASSWORD, CONF_HOST, CONF_PORT, CONF_SENSORS,
-    DEVICE_DEFAULT_NAME)
-from homeassistant.components.sensor import (DOMAIN, PLATFORM_SCHEMA)
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_HOST,
+    CONF_PORT,
+    CONF_SENSORS,
+    DEVICE_DEFAULT_NAME,
+)
+from homeassistant.components.sensor import DOMAIN, PLATFORM_SCHEMA
 
 _LOGGER = logging.getLogger(__name__)
 
-REQUIREMENTS = ['dovado==0.4.1']
+REQUIREMENTS = ["dovado==0.4.1"]
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=30)
 
-SENSOR_UPLOAD = 'upload'
-SENSOR_DOWNLOAD = 'download'
-SENSOR_SIGNAL = 'signal'
-SENSOR_NETWORK = 'network'
-SENSOR_SMS_UNREAD = 'sms'
+SENSOR_UPLOAD = "upload"
+SENSOR_DOWNLOAD = "download"
+SENSOR_SIGNAL = "signal"
+SENSOR_NETWORK = "network"
+SENSOR_SMS_UNREAD = "sms"
 
 SENSORS = {
-    SENSOR_NETWORK: ('signal strength', 'Network', None,
-                     'mdi:access-point-network'),
-    SENSOR_SIGNAL: ('signal strength', 'Signal Strength', '%',
-                    'mdi:signal'),
-    SENSOR_SMS_UNREAD: ('sms unread', 'SMS unread', '',
-                        'mdi:message-text-outline'),
-    SENSOR_UPLOAD: ('traffic modem tx', 'Sent', 'GB',
-                    'mdi:cloud-upload'),
-    SENSOR_DOWNLOAD: ('traffic modem rx', 'Received', 'GB',
-                      'mdi:cloud-download'),
+    SENSOR_NETWORK: ("signal strength", "Network", None, "mdi:access-point-network"),
+    SENSOR_SIGNAL: ("signal strength", "Signal Strength", "%", "mdi:signal"),
+    SENSOR_SMS_UNREAD: ("sms unread", "SMS unread", "", "mdi:message-text-outline"),
+    SENSOR_UPLOAD: ("traffic modem tx", "Sent", "GB", "mdi:cloud-upload"),
+    SENSOR_DOWNLOAD: ("traffic modem rx", "Received", "GB", "mdi:cloud-download"),
 }
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_HOST): cv.string,
-    vol.Optional(CONF_PORT): cv.port,
-    vol.Optional(CONF_SENSORS):
-    vol.All(cv.ensure_list, [vol.In(SENSORS)]),
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_HOST): cv.string,
+        vol.Optional(CONF_PORT): cv.port,
+        vol.Optional(CONF_SENSORS): vol.All(cv.ensure_list, [vol.In(SENSORS)]),
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -70,22 +71,26 @@ class Dovado:
     def setup(self, hass, config, add_entities):
         """Set up the connection."""
         import dovado
+
         self._dovado = dovado.Dovado(
-            config.get(CONF_USERNAME), config.get(CONF_PASSWORD),
-            config.get(CONF_HOST), config.get(CONF_PORT))
+            config.get(CONF_USERNAME),
+            config.get(CONF_PASSWORD),
+            config.get(CONF_HOST),
+            config.get(CONF_PORT),
+        )
 
         if not self.update():
             return False
 
         def send_sms(service):
             """Send SMS through the router."""
-            number = service.data.get('number')
-            message = service.data.get('message')
+            number = service.data.get("number")
+            message = service.data.get("message")
             _LOGGER.debug("message for %s: %s", number, message)
             self._dovado.send_sms(number, message)
 
-        if self.state.get('sms') == 'enabled':
-            service_name = slugify("{} {}".format(self.name, 'send_sms'))
+        if self.state.get("sms") == "enabled":
+            service_name = slugify("{} {}".format(self.name, "send_sms"))
             hass.services.register(DOMAIN, service_name, send_sms)
 
         for sensor in SENSORS:
@@ -107,8 +112,7 @@ class Dovado:
             self.state = self._dovado.state or {}
             if not self.state:
                 return False
-            self.state.update(
-                connected=self.state.get("modem status") == "CONNECTED")
+            self.state.update(connected=self.state.get("modem status") == "CONNECTED")
             _LOGGER.debug("Received: %s", self.state)
             return True
         except OSError as error:
@@ -168,5 +172,6 @@ class DovadoSensor(Entity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
-        return {k: v for k, v in self._dovado.state.items()
-                if k not in ['date', 'time']}
+        return {
+            k: v for k, v in self._dovado.state.items() if k not in ["date", "time"]
+        }

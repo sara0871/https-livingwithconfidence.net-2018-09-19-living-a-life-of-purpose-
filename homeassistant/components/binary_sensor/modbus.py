@@ -14,28 +14,33 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 
 _LOGGER = logging.getLogger(__name__)
-DEPENDENCIES = ['modbus']
+DEPENDENCIES = ["modbus"]
 
-CONF_COIL = 'coil'
-CONF_COILS = 'coils'
+CONF_COIL = "coil"
+CONF_COILS = "coils"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_COILS): [{
-        vol.Required(CONF_COIL): cv.positive_int,
-        vol.Required(CONF_NAME): cv.string,
-        vol.Optional(CONF_SLAVE): cv.positive_int
-    }]
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_COILS): [
+            {
+                vol.Required(CONF_COIL): cv.positive_int,
+                vol.Required(CONF_NAME): cv.string,
+                vol.Optional(CONF_SLAVE): cv.positive_int,
+            }
+        ]
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Modbus binary sensors."""
     sensors = []
     for coil in config.get(CONF_COILS):
-        sensors.append(ModbusCoilSensor(
-            coil.get(CONF_NAME),
-            coil.get(CONF_SLAVE),
-            coil.get(CONF_COIL)))
+        sensors.append(
+            ModbusCoilSensor(
+                coil.get(CONF_NAME), coil.get(CONF_SLAVE), coil.get(CONF_COIL)
+            )
+        )
     add_entities(sensors)
 
 
@@ -66,6 +71,5 @@ class ModbusCoilSensor(BinarySensorDevice):
             self._value = result.bits[0]
         except AttributeError:
             _LOGGER.error(
-                'No response from modbus slave %s coil %s',
-                self._slave,
-                self._coil)
+                "No response from modbus slave %s coil %s", self._slave, self._coil
+            )

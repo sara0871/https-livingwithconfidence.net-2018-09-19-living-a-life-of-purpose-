@@ -11,45 +11,53 @@ import aiohttp
 import async_timeout
 import voluptuous as vol
 
-from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA)
+from homeassistant.components.switch import SwitchDevice, PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_HEADERS, CONF_NAME, CONF_RESOURCE, CONF_TIMEOUT, CONF_METHOD,
-    CONF_USERNAME, CONF_PASSWORD)
+    CONF_HEADERS,
+    CONF_NAME,
+    CONF_RESOURCE,
+    CONF_TIMEOUT,
+    CONF_METHOD,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+)
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_BODY_OFF = 'body_off'
-CONF_BODY_ON = 'body_on'
-CONF_IS_ON_TEMPLATE = 'is_on_template'
+CONF_BODY_OFF = "body_off"
+CONF_BODY_ON = "body_on"
+CONF_IS_ON_TEMPLATE = "is_on_template"
 
-DEFAULT_METHOD = 'post'
-DEFAULT_BODY_OFF = 'OFF'
-DEFAULT_BODY_ON = 'ON'
-DEFAULT_NAME = 'REST Switch'
+DEFAULT_METHOD = "post"
+DEFAULT_BODY_OFF = "OFF"
+DEFAULT_BODY_ON = "ON"
+DEFAULT_NAME = "REST Switch"
 DEFAULT_TIMEOUT = 10
 
-SUPPORT_REST_METHODS = ['post', 'put']
+SUPPORT_REST_METHODS = ["post", "put"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_RESOURCE): cv.url,
-    vol.Optional(CONF_HEADERS): {cv.string: cv.string},
-    vol.Optional(CONF_BODY_OFF, default=DEFAULT_BODY_OFF): cv.template,
-    vol.Optional(CONF_BODY_ON, default=DEFAULT_BODY_ON): cv.template,
-    vol.Optional(CONF_IS_ON_TEMPLATE): cv.template,
-    vol.Optional(CONF_METHOD, default=DEFAULT_METHOD):
-        vol.All(vol.Lower, vol.In(SUPPORT_REST_METHODS)),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
-    vol.Inclusive(CONF_USERNAME, 'authentication'): cv.string,
-    vol.Inclusive(CONF_PASSWORD, 'authentication'): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_RESOURCE): cv.url,
+        vol.Optional(CONF_HEADERS): {cv.string: cv.string},
+        vol.Optional(CONF_BODY_OFF, default=DEFAULT_BODY_OFF): cv.template,
+        vol.Optional(CONF_BODY_ON, default=DEFAULT_BODY_ON): cv.template,
+        vol.Optional(CONF_IS_ON_TEMPLATE): cv.template,
+        vol.Optional(CONF_METHOD, default=DEFAULT_METHOD): vol.All(
+            vol.Lower, vol.In(SUPPORT_REST_METHODS)
+        ),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
+        vol.Inclusive(CONF_USERNAME, "authentication"): cv.string,
+        vol.Inclusive(CONF_PASSWORD, "authentication"): cv.string,
+    }
+)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the RESTful switch."""
     body_off = config.get(CONF_BODY_OFF)
     body_on = config.get(CONF_BODY_ON)
@@ -74,8 +82,17 @@ def async_setup_platform(hass, config, async_add_entities,
     timeout = config.get(CONF_TIMEOUT)
 
     try:
-        switch = RestSwitch(name, resource, method, headers, auth, body_on,
-                            body_off, is_on_template, timeout)
+        switch = RestSwitch(
+            name,
+            resource,
+            method,
+            headers,
+            auth,
+            body_on,
+            body_off,
+            is_on_template,
+            timeout,
+        )
 
         req = yield from switch.get_device_state(hass)
         if req.status >= 400:
@@ -83,8 +100,10 @@ def async_setup_platform(hass, config, async_add_entities,
         else:
             async_add_entities([switch])
     except (TypeError, ValueError):
-        _LOGGER.error("Missing resource or schema in configuration. "
-                      "Add http:// or https:// to your URL")
+        _LOGGER.error(
+            "Missing resource or schema in configuration. "
+            "Add http:// or https:// to your URL"
+        )
     except (asyncio.TimeoutError, aiohttp.ClientError):
         _LOGGER.error("No route to resource/endpoint: %s", resource)
 
@@ -92,8 +111,18 @@ def async_setup_platform(hass, config, async_add_entities,
 class RestSwitch(SwitchDevice):
     """Representation of a switch that can be toggled using REST."""
 
-    def __init__(self, name, resource, method, headers, auth, body_on,
-                 body_off, is_on_template, timeout):
+    def __init__(
+        self,
+        name,
+        resource,
+        method,
+        headers,
+        auth,
+        body_on,
+        body_off,
+        is_on_template,
+        timeout,
+    ):
         """Initialize the REST switch."""
         self._state = None
         self._name = name
@@ -128,8 +157,8 @@ class RestSwitch(SwitchDevice):
                 self._state = True
             else:
                 _LOGGER.error(
-                    "Can't turn on %s. Is resource/endpoint offline?",
-                    self._resource)
+                    "Can't turn on %s. Is resource/endpoint offline?", self._resource
+                )
         except (asyncio.TimeoutError, aiohttp.ClientError):
             _LOGGER.error("Error while turn on %s", self._resource)
 
@@ -144,8 +173,8 @@ class RestSwitch(SwitchDevice):
                 self._state = False
             else:
                 _LOGGER.error(
-                    "Can't turn off %s. Is resource/endpoint offline?",
-                    self._resource)
+                    "Can't turn off %s. Is resource/endpoint offline?", self._resource
+                )
         except (asyncio.TimeoutError, aiohttp.ClientError):
             _LOGGER.error("Error while turn off %s", self._resource)
 
@@ -156,8 +185,11 @@ class RestSwitch(SwitchDevice):
 
         with async_timeout.timeout(self._timeout, loop=self.hass.loop):
             req = yield from getattr(websession, self._method)(
-                self._resource, auth=self._auth, data=bytes(body, 'utf-8'),
-                headers=self._headers)
+                self._resource,
+                auth=self._auth,
+                data=bytes(body, "utf-8"),
+                headers=self._headers,
+            )
             return req
 
     @asyncio.coroutine
@@ -179,11 +211,12 @@ class RestSwitch(SwitchDevice):
 
         if self._is_on_template is not None:
             text = self._is_on_template.async_render_with_possible_json_value(
-                text, 'None')
+                text, "None"
+            )
             text = text.lower()
-            if text == 'true':
+            if text == "true":
                 self._state = True
-            elif text == 'false':
+            elif text == "false":
                 self._state = False
             else:
                 self._state = None

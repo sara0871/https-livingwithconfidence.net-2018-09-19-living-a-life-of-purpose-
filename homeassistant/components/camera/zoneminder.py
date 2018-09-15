@@ -8,12 +8,15 @@ import logging
 
 from homeassistant.const import CONF_NAME
 from homeassistant.components.camera.mjpeg import (
-    CONF_MJPEG_URL, CONF_STILL_IMAGE_URL, MjpegCamera)
+    CONF_MJPEG_URL,
+    CONF_STILL_IMAGE_URL,
+    MjpegCamera,
+)
 from homeassistant.components.zoneminder import DOMAIN as ZONEMINDER_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['zoneminder']
+DEPENDENCIES = ["zoneminder"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -40,7 +43,7 @@ class ZoneMinderCamera(MjpegCamera):
         device_info = {
             CONF_NAME: monitor.name,
             CONF_MJPEG_URL: monitor.mjpeg_image_url,
-            CONF_STILL_IMAGE_URL: monitor.still_image_url
+            CONF_STILL_IMAGE_URL: monitor.still_image_url,
         }
         super().__init__(device_info)
         self._is_recording = None

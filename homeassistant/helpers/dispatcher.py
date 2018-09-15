@@ -7,14 +7,15 @@ from homeassistant.util.async_ import run_callback_threadsafe
 
 
 _LOGGER = logging.getLogger(__name__)
-DATA_DISPATCHER = 'dispatcher'
+DATA_DISPATCHER = "dispatcher"
 
 
 @bind_hass
 def dispatcher_connect(hass, signal, target):
     """Connect a callable function to a signal."""
     async_unsub = run_callback_threadsafe(
-        hass.loop, async_dispatcher_connect, hass, signal, target).result()
+        hass.loop, async_dispatcher_connect, hass, signal, target
+    ).result()
 
     def remove_dispatcher():
         """Remove signal listener."""
@@ -46,8 +47,7 @@ def async_dispatcher_connect(hass, signal, target):
         except (KeyError, ValueError):
             # KeyError is key target listener did not exist
             # ValueError if listener did not exist within signal
-            _LOGGER.warning(
-                "Unable to remove unknown dispatcher %s", target)
+            _LOGGER.warning("Unable to remove unknown dispatcher %s", target)
 
     return async_remove_dispatcher
 

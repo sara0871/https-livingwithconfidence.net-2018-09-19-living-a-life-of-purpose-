@@ -10,18 +10,24 @@ from homeassistant.loader import bind_hass
 from homeassistant.util import json
 from homeassistant.helpers.event import async_call_later
 
-STORAGE_DIR = '.storage'
+STORAGE_DIR = ".storage"
 _LOGGER = logging.getLogger(__name__)
 
 
 @bind_hass
-async def async_migrator(hass, old_path, store, *,
-                         old_conf_load_func=json.load_json,
-                         old_conf_migrate_func=None):
+async def async_migrator(
+    hass,
+    old_path,
+    store,
+    *,
+    old_conf_load_func=json.load_json,
+    old_conf_migrate_func=None
+):
     """Migrate old data to a store and then load data.
 
     async def old_conf_migrate_func(old_data)
     """
+
     def load_old_config():
         """Load old config."""
         if not os.path.isfile(old_path):
@@ -83,51 +89,47 @@ class Store:
             data = self._data
 
             # If we didn't generate data yet, do it now.
-            if 'data_func' in data:
-                data['data'] = data.pop('data_func')()
+            if "data_func" in data:
+                data["data"] = data.pop("data_func")()
         else:
-            data = await self.hass.async_add_executor_job(
-                json.load_json, self.path)
+            data = await self.hass.async_add_executor_job(json.load_json, self.path)
 
             if data == {}:
                 return None
-        if data['version'] == self.version:
-            stored = data['data']
+        if data["version"] == self.version:
+            stored = data["data"]
         else:
-            _LOGGER.info('Migrating %s storage from %s to %s',
-                         self.key, data['version'], self.version)
-            stored = await self._async_migrate_func(
-                data['version'], data['data'])
+            _LOGGER.info(
+                "Migrating %s storage from %s to %s",
+                self.key,
+                data["version"],
+                self.version,
+            )
+            stored = await self._async_migrate_func(data["version"], data["data"])
 
         self._load_task = None
         return stored
 
     async def async_save(self, data):
         """Save data."""
-        self._data = {
-            'version': self.version,
-            'key': self.key,
-            'data': data,
-        }
+        self._data = {"version": self.version, "key": self.key, "data": data}
 
         self._async_cleanup_delay_listener()
         self._async_cleanup_stop_listener()
         await self._async_handle_write_data()
 
     @callback
-    def async_delay_save(self, data_func: Callable[[], Dict],
-                         delay: Optional[int] = None):
+    def async_delay_save(
+        self, data_func: Callable[[], Dict], delay: Optional[int] = None
+    ):
         """Save data with an optional delay."""
-        self._data = {
-            'version': self.version,
-            'key': self.key,
-            'data_func': data_func,
-        }
+        self._data = {"version": self.version, "key": self.key, "data_func": data_func}
 
         self._async_cleanup_delay_listener()
 
         self._unsub_delay_listener = async_call_later(
-            self.hass, delay, self._async_callback_delayed_write)
+            self.hass, delay, self._async_callback_delayed_write
+        )
 
         self._async_ensure_stop_listener()
 
@@ -136,7 +138,8 @@ class Store:
         """Ensure that we write if we quit before delay has passed."""
         if self._unsub_stop_listener is None:
             self._unsub_stop_listener = self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STOP, self._async_callback_stop_write)
+                EVENT_HOMEASSISTANT_STOP, self._async_callback_stop_write
+            )
 
     @callback
     def _async_cleanup_stop_listener(self):
@@ -168,24 +171,25 @@ class Store:
         """Handle writing the config."""
         data = self._data
 
-        if 'data_func' in data:
-            data['data'] = data.pop('data_func')()
+        if "data_func" in data:
+            data["data"] = data.pop("data_func")()
 
         self._data = None
 
         async with self._write_lock:
             try:
                 await self.hass.async_add_executor_job(
-                    self._write_data, self.path, data)
+                    self._write_data, self.path, data
+                )
             except (json.SerializationError, json.WriteError) as err:
-                _LOGGER.error('Error writing config for %s: %s', self.key, err)
+                _LOGGER.error("Error writing config for %s: %s", self.key, err)
 
     def _write_data(self, path: str, data: Dict):
         """Write the data."""
         if not os.path.isdir(os.path.dirname(path)):
             os.makedirs(os.path.dirname(path))
 
-        _LOGGER.debug('Writing data for %s', self.key)
+        _LOGGER.debug("Writing data for %s", self.key)
         json.save_json(path, data)
 
     async def _async_migrate_func(self, old_version, old_data):

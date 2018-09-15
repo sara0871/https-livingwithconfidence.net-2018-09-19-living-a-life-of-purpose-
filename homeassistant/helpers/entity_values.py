@@ -10,8 +10,9 @@ from homeassistant.core import split_entity_id
 class EntityValues:
     """Class to store entity id based values."""
 
-    def __init__(self, exact: Dict = None, domain: Dict = None,
-                 glob: Dict = None) -> None:
+    def __init__(
+        self, exact: Dict = None, domain: Dict = None, glob: Dict = None
+    ) -> None:
         """Initialize an EntityConfigDict."""
         self._cache = {}
         self._exact = exact

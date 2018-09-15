@@ -13,9 +13,9 @@ from homeassistant.helpers.entity import Entity
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['wink']
+DEPENDENCIES = ["wink"]
 
-SENSOR_TYPES = ['temperature', 'humidity', 'balance', 'proximity']
+SENSOR_TYPES = ["temperature", "humidity", "balance", "proximity"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -24,23 +24,23 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     for sensor in pywink.get_sensors():
         _id = sensor.object_id() + sensor.name()
-        if _id not in hass.data[DOMAIN]['unique_ids']:
+        if _id not in hass.data[DOMAIN]["unique_ids"]:
             if sensor.capability() in SENSOR_TYPES:
                 add_entities([WinkSensorDevice(sensor, hass)])
 
     for eggtray in pywink.get_eggtrays():
         _id = eggtray.object_id() + eggtray.name()
-        if _id not in hass.data[DOMAIN]['unique_ids']:
+        if _id not in hass.data[DOMAIN]["unique_ids"]:
             add_entities([WinkSensorDevice(eggtray, hass)])
 
     for tank in pywink.get_propane_tanks():
         _id = tank.object_id() + tank.name()
-        if _id not in hass.data[DOMAIN]['unique_ids']:
+        if _id not in hass.data[DOMAIN]["unique_ids"]:
             add_entities([WinkSensorDevice(tank, hass)])
 
     for piggy_bank in pywink.get_piggy_banks():
         _id = piggy_bank.object_id() + piggy_bank.name()
-        if _id not in hass.data[DOMAIN]['unique_ids']:
+        if _id not in hass.data[DOMAIN]["unique_ids"]:
             try:
                 if piggy_bank.capability() in SENSOR_TYPES:
                     add_entities([WinkSensorDevice(piggy_bank, hass)])
@@ -55,7 +55,7 @@ class WinkSensorDevice(WinkDevice, Entity):
         """Initialize the Wink device."""
         super().__init__(wink, hass)
         self.capability = self.wink.capability()
-        if self.wink.unit() == '°':
+        if self.wink.unit() == "°":
             self._unit_of_measurement = TEMP_CELSIUS
         else:
             self._unit_of_measurement = self.wink.unit()
@@ -63,22 +63,22 @@ class WinkSensorDevice(WinkDevice, Entity):
     @asyncio.coroutine
     def async_added_to_hass(self):
         """Call when entity is added to hass."""
-        self.hass.data[DOMAIN]['entities']['sensor'].append(self)
+        self.hass.data[DOMAIN]["entities"]["sensor"].append(self)
 
     @property
     def state(self):
         """Return the state."""
         state = None
-        if self.capability == 'humidity':
+        if self.capability == "humidity":
             if self.wink.state() is not None:
                 state = round(self.wink.state())
-        elif self.capability == 'temperature':
+        elif self.capability == "temperature":
             if self.wink.state() is not None:
                 state = round(self.wink.state(), 1)
-        elif self.capability == 'balance':
+        elif self.capability == "balance":
             if self.wink.state() is not None:
                 state = round(self.wink.state() / 100, 2)
-        elif self.capability == 'proximity':
+        elif self.capability == "proximity":
             if self.wink.state() is not None:
                 state = self.wink.state()
         else:

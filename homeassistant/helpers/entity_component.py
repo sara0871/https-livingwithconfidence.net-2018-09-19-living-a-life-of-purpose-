@@ -6,7 +6,10 @@ from itertools import chain
 from homeassistant import config as conf_util
 from homeassistant.setup import async_prepare_setup_platform
 from homeassistant.const import (
-    ATTR_ENTITY_ID, CONF_SCAN_INTERVAL, CONF_ENTITY_NAMESPACE)
+    ATTR_ENTITY_ID,
+    CONF_SCAN_INTERVAL,
+    CONF_ENTITY_NAMESPACE,
+)
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_per_platform, discovery
@@ -28,8 +31,9 @@ class EntityComponent:
      - Listen for discovery events for platforms related to the domain.
     """
 
-    def __init__(self, logger, domain, hass,
-                 scan_interval=DEFAULT_SCAN_INTERVAL, group_name=None):
+    def __init__(
+        self, logger, domain, hass, scan_interval=DEFAULT_SCAN_INTERVAL, group_name=None
+    ):
         """Initialize an entity component."""
         self.logger = logger
         self.hass = hass
@@ -39,17 +43,16 @@ class EntityComponent:
 
         self.config = None
 
-        self._platforms = {
-            domain: self._async_init_entity_platform(domain, None)
-        }
+        self._platforms = {domain: self._async_init_entity_platform(domain, None)}
         self.async_add_entities = self._platforms[domain].async_add_entities
         self.add_entities = self._platforms[domain].add_entities
 
     @property
     def entities(self):
         """Return an iterable that returns all entities."""
-        return chain.from_iterable(platform.entities.values() for platform
-                                   in self._platforms.values())
+        return chain.from_iterable(
+            platform.entities.values() for platform in self._platforms.values()
+        )
 
     def get_entity(self, entity_id):
         """Get an entity."""
@@ -91,13 +94,15 @@ class EntityComponent:
             await self._async_setup_platform(platform, {}, info)
 
         discovery.async_listen_platform(
-            self.hass, self.domain, component_platform_discovered)
+            self.hass, self.domain, component_platform_discovered
+        )
 
     async def async_setup_entry(self, config_entry):
         """Set up a config entry."""
         platform_type = config_entry.domain
         platform = await async_prepare_setup_platform(
-            self.hass, self.config, self.domain, platform_type)
+            self.hass, self.config, self.domain, platform_type
+        )
 
         if platform is None:
             return False
@@ -105,11 +110,12 @@ class EntityComponent:
         key = config_entry.entry_id
 
         if key in self._platforms:
-            raise ValueError('Config entry has already been setup!')
+            raise ValueError("Config entry has already been setup!")
 
         self._platforms[key] = self._async_init_entity_platform(
-            platform_type, platform,
-            scan_interval=getattr(platform, 'SCAN_INTERVAL', None),
+            platform_type,
+            platform,
+            scan_interval=getattr(platform, "SCAN_INTERVAL", None),
         )
 
         return await self._platforms[key].async_setup_entry(config_entry)
@@ -121,7 +127,7 @@ class EntityComponent:
         platform = self._platforms.pop(key, None)
 
         if platform is None:
-            raise ValueError('Config entry was never loaded!')
+            raise ValueError("Config entry was never loaded!")
 
         await platform.async_reset()
         return True
@@ -139,33 +145,39 @@ class EntityComponent:
             return [entity for entity in self.entities if entity.available]
 
         entity_ids = set(extract_entity_ids(self.hass, service, expand_group))
-        return [entity for entity in self.entities
-                if entity.available and entity.entity_id in entity_ids]
+        return [
+            entity
+            for entity in self.entities
+            if entity.available and entity.entity_id in entity_ids
+        ]
 
     @callback
     def async_register_entity_service(self, name, schema, func):
         """Register an entity service."""
+
         async def handle_service(call):
             """Handle the service."""
             await self.hass.helpers.service.entity_service_call(
                 self._platforms.values(), func, call
             )
 
-        self.hass.services.async_register(
-            self.domain, name, handle_service, schema)
+        self.hass.services.async_register(self.domain, name, handle_service, schema)
 
-    async def _async_setup_platform(self, platform_type, platform_config,
-                                    discovery_info=None):
+    async def _async_setup_platform(
+        self, platform_type, platform_config, discovery_info=None
+    ):
         """Set up a platform for this component."""
         platform = await async_prepare_setup_platform(
-            self.hass, self.config, self.domain, platform_type)
+            self.hass, self.config, self.domain, platform_type
+        )
 
         if platform is None:
             return
 
         # Use config scan interval, fallback to platform if none set
         scan_interval = platform_config.get(
-            CONF_SCAN_INTERVAL, getattr(platform, 'SCAN_INTERVAL', None))
+            CONF_SCAN_INTERVAL, getattr(platform, "SCAN_INTERVAL", None)
+        )
         entity_namespace = platform_config.get(CONF_ENTITY_NAMESPACE)
 
         key = (platform_type, scan_interval, entity_namespace)
@@ -186,13 +198,18 @@ class EntityComponent:
         if self.group_name is None:
             return
 
-        ids = [entity.entity_id for entity in
-               sorted(self.entities,
-                      key=lambda entity: entity.name or entity.entity_id)]
+        ids = [
+            entity.entity_id
+            for entity in sorted(
+                self.entities, key=lambda entity: entity.name or entity.entity_id
+            )
+        ]
 
         self.hass.components.group.async_set_group(
-            slugify(self.group_name), name=self.group_name,
-            visible=False, entity_ids=ids
+            slugify(self.group_name),
+            name=self.group_name,
+            visible=False,
+            entity_ids=ids,
         )
 
     async def _async_reset(self):
@@ -200,15 +217,12 @@ class EntityComponent:
 
         This method must be run in the event loop.
         """
-        tasks = [platform.async_reset() for platform
-                 in self._platforms.values()]
+        tasks = [platform.async_reset() for platform in self._platforms.values()]
 
         if tasks:
             await asyncio.wait(tasks, loop=self.hass.loop)
 
-        self._platforms = {
-            self.domain: self._platforms[self.domain]
-        }
+        self._platforms = {self.domain: self._platforms[self.domain]}
         self.config = None
 
         if self.group_name is not None:
@@ -226,14 +240,12 @@ class EntityComponent:
         This method must be run in the event loop.
         """
         try:
-            conf = await \
-                conf_util.async_hass_config_yaml(self.hass)
+            conf = await conf_util.async_hass_config_yaml(self.hass)
         except HomeAssistantError as err:
             self.logger.error(err)
             return None
 
-        conf = conf_util.async_process_component_config(
-            self.hass, conf, self.domain)
+        conf = conf_util.async_process_component_config(self.hass, conf, self.domain)
 
         if conf is None:
             return None
@@ -241,8 +253,9 @@ class EntityComponent:
         await self._async_reset()
         return conf
 
-    def _async_init_entity_platform(self, platform_type, platform,
-                                    scan_interval=None, entity_namespace=None):
+    def _async_init_entity_platform(
+        self, platform_type, platform, scan_interval=None, entity_namespace=None
+    ):
         """Initialize an entity platform."""
         if scan_interval is None:
             scan_interval = self.scan_interval

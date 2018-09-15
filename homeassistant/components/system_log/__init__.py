@@ -18,38 +18,47 @@ from homeassistant.components.http import HomeAssistantView
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
-CONF_MAX_ENTRIES = 'max_entries'
-CONF_FIRE_EVENT = 'fire_event'
-CONF_MESSAGE = 'message'
-CONF_LEVEL = 'level'
-CONF_LOGGER = 'logger'
+CONF_MAX_ENTRIES = "max_entries"
+CONF_FIRE_EVENT = "fire_event"
+CONF_MESSAGE = "message"
+CONF_LEVEL = "level"
+CONF_LOGGER = "logger"
 
-DATA_SYSTEM_LOG = 'system_log'
+DATA_SYSTEM_LOG = "system_log"
 DEFAULT_MAX_ENTRIES = 50
 DEFAULT_FIRE_EVENT = False
-DEPENDENCIES = ['http']
-DOMAIN = 'system_log'
+DEPENDENCIES = ["http"]
+DOMAIN = "system_log"
 
-EVENT_SYSTEM_LOG = 'system_log_event'
+EVENT_SYSTEM_LOG = "system_log_event"
 
-SERVICE_CLEAR = 'clear'
-SERVICE_WRITE = 'write'
+SERVICE_CLEAR = "clear"
+SERVICE_WRITE = "write"
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Optional(CONF_MAX_ENTRIES, default=DEFAULT_MAX_ENTRIES):
-            cv.positive_int,
-        vol.Optional(CONF_FIRE_EVENT, default=DEFAULT_FIRE_EVENT): cv.boolean,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Optional(
+                    CONF_MAX_ENTRIES, default=DEFAULT_MAX_ENTRIES
+                ): cv.positive_int,
+                vol.Optional(CONF_FIRE_EVENT, default=DEFAULT_FIRE_EVENT): cv.boolean,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 SERVICE_CLEAR_SCHEMA = vol.Schema({})
-SERVICE_WRITE_SCHEMA = vol.Schema({
-    vol.Required(CONF_MESSAGE): cv.string,
-    vol.Optional(CONF_LEVEL, default='error'):
-        vol.In(['debug', 'info', 'warning', 'error', 'critical']),
-    vol.Optional(CONF_LOGGER): cv.string,
-})
+SERVICE_WRITE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_MESSAGE): cv.string,
+        vol.Optional(CONF_LEVEL, default="error"): vol.In(
+            ["debug", "info", "warning", "error", "critical"]
+        ),
+        vol.Optional(CONF_LOGGER): cv.string,
+    }
+)
 
 
 def _figure_out_source(record, call_stack, hass):
@@ -57,6 +66,7 @@ def _figure_out_source(record, call_stack, hass):
     try:
         # If netdisco is installed check its path too.
         from netdisco import __path__ as netdisco_path
+
         paths.append(netdisco_path[0])
     except ImportError:
         pass
@@ -75,11 +85,11 @@ def _figure_out_source(record, call_stack, hass):
             # For some reason we couldn't find pathname in the stack.
             stack = [record.pathname]
         else:
-            stack = call_stack[0:index+1]
+            stack = call_stack[0 : index + 1]
 
     # Iterate through the stack call (in reverse) and find the last call from
     # a file in Home Assistant. Try to figure out where error happened.
-    paths_re = r'(?:{})/(.*)'.format('|'.join([re.escape(x) for x in paths]))
+    paths_re = r"(?:{})/(.*)".format("|".join([re.escape(x) for x in paths]))
     for pathname in reversed(stack):
 
         # Try to match with a file within Home Assistant
@@ -109,12 +119,12 @@ class LogErrorHandler(logging.Handler):
 
     def _create_entry(self, record, call_stack):
         return {
-            'timestamp': record.created,
-            'level': record.levelname,
-            'message': record.getMessage(),
-            'exception': _exception_as_string(record.exc_info),
-            'source': _figure_out_source(record, call_stack, self.hass),
-            }
+            "timestamp": record.created,
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "exception": _exception_as_string(record.exc_info),
+            "source": _figure_out_source(record, call_stack, self.hass),
+        }
 
     def emit(self, record):
         """Save error and warning logs.
@@ -141,8 +151,7 @@ def async_setup(hass, config):
     if conf is None:
         conf = CONFIG_SCHEMA({DOMAIN: {}})[DOMAIN]
 
-    handler = LogErrorHandler(hass, conf[CONF_MAX_ENTRIES],
-                              conf[CONF_FIRE_EVENT])
+    handler = LogErrorHandler(hass, conf[CONF_MAX_ENTRIES], conf[CONF_FIRE_EVENT])
     logging.getLogger().addHandler(handler)
 
     hass.http.register_view(AllErrorsView(handler))
@@ -150,12 +159,13 @@ def async_setup(hass, config):
     @asyncio.coroutine
     def async_service_handler(service):
         """Handle logger services."""
-        if service.service == 'clear':
+        if service.service == "clear":
             handler.records.clear()
             return
-        if service.service == 'write':
+        if service.service == "write":
             logger = logging.getLogger(
-                service.data.get(CONF_LOGGER, '{}.external'.format(__name__)))
+                service.data.get(CONF_LOGGER, "{}.external".format(__name__))
+            )
             level = service.data[CONF_LEVEL]
             getattr(logger, level)(service.data[CONF_MESSAGE])
 
@@ -165,15 +175,14 @@ def async_setup(hass, config):
         # This is needed as older logger instances will remain
         logging.getLogger().removeHandler(handler)
 
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP,
-                               async_shutdown_handler)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_shutdown_handler)
 
     hass.services.async_register(
-        DOMAIN, SERVICE_CLEAR, async_service_handler,
-        schema=SERVICE_CLEAR_SCHEMA)
+        DOMAIN, SERVICE_CLEAR, async_service_handler, schema=SERVICE_CLEAR_SCHEMA
+    )
     hass.services.async_register(
-        DOMAIN, SERVICE_WRITE, async_service_handler,
-        schema=SERVICE_WRITE_SCHEMA)
+        DOMAIN, SERVICE_WRITE, async_service_handler, schema=SERVICE_WRITE_SCHEMA
+    )
 
     return True
 

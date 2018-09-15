@@ -13,14 +13,17 @@ import voluptuous as vol
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA  # noqa
 from homeassistant.const import (
-    DEVICE_CLASS_BATTERY, DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_ILLUMINANCE,
-    DEVICE_CLASS_TEMPERATURE)
+    DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_HUMIDITY,
+    DEVICE_CLASS_ILLUMINANCE,
+    DEVICE_CLASS_TEMPERATURE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'sensor'
+DOMAIN = "sensor"
 
-ENTITY_ID_FORMAT = DOMAIN + '.{}'
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
 SCAN_INTERVAL = timedelta(seconds=30)
 DEVICE_CLASSES = [
@@ -36,7 +39,8 @@ DEVICE_CLASSES_SCHEMA = vol.All(vol.Lower, vol.In(DEVICE_CLASSES))
 async def async_setup(hass, config):
     """Track states and offer events for sensors."""
     component = hass.data[DOMAIN] = EntityComponent(
-        _LOGGER, DOMAIN, hass, SCAN_INTERVAL)
+        _LOGGER, DOMAIN, hass, SCAN_INTERVAL
+    )
 
     await component.async_setup(config)
     return True

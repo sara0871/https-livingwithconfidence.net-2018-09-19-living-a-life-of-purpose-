@@ -8,38 +8,33 @@ import voluptuous as vol
 from homeassistant.const import HTTP_NOT_FOUND, HTTP_BAD_REQUEST
 from homeassistant.core import callback
 from homeassistant.components import http
-from homeassistant.components.http.data_validator import (
-    RequestDataValidator)
+from homeassistant.components.http.data_validator import RequestDataValidator
 from homeassistant.helpers import intent
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util.json import load_json, save_json
 
-ATTR_NAME = 'name'
+ATTR_NAME = "name"
 
-DOMAIN = 'shopping_list'
-DEPENDENCIES = ['http']
+DOMAIN = "shopping_list"
+DEPENDENCIES = ["http"]
 _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = vol.Schema({DOMAIN: {}}, extra=vol.ALLOW_EXTRA)
-EVENT = 'shopping_list_updated'
-INTENT_ADD_ITEM = 'HassShoppingListAddItem'
-INTENT_LAST_ITEMS = 'HassShoppingListLastItems'
-ITEM_UPDATE_SCHEMA = vol.Schema({
-    'complete': bool,
-    ATTR_NAME: str,
-})
-PERSISTENCE = '.shopping_list.json'
+EVENT = "shopping_list_updated"
+INTENT_ADD_ITEM = "HassShoppingListAddItem"
+INTENT_LAST_ITEMS = "HassShoppingListLastItems"
+ITEM_UPDATE_SCHEMA = vol.Schema({"complete": bool, ATTR_NAME: str})
+PERSISTENCE = ".shopping_list.json"
 
-SERVICE_ADD_ITEM = 'add_item'
-SERVICE_COMPLETE_ITEM = 'complete_item'
+SERVICE_ADD_ITEM = "add_item"
+SERVICE_COMPLETE_ITEM = "complete_item"
 
-SERVICE_ITEM_SCHEMA = vol.Schema({
-    vol.Required(ATTR_NAME): vol.Any(None, cv.string)
-})
+SERVICE_ITEM_SCHEMA = vol.Schema({vol.Required(ATTR_NAME): vol.Any(None, cv.string)})
 
 
 @asyncio.coroutine
 def async_setup(hass, config):
     """Initialize the shopping list."""
+
     @asyncio.coroutine
     def add_item_service(call):
         """Add an item with `name`."""
@@ -56,11 +51,11 @@ def async_setup(hass, config):
         if name is None:
             return
         try:
-            item = [item for item in data.items if item['name'] == name][0]
+            item = [item for item in data.items if item["name"] == name][0]
         except IndexError:
             _LOGGER.error("Removing of item failed: %s cannot be found", name)
         else:
-            data.async_update(item['id'], {'name': name, 'complete': True})
+            data.async_update(item["id"], {"name": name, "complete": True})
 
     data = hass.data[DOMAIN] = ShoppingData(hass)
     yield from data.async_load()
@@ -72,8 +67,7 @@ def async_setup(hass, config):
         DOMAIN, SERVICE_ADD_ITEM, add_item_service, schema=SERVICE_ITEM_SCHEMA
     )
     hass.services.async_register(
-        DOMAIN, SERVICE_COMPLETE_ITEM, complete_item_service,
-        schema=SERVICE_ITEM_SCHEMA
+        DOMAIN, SERVICE_COMPLETE_ITEM, complete_item_service, schema=SERVICE_ITEM_SCHEMA
     )
 
     hass.http.register_view(ShoppingListView)
@@ -81,15 +75,16 @@ def async_setup(hass, config):
     hass.http.register_view(UpdateShoppingListItemView)
     hass.http.register_view(ClearCompletedItemsView)
 
-    hass.components.conversation.async_register(INTENT_ADD_ITEM, [
-        'Add [the] [a] [an] {item} to my shopping list',
-    ])
-    hass.components.conversation.async_register(INTENT_LAST_ITEMS, [
-        'What is on my shopping list'
-    ])
+    hass.components.conversation.async_register(
+        INTENT_ADD_ITEM, ["Add [the] [a] [an] {item} to my shopping list"]
+    )
+    hass.components.conversation.async_register(
+        INTENT_LAST_ITEMS, ["What is on my shopping list"]
+    )
 
     yield from hass.components.frontend.async_register_built_in_panel(
-        'shopping-list', 'shopping_list', 'mdi:cart')
+        "shopping-list", "shopping_list", "mdi:cart"
+    )
 
     return True
 
@@ -105,11 +100,7 @@ class ShoppingData:
     @callback
     def async_add(self, name):
         """Add a shopping list item."""
-        item = {
-            'name': name,
-            'id': uuid.uuid4().hex,
-            'complete': False
-        }
+        item = {"name": name, "id": uuid.uuid4().hex, "complete": False}
         self.items.append(item)
         self.hass.async_add_job(self.save)
         return item
@@ -117,7 +108,7 @@ class ShoppingData:
     @callback
     def async_update(self, item_id, info):
         """Update a shopping list item."""
-        item = next((itm for itm in self.items if itm['id'] == item_id), None)
+        item = next((itm for itm in self.items if itm["id"] == item_id), None)
 
         if item is None:
             raise KeyError
@@ -130,12 +121,13 @@ class ShoppingData:
     @callback
     def async_clear_completed(self):
         """Clear completed items."""
-        self.items = [itm for itm in self.items if not itm['complete']]
+        self.items = [itm for itm in self.items if not itm["complete"]]
         self.hass.async_add_job(self.save)
 
     @asyncio.coroutine
     def async_load(self):
         """Load items."""
+
         def load():
             """Load the items synchronously."""
             return load_json(self.hass.config.path(PERSISTENCE), default=[])
@@ -151,20 +143,17 @@ class AddItemIntent(intent.IntentHandler):
     """Handle AddItem intents."""
 
     intent_type = INTENT_ADD_ITEM
-    slot_schema = {
-        'item': cv.string
-    }
+    slot_schema = {"item": cv.string}
 
     @asyncio.coroutine
     def async_handle(self, intent_obj):
         """Handle the intent."""
         slots = self.async_validate_slots(intent_obj.slots)
-        item = slots['item']['value']
+        item = slots["item"]["value"]
         intent_obj.hass.data[DOMAIN].async_add(item)
 
         response = intent_obj.create_response()
-        response.async_set_speech(
-            "I've added {} to your shopping list".format(item))
+        response.async_set_speech("I've added {} to your shopping list".format(item))
         intent_obj.hass.bus.async_fire(EVENT)
         return response
 
@@ -173,9 +162,7 @@ class ListTopItemsIntent(intent.IntentHandler):
     """Handle AddItem intents."""
 
     intent_type = INTENT_LAST_ITEMS
-    slot_schema = {
-        'item': cv.string
-    }
+    slot_schema = {"item": cv.string}
 
     @asyncio.coroutine
     def async_handle(self, intent_obj):
@@ -184,32 +171,33 @@ class ListTopItemsIntent(intent.IntentHandler):
         response = intent_obj.create_response()
 
         if not items:
-            response.async_set_speech(
-                "There are no items on your shopping list")
+            response.async_set_speech("There are no items on your shopping list")
         else:
             response.async_set_speech(
                 "These are the top {} items on your shopping list: {}".format(
                     min(len(items), 5),
-                    ', '.join(itm['name'] for itm in reversed(items))))
+                    ", ".join(itm["name"] for itm in reversed(items)),
+                )
+            )
         return response
 
 
 class ShoppingListView(http.HomeAssistantView):
     """View to retrieve shopping list content."""
 
-    url = '/api/shopping_list'
+    url = "/api/shopping_list"
     name = "api:shopping_list"
 
     @callback
     def get(self, request):
         """Retrieve shopping list items."""
-        return self.json(request.app['hass'].data[DOMAIN].items)
+        return self.json(request.app["hass"].data[DOMAIN].items)
 
 
 class UpdateShoppingListItemView(http.HomeAssistantView):
     """View to retrieve shopping list content."""
 
-    url = '/api/shopping_list/item/{item_id}'
+    url = "/api/shopping_list/item/{item_id}"
     name = "api:shopping_list:item:id"
 
     async def post(self, request, item_id):
@@ -217,42 +205,40 @@ class UpdateShoppingListItemView(http.HomeAssistantView):
         data = await request.json()
 
         try:
-            item = request.app['hass'].data[DOMAIN].async_update(item_id, data)
-            request.app['hass'].bus.async_fire(EVENT)
+            item = request.app["hass"].data[DOMAIN].async_update(item_id, data)
+            request.app["hass"].bus.async_fire(EVENT)
             return self.json(item)
         except KeyError:
-            return self.json_message('Item not found', HTTP_NOT_FOUND)
+            return self.json_message("Item not found", HTTP_NOT_FOUND)
         except vol.Invalid:
-            return self.json_message('Item not found', HTTP_BAD_REQUEST)
+            return self.json_message("Item not found", HTTP_BAD_REQUEST)
 
 
 class CreateShoppingListItemView(http.HomeAssistantView):
     """View to retrieve shopping list content."""
 
-    url = '/api/shopping_list/item'
+    url = "/api/shopping_list/item"
     name = "api:shopping_list:item"
 
-    @RequestDataValidator(vol.Schema({
-        vol.Required('name'): str,
-    }))
+    @RequestDataValidator(vol.Schema({vol.Required("name"): str}))
     @asyncio.coroutine
     def post(self, request, data):
         """Create a new shopping list item."""
-        item = request.app['hass'].data[DOMAIN].async_add(data['name'])
-        request.app['hass'].bus.async_fire(EVENT)
+        item = request.app["hass"].data[DOMAIN].async_add(data["name"])
+        request.app["hass"].bus.async_fire(EVENT)
         return self.json(item)
 
 
 class ClearCompletedItemsView(http.HomeAssistantView):
     """View to retrieve shopping list content."""
 
-    url = '/api/shopping_list/clear_completed'
+    url = "/api/shopping_list/clear_completed"
     name = "api:shopping_list:clear_completed"
 
     @callback
     def post(self, request):
         """Retrieve if API is running."""
-        hass = request.app['hass']
+        hass = request.app["hass"]
         hass.data[DOMAIN].async_clear_completed()
         hass.bus.async_fire(EVENT)
-        return self.json_message('Cleared completed items.')
+        return self.json_message("Cleared completed items.")

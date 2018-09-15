@@ -8,11 +8,23 @@ import logging
 
 from threading import Timer
 from homeassistant.components.light import (
-    ATTR_WHITE_VALUE, ATTR_BRIGHTNESS, ATTR_COLOR_TEMP, ATTR_HS_COLOR,
-    ATTR_TRANSITION, SUPPORT_BRIGHTNESS, SUPPORT_COLOR_TEMP, SUPPORT_COLOR,
-    SUPPORT_TRANSITION, SUPPORT_WHITE_VALUE, DOMAIN, Light)
+    ATTR_WHITE_VALUE,
+    ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP,
+    ATTR_HS_COLOR,
+    ATTR_TRANSITION,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR_TEMP,
+    SUPPORT_COLOR,
+    SUPPORT_TRANSITION,
+    SUPPORT_WHITE_VALUE,
+    DOMAIN,
+    Light,
+)
 from homeassistant.components import zwave
-from homeassistant.components.zwave import async_setup_platform  # noqa pylint: disable=unused-import
+from homeassistant.components.zwave import (
+    async_setup_platform
+)  # noqa pylint: disable=unused-import
 from homeassistant.const import STATE_OFF, STATE_ON
 import homeassistant.util.color as color_util
 
@@ -28,11 +40,9 @@ COLOR_CHANNEL_RED = 0x04
 COLOR_CHANNEL_GREEN = 0x08
 COLOR_CHANNEL_BLUE = 0x10
 
-WORKAROUND_ZW098 = 'zw098'
+WORKAROUND_ZW098 = "zw098"
 
-DEVICE_MAPPINGS = {
-    AEOTEC_ZW098_LED_BULB_LIGHT: WORKAROUND_ZW098
-}
+DEVICE_MAPPINGS = {AEOTEC_ZW098_LED_BULB_LIGHT: WORKAROUND_ZW098}
 
 # Generate midpoint color temperatures for bulbs that have limited
 # support for white light colors
@@ -47,9 +57,15 @@ def get_device(node, values, node_config, **kwargs):
     """Create Z-Wave entity device."""
     refresh = node_config.get(zwave.CONF_REFRESH_VALUE)
     delay = node_config.get(zwave.CONF_REFRESH_DELAY)
-    _LOGGER.debug("node=%d value=%d node_config=%s CONF_REFRESH_VALUE=%s"
-                  " CONF_REFRESH_DELAY=%s", node.node_id,
-                  values.primary.value_id, node_config, refresh, delay)
+    _LOGGER.debug(
+        "node=%d value=%d node_config=%s CONF_REFRESH_VALUE=%s"
+        " CONF_REFRESH_DELAY=%s",
+        node.node_id,
+        values.primary.value_id,
+        node_config,
+        refresh,
+        delay,
+    )
 
     if node.has_command_class(zwave.const.COMMAND_CLASS_SWITCH_COLOR):
         return ZwaveColorLight(values, refresh, delay)
@@ -77,7 +93,9 @@ def ct_to_hs(temp):
     """Convert color temperature (mireds) to hs."""
     colorlist = list(
         color_util.color_temperature_to_hs(
-            color_util.color_temperature_mired_to_kelvin(temp)))
+            color_util.color_temperature_mired_to_kelvin(temp)
+        )
+    )
     return [int(val) for val in colorlist]
 
 
@@ -96,10 +114,11 @@ class ZwaveDimmer(zwave.ZWaveDeviceEntity, Light):
 
         # Enable appropriate workaround flags for our device
         # Make sure that we have values for the key before converting to int
-        if (self.node.manufacturer_id.strip() and
-                self.node.product_id.strip()):
-            specific_sensor_key = (int(self.node.manufacturer_id, 16),
-                                   int(self.node.product_id, 16))
+        if self.node.manufacturer_id.strip() and self.node.product_id.strip():
+            specific_sensor_key = (
+                int(self.node.manufacturer_id, 16),
+                int(self.node.product_id, 16),
+            )
             if specific_sensor_key in DEVICE_MAPPINGS:
                 if DEVICE_MAPPINGS[specific_sensor_key] == WORKAROUND_ZW098:
                     _LOGGER.debug("AEOTEC ZW098 workaround enabled")
@@ -108,8 +127,9 @@ class ZwaveDimmer(zwave.ZWaveDeviceEntity, Light):
         # Used for value change event handling
         self._refreshing = False
         self._timer = None
-        _LOGGER.debug('self._refreshing=%s self.delay=%s',
-                      self._refresh_value, self._delay)
+        _LOGGER.debug(
+            "self._refreshing=%s self.delay=%s", self._refresh_value, self._delay
+        )
         self.value_added()
         self.update_properties()
 
@@ -130,6 +150,7 @@ class ZwaveDimmer(zwave.ZWaveDeviceEntity, Light):
             if self._refreshing:
                 self._refreshing = False
             else:
+
                 def _refresh_value():
                     """Use timer callback for delayed value refresh."""
                     self._refreshing = True
@@ -181,12 +202,12 @@ class ZwaveDimmer(zwave.ZWaveDeviceEntity, Light):
             self.values.dimming_duration.data = int(transition)
         elif transition > 7620:
             self.values.dimming_duration.data = 0xFE
-            _LOGGER.warning("Transition clipped to 127 minutes for %s.",
-                            self.entity_id)
+            _LOGGER.warning("Transition clipped to 127 minutes for %s.", self.entity_id)
         else:
             minutes = int(transition / 60)
-            _LOGGER.debug("Transition rounded to %d minutes for %s.",
-                          minutes, self.entity_id)
+            _LOGGER.debug(
+                "Transition rounded to %d minutes for %s.", minutes, self.entity_id
+            )
             self.values.dimming_duration.data = minutes + 0x7F
 
     def turn_on(self, **kwargs):
@@ -232,7 +253,8 @@ class ZwaveColorLight(ZwaveDimmer):
         if self._zw098:
             self._supported_features |= SUPPORT_COLOR_TEMP
         elif self._color_channels is not None and self._color_channels & (
-                COLOR_CHANNEL_WARM_WHITE | COLOR_CHANNEL_COLD_WHITE):
+            COLOR_CHANNEL_WARM_WHITE | COLOR_CHANNEL_COLD_WHITE
+        ):
             self._supported_features |= SUPPORT_WHITE_VALUE
 
     def update_properties(self):
@@ -251,10 +273,7 @@ class ZwaveColorLight(ZwaveDimmer):
         data = self.values.color.data
 
         # RGB is always present in the openzwave color data string.
-        rgb = [
-            int(data[1:3], 16),
-            int(data[3:5], 16),
-            int(data[5:7], 16)]
+        rgb = [int(data[1:3], 16), int(data[3:5], 16), int(data[5:7], 16)]
         self._hs = color_util.color_RGB_to_hs(*rgb)
 
         # Parse remaining color channels. Openzwave appends white channels
@@ -263,14 +282,14 @@ class ZwaveColorLight(ZwaveDimmer):
 
         # Warm white
         if self._color_channels & COLOR_CHANNEL_WARM_WHITE:
-            warm_white = int(data[index:index+2], 16)
+            warm_white = int(data[index : index + 2], 16)
             index += 2
         else:
             warm_white = 0
 
         # Cold white
         if self._color_channels & COLOR_CHANNEL_COLD_WHITE:
-            cold_white = int(data[index:index+2], 16)
+            cold_white = int(data[index : index + 2], 16)
             index += 2
         else:
             cold_white = 0
@@ -296,9 +315,11 @@ class ZwaveColorLight(ZwaveDimmer):
             self._white = cold_white
 
         # If no rgb channels supported, report None.
-        if not (self._color_channels & COLOR_CHANNEL_RED or
-                self._color_channels & COLOR_CHANNEL_GREEN or
-                self._color_channels & COLOR_CHANNEL_BLUE):
+        if not (
+            self._color_channels & COLOR_CHANNEL_RED
+            or self._color_channels & COLOR_CHANNEL_GREEN
+            or self._color_channels & COLOR_CHANNEL_BLUE
+        ):
             self._hs = None
 
     @property
@@ -330,10 +351,10 @@ class ZwaveColorLight(ZwaveDimmer):
             if self._zw098:
                 if kwargs[ATTR_COLOR_TEMP] > TEMP_MID_HASS:
                     self._ct = TEMP_WARM_HASS
-                    rgbw = '#000000ff00'
+                    rgbw = "#000000ff00"
                 else:
                     self._ct = TEMP_COLD_HASS
-                    rgbw = '#00000000ff'
+                    rgbw = "#00000000ff"
         elif ATTR_HS_COLOR in kwargs:
             self._hs = kwargs[ATTR_HS_COLOR]
             if ATTR_WHITE_VALUE not in kwargs:
@@ -341,13 +362,13 @@ class ZwaveColorLight(ZwaveDimmer):
                 self._white = 0
 
         if ATTR_WHITE_VALUE in kwargs or ATTR_HS_COLOR in kwargs:
-            rgbw = '#'
+            rgbw = "#"
             for colorval in color_util.color_hs_to_RGB(*self._hs):
-                rgbw += format(colorval, '02x')
+                rgbw += format(colorval, "02x")
             if self._white is not None:
-                rgbw += format(self._white, '02x') + '00'
+                rgbw += format(self._white, "02x") + "00"
             else:
-                rgbw += '0000'
+                rgbw += "0000"
 
         if rgbw and self.values.color:
             self.values.color.data = rgbw

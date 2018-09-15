@@ -13,12 +13,13 @@ from homeassistant.const import EVENT_HOMEASSISTANT_CLOSE, __version__
 from homeassistant.loader import bind_hass
 from homeassistant.util import ssl as ssl_util
 
-DATA_CONNECTOR = 'aiohttp_connector'
-DATA_CONNECTOR_NOTVERIFY = 'aiohttp_connector_notverify'
-DATA_CLIENTSESSION = 'aiohttp_clientsession'
-DATA_CLIENTSESSION_NOTVERIFY = 'aiohttp_clientsession_notverify'
-SERVER_SOFTWARE = 'HomeAssistant/{0} aiohttp/{1} Python/{2[0]}.{2[1]}'.format(
-    __version__, aiohttp.__version__, sys.version_info)
+DATA_CONNECTOR = "aiohttp_connector"
+DATA_CONNECTOR_NOTVERIFY = "aiohttp_connector_notverify"
+DATA_CLIENTSESSION = "aiohttp_clientsession"
+DATA_CLIENTSESSION_NOTVERIFY = "aiohttp_clientsession_notverify"
+SERVER_SOFTWARE = "HomeAssistant/{0} aiohttp/{1} Python/{2[0]}.{2[1]}".format(
+    __version__, aiohttp.__version__, sys.version_info
+)
 
 
 @callback
@@ -41,8 +42,7 @@ def async_get_clientsession(hass, verify_ssl=True):
 
 @callback
 @bind_hass
-def async_create_clientsession(hass, verify_ssl=True, auto_cleanup=True,
-                               **kwargs):
+def async_create_clientsession(hass, verify_ssl=True, auto_cleanup=True, **kwargs):
     """Create a new ClientSession with kwargs, i.e. for cookies.
 
     If auto_cleanup is False, you need to call detach() after the session
@@ -67,8 +67,9 @@ def async_create_clientsession(hass, verify_ssl=True, auto_cleanup=True,
 
 
 @bind_hass
-async def async_aiohttp_proxy_web(hass, request, web_coro,
-                                  buffer_size=102400, timeout=10):
+async def async_aiohttp_proxy_web(
+    hass, request, web_coro, buffer_size=102400, timeout=10
+):
     """Stream websession request to aiohttp web response."""
     try:
         with async_timeout.timeout(timeout, loop=hass.loop):
@@ -88,18 +89,16 @@ async def async_aiohttp_proxy_web(hass, request, web_coro,
 
     try:
         return await async_aiohttp_proxy_stream(
-            hass,
-            request,
-            req.content,
-            req.headers.get(CONTENT_TYPE)
+            hass, request, req.content, req.headers.get(CONTENT_TYPE)
         )
     finally:
         req.close()
 
 
 @bind_hass
-async def async_aiohttp_proxy_stream(hass, request, stream, content_type,
-                                     buffer_size=102400, timeout=10):
+async def async_aiohttp_proxy_stream(
+    hass, request, stream, content_type, buffer_size=102400, timeout=10
+):
     """Stream a stream to aiohttp web response."""
     response = web.StreamResponse()
     response.content_type = content_type
@@ -127,13 +126,13 @@ def _async_register_clientsession_shutdown(hass, clientsession):
 
     This method must be run in the event loop.
     """
+
     @callback
     def _async_close_websession(event):
         """Close websession."""
         clientsession.detach()
 
-    hass.bus.async_listen_once(
-        EVENT_HOMEASSISTANT_CLOSE, _async_close_websession)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_CLOSE, _async_close_websession)
 
 
 @callback
@@ -160,7 +159,6 @@ def _async_get_connector(hass, verify_ssl=True):
         """Close connector pool."""
         connector.close()
 
-    hass.bus.async_listen_once(
-        EVENT_HOMEASSISTANT_CLOSE, _async_close_connector)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_CLOSE, _async_close_connector)
 
     return connector

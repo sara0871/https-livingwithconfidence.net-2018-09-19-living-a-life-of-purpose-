@@ -7,16 +7,24 @@ https://home-assistant.io/components/climate.tesla/
 import logging
 
 from homeassistant.components.climate import (
-    ENTITY_ID_FORMAT, SUPPORT_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE,
-    ClimateDevice)
+    ENTITY_ID_FORMAT,
+    SUPPORT_OPERATION_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    ClimateDevice,
+)
 from homeassistant.components.tesla import DOMAIN as TESLA_DOMAIN
 from homeassistant.components.tesla import TeslaDevice
 from homeassistant.const import (
-    ATTR_TEMPERATURE, STATE_OFF, STATE_ON, TEMP_CELSIUS, TEMP_FAHRENHEIT)
+    ATTR_TEMPERATURE,
+    STATE_OFF,
+    STATE_ON,
+    TEMP_CELSIUS,
+    TEMP_FAHRENHEIT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['tesla']
+DEPENDENCIES = ["tesla"]
 
 OPERATION_LIST = [STATE_ON, STATE_OFF]
 
@@ -25,8 +33,10 @@ SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Tesla climate platform."""
-    devices = [TeslaThermostat(device, hass.data[TESLA_DOMAIN]['controller'])
-               for device in hass.data[TESLA_DOMAIN]['devices']['climate']]
+    devices = [
+        TeslaThermostat(device, hass.data[TESLA_DOMAIN]["controller"])
+        for device in hass.data[TESLA_DOMAIN]["devices"]["climate"]
+    ]
     add_entities(devices, True)
 
 
@@ -70,7 +80,7 @@ class TeslaThermostat(TeslaDevice, ClimateDevice):
         """Return the unit of measurement."""
         tesla_temp_units = self.tesla_device.measurement
 
-        if tesla_temp_units == 'F':
+        if tesla_temp_units == "F":
             return TEMP_FAHRENHEIT
         return TEMP_CELSIUS
 

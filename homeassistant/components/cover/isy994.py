@@ -8,10 +8,14 @@ import logging
 from typing import Callable
 
 from homeassistant.components.cover import CoverDevice, DOMAIN
-from homeassistant.components.isy994 import (ISY994_NODES, ISY994_PROGRAMS,
-                                             ISYDevice)
+from homeassistant.components.isy994 import ISY994_NODES, ISY994_PROGRAMS, ISYDevice
 from homeassistant.const import (
-    STATE_OPEN, STATE_CLOSED, STATE_OPENING, STATE_CLOSING, STATE_UNKNOWN)
+    STATE_OPEN,
+    STATE_CLOSED,
+    STATE_OPENING,
+    STATE_CLOSING,
+    STATE_UNKNOWN,
+)
 from homeassistant.helpers.typing import ConfigType
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,14 +23,15 @@ _LOGGER = logging.getLogger(__name__)
 VALUE_TO_STATE = {
     0: STATE_CLOSED,
     101: STATE_UNKNOWN,
-    102: 'stopped',
+    102: "stopped",
     103: STATE_CLOSING,
-    104: STATE_OPENING
+    104: STATE_OPENING,
 }
 
 
-def setup_platform(hass, config: ConfigType,
-                   add_entities: Callable[[list], None], discovery_info=None):
+def setup_platform(
+    hass, config: ConfigType, add_entities: Callable[[list], None], discovery_info=None
+):
     """Set up the ISY994 cover platform."""
     devices = []
     for node in hass.data[ISY994_NODES][DOMAIN]:

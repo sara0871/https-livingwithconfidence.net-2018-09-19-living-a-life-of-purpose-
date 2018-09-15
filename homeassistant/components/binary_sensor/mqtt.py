@@ -13,40 +13,53 @@ import voluptuous as vol
 from homeassistant.core import callback
 from homeassistant.components import mqtt
 from homeassistant.components.binary_sensor import (
-    BinarySensorDevice, DEVICE_CLASSES_SCHEMA)
+    BinarySensorDevice,
+    DEVICE_CLASSES_SCHEMA,
+)
 from homeassistant.const import (
-    CONF_FORCE_UPDATE, CONF_NAME, CONF_VALUE_TEMPLATE, CONF_PAYLOAD_ON,
-    CONF_PAYLOAD_OFF, CONF_DEVICE_CLASS)
+    CONF_FORCE_UPDATE,
+    CONF_NAME,
+    CONF_VALUE_TEMPLATE,
+    CONF_PAYLOAD_ON,
+    CONF_PAYLOAD_OFF,
+    CONF_DEVICE_CLASS,
+)
 from homeassistant.components.mqtt import (
-    CONF_STATE_TOPIC, CONF_AVAILABILITY_TOPIC, CONF_PAYLOAD_AVAILABLE,
-    CONF_PAYLOAD_NOT_AVAILABLE, CONF_QOS, MqttAvailability)
+    CONF_STATE_TOPIC,
+    CONF_AVAILABILITY_TOPIC,
+    CONF_PAYLOAD_AVAILABLE,
+    CONF_PAYLOAD_NOT_AVAILABLE,
+    CONF_QOS,
+    MqttAvailability,
+)
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'MQTT Binary sensor'
-CONF_UNIQUE_ID = 'unique_id'
-DEFAULT_PAYLOAD_OFF = 'OFF'
-DEFAULT_PAYLOAD_ON = 'ON'
+DEFAULT_NAME = "MQTT Binary sensor"
+CONF_UNIQUE_ID = "unique_id"
+DEFAULT_PAYLOAD_OFF = "OFF"
+DEFAULT_PAYLOAD_ON = "ON"
 DEFAULT_FORCE_UPDATE = False
 
-DEPENDENCIES = ['mqtt']
+DEPENDENCIES = ["mqtt"]
 
-PLATFORM_SCHEMA = mqtt.MQTT_RO_PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PAYLOAD_OFF, default=DEFAULT_PAYLOAD_OFF): cv.string,
-    vol.Optional(CONF_PAYLOAD_ON, default=DEFAULT_PAYLOAD_ON): cv.string,
-    vol.Optional(CONF_DEVICE_CLASS): DEVICE_CLASSES_SCHEMA,
-    vol.Optional(CONF_FORCE_UPDATE, default=DEFAULT_FORCE_UPDATE): cv.boolean,
-    # Integrations shouldn't never expose unique_id through configuration
-    # this here is an exception because MQTT is a msg transport, not a protocol
-    vol.Optional(CONF_UNIQUE_ID): cv.string,
-}).extend(mqtt.MQTT_AVAILABILITY_SCHEMA.schema)
+PLATFORM_SCHEMA = mqtt.MQTT_RO_PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PAYLOAD_OFF, default=DEFAULT_PAYLOAD_OFF): cv.string,
+        vol.Optional(CONF_PAYLOAD_ON, default=DEFAULT_PAYLOAD_ON): cv.string,
+        vol.Optional(CONF_DEVICE_CLASS): DEVICE_CLASSES_SCHEMA,
+        vol.Optional(CONF_FORCE_UPDATE, default=DEFAULT_FORCE_UPDATE): cv.boolean,
+        # Integrations shouldn't never expose unique_id through configuration
+        # this here is an exception because MQTT is a msg transport, not a protocol
+        vol.Optional(CONF_UNIQUE_ID): cv.string,
+    }
+).extend(mqtt.MQTT_AVAILABILITY_SCHEMA.schema)
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the MQTT binary sensor."""
     if discovery_info is not None:
         config = PLATFORM_SCHEMA(discovery_info)
@@ -55,32 +68,48 @@ def async_setup_platform(hass, config, async_add_entities,
     if value_template is not None:
         value_template.hass = hass
 
-    async_add_entities([MqttBinarySensor(
-        config.get(CONF_NAME),
-        config.get(CONF_STATE_TOPIC),
-        config.get(CONF_AVAILABILITY_TOPIC),
-        config.get(CONF_DEVICE_CLASS),
-        config.get(CONF_QOS),
-        config.get(CONF_FORCE_UPDATE),
-        config.get(CONF_PAYLOAD_ON),
-        config.get(CONF_PAYLOAD_OFF),
-        config.get(CONF_PAYLOAD_AVAILABLE),
-        config.get(CONF_PAYLOAD_NOT_AVAILABLE),
-        value_template,
-        config.get(CONF_UNIQUE_ID),
-    )])
+    async_add_entities(
+        [
+            MqttBinarySensor(
+                config.get(CONF_NAME),
+                config.get(CONF_STATE_TOPIC),
+                config.get(CONF_AVAILABILITY_TOPIC),
+                config.get(CONF_DEVICE_CLASS),
+                config.get(CONF_QOS),
+                config.get(CONF_FORCE_UPDATE),
+                config.get(CONF_PAYLOAD_ON),
+                config.get(CONF_PAYLOAD_OFF),
+                config.get(CONF_PAYLOAD_AVAILABLE),
+                config.get(CONF_PAYLOAD_NOT_AVAILABLE),
+                value_template,
+                config.get(CONF_UNIQUE_ID),
+            )
+        ]
+    )
 
 
 class MqttBinarySensor(MqttAvailability, BinarySensorDevice):
     """Representation a binary sensor that is updated by MQTT."""
 
-    def __init__(self, name, state_topic, availability_topic, device_class,
-                 qos, force_update, payload_on, payload_off, payload_available,
-                 payload_not_available, value_template,
-                 unique_id: Optional[str]):
+    def __init__(
+        self,
+        name,
+        state_topic,
+        availability_topic,
+        device_class,
+        qos,
+        force_update,
+        payload_on,
+        payload_off,
+        payload_available,
+        payload_not_available,
+        value_template,
+        unique_id: Optional[str],
+    ):
         """Initialize the MQTT binary sensor."""
-        super().__init__(availability_topic, qos, payload_available,
-                         payload_not_available)
+        super().__init__(
+            availability_topic, qos, payload_available, payload_not_available
+        )
         self._name = name
         self._state = None
         self._state_topic = state_topic
@@ -101,22 +130,24 @@ class MqttBinarySensor(MqttAvailability, BinarySensorDevice):
         def state_message_received(topic, payload, qos):
             """Handle a new received MQTT state message."""
             if self._template is not None:
-                payload = self._template.async_render_with_possible_json_value(
-                    payload)
+                payload = self._template.async_render_with_possible_json_value(payload)
             if payload == self._payload_on:
                 self._state = True
             elif payload == self._payload_off:
                 self._state = False
             else:  # Payload is not for this entity
-                _LOGGER.warning('No matching payload found'
-                                ' for entity: %s with state_topic: %s',
-                                self._name, self._state_topic)
+                _LOGGER.warning(
+                    "No matching payload found" " for entity: %s with state_topic: %s",
+                    self._name,
+                    self._state_topic,
+                )
                 return
 
             self.async_schedule_update_ha_state()
 
         yield from mqtt.async_subscribe(
-            self.hass, self._state_topic, state_message_received, self._qos)
+            self.hass, self._state_topic, state_message_received, self._qos
+        )
 
     @property
     def should_poll(self):

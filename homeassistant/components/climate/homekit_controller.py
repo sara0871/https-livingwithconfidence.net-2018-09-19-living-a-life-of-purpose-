@@ -6,23 +6,23 @@ https://home-assistant.io/components/climate.homekit_controller/
 """
 import logging
 
-from homeassistant.components.homekit_controller import (
-    HomeKitEntity, KNOWN_ACCESSORIES)
+from homeassistant.components.homekit_controller import HomeKitEntity, KNOWN_ACCESSORIES
 from homeassistant.components.climate import (
-    ClimateDevice, STATE_HEAT, STATE_COOL, STATE_IDLE,
-    SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE)
+    ClimateDevice,
+    STATE_HEAT,
+    STATE_COOL,
+    STATE_IDLE,
+    SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_OPERATION_MODE,
+)
 from homeassistant.const import TEMP_CELSIUS, STATE_OFF, ATTR_TEMPERATURE
 
-DEPENDENCIES = ['homekit_controller']
+DEPENDENCIES = ["homekit_controller"]
 
 _LOGGER = logging.getLogger(__name__)
 
 # Map of Homekit operation modes to hass modes
-MODE_HOMEKIT_TO_HASS = {
-    0: STATE_OFF,
-    1: STATE_HEAT,
-    2: STATE_COOL,
-}
+MODE_HOMEKIT_TO_HASS = {0: STATE_OFF, 1: STATE_HEAT, 2: STATE_COOL}
 
 # Map of hass operation modes to homekit modes
 MODE_HASS_TO_HOMEKIT = {v: k for k, v in MODE_HOMEKIT_TO_HASS.items()}
@@ -31,7 +31,7 @@ MODE_HASS_TO_HOMEKIT = {v: k for k, v in MODE_HOMEKIT_TO_HASS.items()}
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up Homekit climate."""
     if discovery_info is not None:
-        accessory = hass.data[KNOWN_ACCESSORIES][discovery_info['serial']]
+        accessory = hass.data[KNOWN_ACCESSORIES][discovery_info["serial"]]
         add_entities([HomeKitClimateDevice(accessory, discovery_info)], True)
 
 
@@ -53,38 +53,42 @@ class HomeKitClimateDevice(HomeKitEntity, ClimateDevice):
         from homekit import CharacteristicsTypes as ctypes
 
         for characteristic in characteristics:
-            ctype = characteristic['type']
+            ctype = characteristic["type"]
             if ctype == ctypes.HEATING_COOLING_CURRENT:
-                self._state = MODE_HOMEKIT_TO_HASS.get(
-                    characteristic['value'])
+                self._state = MODE_HOMEKIT_TO_HASS.get(characteristic["value"])
             if ctype == ctypes.HEATING_COOLING_TARGET:
-                self._chars['target_mode'] = characteristic['iid']
+                self._chars["target_mode"] = characteristic["iid"]
                 self._features |= SUPPORT_OPERATION_MODE
-                self._current_mode = MODE_HOMEKIT_TO_HASS.get(
-                    characteristic['value'])
-                self._valid_modes = [MODE_HOMEKIT_TO_HASS.get(
-                    mode) for mode in characteristic['valid-values']]
+                self._current_mode = MODE_HOMEKIT_TO_HASS.get(characteristic["value"])
+                self._valid_modes = [
+                    MODE_HOMEKIT_TO_HASS.get(mode)
+                    for mode in characteristic["valid-values"]
+                ]
             elif ctype == ctypes.TEMPERATURE_CURRENT:
-                self._current_temp = characteristic['value']
+                self._current_temp = characteristic["value"]
             elif ctype == ctypes.TEMPERATURE_TARGET:
-                self._chars['target_temp'] = characteristic['iid']
+                self._chars["target_temp"] = characteristic["iid"]
                 self._features |= SUPPORT_TARGET_TEMPERATURE
-                self._target_temp = characteristic['value']
+                self._target_temp = characteristic["value"]
 
     def set_temperature(self, **kwargs):
         """Set new target temperature."""
         temp = kwargs.get(ATTR_TEMPERATURE)
 
-        characteristics = [{'aid': self._aid,
-                            'iid': self._chars['target_temp'],
-                            'value': temp}]
+        characteristics = [
+            {"aid": self._aid, "iid": self._chars["target_temp"], "value": temp}
+        ]
         self.put_characteristics(characteristics)
 
     def set_operation_mode(self, operation_mode):
         """Set new target operation mode."""
-        characteristics = [{'aid': self._aid,
-                            'iid': self._chars['target_mode'],
-                            'value': MODE_HASS_TO_HOMEKIT[operation_mode]}]
+        characteristics = [
+            {
+                "aid": self._aid,
+                "iid": self._chars["target_mode"],
+                "value": MODE_HASS_TO_HOMEKIT[operation_mode],
+            }
+        ]
         self.put_characteristics(characteristics)
 
     @property

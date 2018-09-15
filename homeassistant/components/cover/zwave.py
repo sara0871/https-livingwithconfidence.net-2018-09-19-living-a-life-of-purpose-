@@ -8,10 +8,16 @@ https://home-assistant.io/components/cover.zwave/
 # pylint: disable=import-error
 import logging
 from homeassistant.components.cover import (
-    DOMAIN, SUPPORT_OPEN, SUPPORT_CLOSE, ATTR_POSITION)
+    DOMAIN,
+    SUPPORT_OPEN,
+    SUPPORT_CLOSE,
+    ATTR_POSITION,
+)
 from homeassistant.components.zwave import ZWaveDeviceEntity
 from homeassistant.components import zwave
-from homeassistant.components.zwave import async_setup_platform  # noqa pylint: disable=unused-import
+from homeassistant.components.zwave import (
+    async_setup_platform
+)  # noqa pylint: disable=unused-import
 from homeassistant.components.zwave import workaround
 from homeassistant.components.cover import CoverDevice
 
@@ -23,14 +29,14 @@ SUPPORT_GARAGE = SUPPORT_OPEN | SUPPORT_CLOSE
 def get_device(hass, values, node_config, **kwargs):
     """Create Z-Wave entity device."""
     invert_buttons = node_config.get(zwave.CONF_INVERT_OPENCLOSE_BUTTONS)
-    if (values.primary.command_class ==
-            zwave.const.COMMAND_CLASS_SWITCH_MULTILEVEL
-            and values.primary.index == 0):
+    if (
+        values.primary.command_class == zwave.const.COMMAND_CLASS_SWITCH_MULTILEVEL
+        and values.primary.index == 0
+    ):
         return ZwaveRollershutter(hass, values, invert_buttons)
     if values.primary.command_class == zwave.const.COMMAND_CLASS_SWITCH_BINARY:
         return ZwaveGarageDoorSwitch(values)
-    if values.primary.command_class == \
-       zwave.const.COMMAND_CLASS_BARRIER_OPERATOR:
+    if values.primary.command_class == zwave.const.COMMAND_CLASS_BARRIER_OPERATOR:
         return ZwaveGarageDoorBarrier(values)
     return None
 
@@ -57,8 +63,12 @@ class ZwaveRollershutter(zwave.ZWaveDeviceEntity, CoverDevice):
         # Position value
         self._current_position = self.values.primary.data
 
-        if self.values.open and self.values.close and \
-                self._open_id is None and self._close_id is None:
+        if (
+            self.values.open
+            and self.values.close
+            and self._open_id is None
+            and self._close_id is None
+        ):
             if self._invert_buttons:
                 self._open_id = self.values.close.value_id
                 self._close_id = self.values.open.value_id
@@ -97,8 +107,7 @@ class ZwaveRollershutter(zwave.ZWaveDeviceEntity, CoverDevice):
 
     def set_cover_position(self, **kwargs):
         """Move the roller shutter to a specific position."""
-        self.node.set_dimmer(self.values.primary.value_id,
-                             kwargs.get(ATTR_POSITION))
+        self.node.set_dimmer(self.values.primary.value_id, kwargs.get(ATTR_POSITION))
 
     def stop_cover(self, **kwargs):
         """Stop the roller shutter."""
@@ -122,7 +131,7 @@ class ZwaveGarageDoorBase(zwave.ZWaveDeviceEntity, CoverDevice):
     @property
     def device_class(self):
         """Return the class of this device, from component DEVICE_CLASSES."""
-        return 'garage'
+        return "garage"
 
     @property
     def supported_features(self):

@@ -14,22 +14,37 @@ import homeassistant.helpers.config_validation as cv
 
 from .config_flow import configured_haps
 from .const import (
-    CONF_ACCESSPOINT, CONF_AUTHTOKEN, DOMAIN, HMIPC_AUTHTOKEN, HMIPC_HAPID,
-    HMIPC_NAME)
+    CONF_ACCESSPOINT,
+    CONF_AUTHTOKEN,
+    DOMAIN,
+    HMIPC_AUTHTOKEN,
+    HMIPC_HAPID,
+    HMIPC_NAME,
+)
 from .device import HomematicipGenericDevice  # noqa: F401
 from .hap import HomematicipAuth, HomematicipHAP  # noqa: F401
 
-REQUIREMENTS = ['homematicip==0.9.8']
+REQUIREMENTS = ["homematicip==0.9.8"]
 
 _LOGGER = logging.getLogger(__name__)
 
-CONFIG_SCHEMA = vol.Schema({
-    vol.Optional(DOMAIN, default=[]): vol.All(cv.ensure_list, [vol.Schema({
-        vol.Optional(CONF_NAME, default=''): vol.Any(cv.string),
-        vol.Required(CONF_ACCESSPOINT): cv.string,
-        vol.Required(CONF_AUTHTOKEN): cv.string,
-    })]),
-}, extra=vol.ALLOW_EXTRA)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        vol.Optional(DOMAIN, default=[]): vol.All(
+            cv.ensure_list,
+            [
+                vol.Schema(
+                    {
+                        vol.Optional(CONF_NAME, default=""): vol.Any(cv.string),
+                        vol.Required(CONF_ACCESSPOINT): cv.string,
+                        vol.Required(CONF_AUTHTOKEN): cv.string,
+                    }
+                )
+            ],
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 async def async_setup(hass, config):
@@ -40,14 +55,17 @@ async def async_setup(hass, config):
 
     for conf in accesspoints:
         if conf[CONF_ACCESSPOINT] not in configured_haps(hass):
-            hass.async_add_job(hass.config_entries.flow.async_init(
-                DOMAIN, context={'source': config_entries.SOURCE_IMPORT},
-                data={
-                    HMIPC_HAPID: conf[CONF_ACCESSPOINT],
-                    HMIPC_AUTHTOKEN: conf[CONF_AUTHTOKEN],
-                    HMIPC_NAME: conf[CONF_NAME],
-                }
-            ))
+            hass.async_add_job(
+                hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": config_entries.SOURCE_IMPORT},
+                    data={
+                        HMIPC_HAPID: conf[CONF_ACCESSPOINT],
+                        HMIPC_AUTHTOKEN: conf[CONF_AUTHTOKEN],
+                        HMIPC_NAME: conf[CONF_NAME],
+                    },
+                )
+            )
 
     return True
 
@@ -55,7 +73,7 @@ async def async_setup(hass, config):
 async def async_setup_entry(hass, entry):
     """Set up an access point from a config entry."""
     hap = HomematicipHAP(hass, entry)
-    hapid = entry.data[HMIPC_HAPID].replace('-', '').upper()
+    hapid = entry.data[HMIPC_HAPID].replace("-", "").upper()
     hass.data[DOMAIN][hapid] = hap
     return await hap.async_setup()
 

@@ -6,18 +6,16 @@ https://home-assistant.io/components/remote.apple_tv/
 """
 import asyncio
 
-from homeassistant.components.apple_tv import (
-    ATTR_ATV, ATTR_POWER, DATA_APPLE_TV)
+from homeassistant.components.apple_tv import ATTR_ATV, ATTR_POWER, DATA_APPLE_TV
 from homeassistant.components import remote
-from homeassistant.const import (CONF_NAME, CONF_HOST)
+from homeassistant.const import CONF_NAME, CONF_HOST
 
 
-DEPENDENCIES = ['apple_tv']
+DEPENDENCIES = ["apple_tv"]
 
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_entities,
-                         discovery_info=None):
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Apple TV remote platform."""
     if not discovery_info:
         return
