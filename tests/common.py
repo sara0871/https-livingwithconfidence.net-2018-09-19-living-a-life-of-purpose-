@@ -372,9 +372,9 @@ class MockUser(auth_models.User):
         ensure_auth_manager_loaded(auth_mgr)
 
         if self._mock_system_generated:
-            group_id = auth_mgr._store.system_user_group_id
+            group_id = auth_mgr._store._system_user_group_id
         else:
-            group_id = auth_mgr._store.default_new_user_group_id
+            group_id = auth_mgr._store._default_new_user_group_id
 
         self.group = auth_mgr._store._groups[group_id]
 

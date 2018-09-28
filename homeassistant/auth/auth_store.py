@@ -70,8 +70,8 @@ class AuthStore:
         self.hass = hass
         self._users = None  # type: Optional[Dict[str, models.User]]
         self._groups = None  # type: Optional[Dict[str, models.Group]]
-        self.default_new_user_group_id = None  # type: Optional[str]
-        self.system_user_group_id = None  # type: Optional[str]
+        self._default_new_user_group_id = None  # type: Optional[str]
+        self._system_user_group_id = None  # type: Optional[str]
         self._store = DataStore(hass)
 
     async def async_get_users(self) -> List[models.User]:
@@ -102,9 +102,9 @@ class AuthStore:
             assert self._users is not None
 
         if system_generated:
-            group_id = self.system_user_group_id
+            group_id = self._system_user_group_id
         elif group_id is None:
-            group_id = self.default_new_user_group_id
+            group_id = self._default_new_user_group_id
 
         kwargs = {
             'name': name,
@@ -343,8 +343,8 @@ class AuthStore:
 
         self._groups = groups
         self._users = users
-        self.default_new_user_group_id = data['default_new_user_group_id']
-        self.system_user_group_id = data['system_user_group_id']
+        self._default_new_user_group_id = data['default_new_user_group_id']
+        self._system_user_group_id = data['system_user_group_id']
 
     @callback
     def _async_schedule_save(self) -> None:
@@ -418,8 +418,8 @@ class AuthStore:
             'groups': groups,
             'credentials': credentials,
             'refresh_tokens': refresh_tokens,
-            'default_new_user_group_id': self.default_new_user_group_id,
-            'system_user_group_id': self.system_user_group_id,
+            'default_new_user_group_id': self._default_new_user_group_id,
+            'system_user_group_id': self._system_user_group_id,
         }
 
     def _set_defaults(self):
@@ -430,8 +430,8 @@ class AuthStore:
         system_group = models.Group(name='System', system_generated=True)
         family_group = models.Group(name='Family')
 
-        self.default_new_user_group_id = family_group.id
-        self.system_user_group_id = system_group.id
+        self._default_new_user_group_id = family_group.id
+        self._system_user_group_id = system_group.id
 
         groups = OrderedDict()
         groups[system_group.id] = system_group
