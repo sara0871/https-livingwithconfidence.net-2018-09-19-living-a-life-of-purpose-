@@ -334,7 +334,7 @@ async def test_generating_system_user(hass):
     manager = await auth.auth_manager_from_config(hass, [], [])
     user = await manager.async_create_system_user('Hass.io')
     token = await manager.async_create_refresh_token(user)
-    assert user.system_generated
+    assert user.group.system_generated
     assert token is not None
     assert token.client_id is None
 
@@ -343,7 +343,7 @@ async def test_refresh_token_requires_client_for_user(hass):
     """Test create refresh token for a user with client_id."""
     manager = await auth.auth_manager_from_config(hass, [], [])
     user = MockUser().add_to_auth_manager(manager)
-    assert user.system_generated is False
+    assert user.group.system_generated is False
 
     with pytest.raises(ValueError):
         await manager.async_create_refresh_token(user)
@@ -361,7 +361,7 @@ async def test_refresh_token_not_requires_client_for_system_user(hass):
     """Test create refresh token for a system user w/o client_id."""
     manager = await auth.auth_manager_from_config(hass, [], [])
     user = await manager.async_create_system_user('Hass.io')
-    assert user.system_generated is True
+    assert user.group.system_generated is True
 
     with pytest.raises(ValueError):
         await manager.async_create_refresh_token(user, CLIENT_ID)

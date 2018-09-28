@@ -44,9 +44,9 @@ class TrustedNetworksAuthProvider(AuthProvider):
         """Return a flow to login."""
         assert context is not None
         users = await self.store.async_get_users()
-        available_users = {user.id: user.name
-                           for user in users
-                           if not user.system_generated and user.is_active}
+        available_users = {
+            user.id: user.name for user in users
+            if not user.group.system_generated and user.is_active}
 
         return TrustedNetworksLoginFlow(
             self, cast(str, context.get('ip_address')), available_users)
@@ -58,7 +58,7 @@ class TrustedNetworksAuthProvider(AuthProvider):
 
         users = await self.store.async_get_users()
         for user in users:
-            if (not user.system_generated and
+            if (not user.group.system_generated and
                     user.is_active and
                     user.id == user_id):
                 for credential in await self.async_credentials():

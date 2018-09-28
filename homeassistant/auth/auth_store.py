@@ -1,18 +1,59 @@
 """Storage for auth models."""
 from collections import OrderedDict
 from datetime import timedelta
+import hmac
 from logging import getLogger
 from typing import Any, Dict, List, Optional  # noqa: F401
-import hmac
+import uuid
 
 from homeassistant.auth.const import ACCESS_TOKEN_EXPIRATION
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import storage
 from homeassistant.util import dt as dt_util
 
 from . import models
 
-STORAGE_VERSION = 1
+STORAGE_VERSION = 2
 STORAGE_KEY = 'auth'
+
+
+class DataStore(storage.Store):
+    """Store the auth data on disk using JSON."""
+
+    def __init__(self, hass):
+        """Initialize the data store."""
+        super().__init__(hass, STORAGE_VERSION, STORAGE_KEY, True)
+
+    async def _async_migrate_func(self, old_version, old_data):
+        """Migrate to the new version."""
+        if old_version <= 1:
+            system_group_id = old_data['system_user_group_id'] = \
+                uuid.uuid4().hex
+            family_group_id = old_data['default_new_user_group_id'] = \
+                uuid.uuid4().hex
+
+            old_data['groups'] = [
+                {
+                    'name': 'System',
+                    'id': system_group_id,
+                    'system_generated': True,
+                },
+                {
+                    'name': 'Family',
+                    'id': family_group_id,
+                    'system_generated': False,
+                },
+            ]
+
+            for user_info in old_data['users']:
+                if user_info.pop('system_generated'):
+                    group_id = system_group_id
+                else:
+                    group_id = family_group_id
+
+                user_info['group_id'] = group_id
+
+        return old_data
 
 
 class AuthStore:
@@ -28,8 +69,10 @@ class AuthStore:
         """Initialize the auth store."""
         self.hass = hass
         self._users = None  # type: Optional[Dict[str, models.User]]
-        self._store = hass.helpers.storage.Store(STORAGE_VERSION, STORAGE_KEY,
-                                                 private=True)
+        self._groups = None  # type: Optional[Dict[str, models.Group]]
+        self.default_new_user_group_id = None  # type: Optional[str]
+        self.system_user_group_id = None  # type: Optional[str]
+        self._store = DataStore(hass)
 
     async def async_get_users(self) -> List[models.User]:
         """Retrieve all users."""
@@ -50,6 +93,7 @@ class AuthStore:
     async def async_create_user(
             self, name: Optional[str], is_owner: Optional[bool] = None,
             is_active: Optional[bool] = None,
+            group_id: Optional[str] = None,
             system_generated: Optional[bool] = None,
             credentials: Optional[models.Credentials] = None) -> models.User:
         """Create a new user."""
@@ -57,8 +101,14 @@ class AuthStore:
             await self._async_load()
             assert self._users is not None
 
+        if system_generated:
+            group_id = self.system_user_group_id
+        elif group_id is None:
+            group_id = self.default_new_user_group_id
+
         kwargs = {
-            'name': name
+            'name': name,
+            'group': self._groups[group_id],
         }  # type: Dict[str, Any]
 
         if is_owner is not None:
@@ -66,9 +116,6 @@ class AuthStore:
 
         if is_active is not None:
             kwargs['is_active'] = is_active
-
-        if system_generated is not None:
-            kwargs['system_generated'] = system_generated
 
         new_user = models.User(**kwargs)
 
@@ -214,14 +261,32 @@ class AuthStore:
         if self._users is not None:
             return
 
-        users = OrderedDict()  # type: Dict[str, models.User]
-
         if data is None:
-            self._users = users
+            self._set_defaults()
             return
 
+        users = OrderedDict()  # type: Dict[str, models.User]
+        groups = OrderedDict()  # type: Dict[str, models.Group]
+
+        # When creating objects we mention each attribute explicetely. This
+        # prevents crashing if user rolls back HA version after a new property
+        # was added.
+
+        for group_dict in data['groups']:
+            groups[group_dict['id']] = models.Group(
+                name=group_dict['name'],
+                id=group_dict['id'],
+                system_generated=group_dict['system_generated'],
+            )
+
         for user_dict in data['users']:
-            users[user_dict['id']] = models.User(**user_dict)
+            users[user_dict['id']] = models.User(
+                name=user_dict['name'],
+                group=groups[user_dict['group_id']],
+                id=user_dict['id'],
+                is_owner=user_dict['is_owner'],
+                is_active=user_dict['is_active'],
+            )
 
         for cred_dict in data['credentials']:
             users[cred_dict['user_id']].credentials.append(models.Credentials(
@@ -276,7 +341,10 @@ class AuthStore:
             )
             users[rt_dict['user_id']].refresh_tokens[token.id] = token
 
+        self._groups = groups
         self._users = users
+        self.default_new_user_group_id = data['default_new_user_group_id']
+        self.system_user_group_id = data['system_user_group_id']
 
     @callback
     def _async_schedule_save(self) -> None:
@@ -294,12 +362,21 @@ class AuthStore:
         users = [
             {
                 'id': user.id,
+                'group_id': user.group.id,
                 'is_owner': user.is_owner,
                 'is_active': user.is_active,
                 'name': user.name,
-                'system_generated': user.system_generated,
             }
             for user in self._users.values()
+        ]
+
+        groups = [
+            {
+                'name': group.name,
+                'id': group.id,
+                'system_generated': group.system_generated,
+            }
+            for group in self._groups.values()
         ]
 
         credentials = [
@@ -338,6 +415,26 @@ class AuthStore:
 
         return {
             'users': users,
+            'groups': groups,
             'credentials': credentials,
             'refresh_tokens': refresh_tokens,
+            'default_new_user_group_id': self.default_new_user_group_id,
+            'system_user_group_id': self.system_user_group_id,
         }
+
+    def _set_defaults(self):
+        """Set default values for auth store."""
+        self._users = OrderedDict()
+
+        # Add default groups
+        system_group = models.Group(name='System', system_generated=True)
+        family_group = models.Group(name='Family')
+
+        self.default_new_user_group_id = family_group.id
+        self.system_user_group_id = system_group.id
+
+        groups = OrderedDict()
+        groups[system_group.id] = system_group
+        groups[family_group.id] = family_group
+
+        self._groups = groups

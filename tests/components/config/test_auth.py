@@ -83,6 +83,7 @@ async def test_list(hass, hass_ws_client):
         'is_owner': True,
         'is_active': True,
         'system_generated': False,
+        'group_id': owner.group.id,
         'credentials': [{'type': 'homeassistant'}]
     }
     assert data[1] == {
@@ -91,6 +92,7 @@ async def test_list(hass, hass_ws_client):
         'is_owner': False,
         'is_active': True,
         'system_generated': True,
+        'group_id': system.group.id,
         'credentials': [],
     }
     assert data[2] == {
@@ -99,6 +101,7 @@ async def test_list(hass, hass_ws_client):
         'is_owner': False,
         'is_active': False,
         'system_generated': False,
+        'group_id': inactive.group.id,
         'credentials': [],
     }
 
@@ -201,7 +204,7 @@ async def test_create(hass, hass_ws_client, hass_access_token):
     assert user.name == data_user['name']
     assert user.is_active
     assert not user.is_owner
-    assert not user.system_generated
+    assert not user.group.system_generated
 
 
 async def test_create_requires_owner(hass, hass_ws_client, hass_access_token):

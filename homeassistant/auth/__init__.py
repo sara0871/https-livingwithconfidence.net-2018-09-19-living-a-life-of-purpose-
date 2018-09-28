@@ -211,7 +211,7 @@ class AuthManager:
     async def async_enable_user_mfa(self, user: models.User,
                                     mfa_module_id: str, data: Any) -> None:
         """Enable a multi-factor auth module for user."""
-        if user.system_generated:
+        if user.group.system_generated:
             raise ValueError('System generated users cannot enable '
                              'multi-factor auth module.')
 
@@ -225,7 +225,7 @@ class AuthManager:
     async def async_disable_user_mfa(self, user: models.User,
                                      mfa_module_id: str) -> None:
         """Disable a multi-factor auth module for user."""
-        if user.system_generated:
+        if user.group.system_generated:
             raise ValueError('System generated users cannot disable '
                              'multi-factor auth module.')
 
@@ -255,18 +255,18 @@ class AuthManager:
         if not user.is_active:
             raise ValueError('User is not active')
 
-        if user.system_generated and client_id is not None:
+        if user.group.system_generated and client_id is not None:
             raise ValueError(
                 'System generated users cannot have refresh tokens connected '
                 'to a client.')
 
         if token_type is None:
-            if user.system_generated:
+            if user.group.system_generated:
                 token_type = models.TOKEN_TYPE_SYSTEM
             else:
                 token_type = models.TOKEN_TYPE_NORMAL
 
-        if user.system_generated != (token_type == models.TOKEN_TYPE_SYSTEM):
+        if user.group.system_generated != (token_type == models.TOKEN_TYPE_SYSTEM):
             raise ValueError(
                 'System generated users can only have system type '
                 'refresh tokens')
@@ -414,7 +414,7 @@ class AuthManager:
         being created.
         """
         for user in await self._store.async_get_users():
-            if not user.system_generated:
+            if not user.group.system_generated:
                 return False
 
         return True

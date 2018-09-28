@@ -1,0 +1,24 @@
+{
+    "data": {
+        "credentials": [],
+        "refresh_tokens": [],
+        "users": [
+            {
+                "id": "74f25fa868d649cd83114b321f5f0256",
+                "is_active": true,
+                "is_owner": true,
+                "name": "Paulus",
+                "system_generated": false
+            },
+            {
+              "id": "b8e85152681d4611a13fb3ffe04b99f4",
+              "is_active": true,
+              "is_owner": false,
+              "name": "Hass.io",
+              "system_generated": true
+          }
+      ]
+    },
+    "key": "auth",
+    "version": 1
+}

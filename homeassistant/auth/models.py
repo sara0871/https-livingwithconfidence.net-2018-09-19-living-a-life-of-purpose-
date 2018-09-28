@@ -15,14 +15,24 @@ TOKEN_TYPE_LONG_LIVED_ACCESS_TOKEN = 'long_lived_access_token'
 
 
 @attr.s(slots=True)
+class Group:
+    """A group."""
+
+    name = attr.ib(type=str)  # type: Optional[str]
+    id = attr.ib(type=str, default=attr.Factory(lambda: uuid.uuid4().hex))
+    # System generated groups cannot be changed
+    system_generated = attr.ib(type=bool, default=False)
+
+
+@attr.s(slots=True)
 class User:
     """A user."""
 
     name = attr.ib(type=str)  # type: Optional[str]
+    group = attr.ib(type=Group)
     id = attr.ib(type=str, default=attr.Factory(lambda: uuid.uuid4().hex))
     is_owner = attr.ib(type=bool, default=False)
     is_active = attr.ib(type=bool, default=False)
-    system_generated = attr.ib(type=bool, default=False)
 
     # List of credentials of a user.
     credentials = attr.ib(

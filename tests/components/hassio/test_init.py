@@ -105,7 +105,7 @@ async def test_setup_api_push_api_data_default(hass, aioclient_mock,
         hass_storage[STORAGE_KEY]['data']['hassio_user']
     )
     assert hassio_user is not None
-    assert hassio_user.system_generated
+    assert hassio_user.group.system_generated
     for token in hassio_user.refresh_tokens.values():
         if token.token == refresh_token:
             break

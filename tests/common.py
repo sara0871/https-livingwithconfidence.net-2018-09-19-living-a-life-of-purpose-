@@ -355,11 +355,13 @@ class MockUser(auth_models.User):
             'is_owner': is_owner,
             'is_active': is_active,
             'name': name,
-            'system_generated': system_generated,
+            # Filled in when added to hass/auth manager
+            'group': None,
         }
         if id is not None:
             kwargs['id'] = id
         super().__init__(**kwargs)
+        self._mock_system_generated = system_generated
 
     def add_to_hass(self, hass):
         """Test helper to add entry to hass."""
@@ -368,6 +370,14 @@ class MockUser(auth_models.User):
     def add_to_auth_manager(self, auth_mgr):
         """Test helper to add entry to hass."""
         ensure_auth_manager_loaded(auth_mgr)
+
+        if self._mock_system_generated:
+            group_id = auth_mgr._store.system_user_group_id
+        else:
+            group_id = auth_mgr._store.default_new_user_group_id
+
+        self.group = auth_mgr._store._groups[group_id]
+
         auth_mgr._store._users[self.id] = self
         return self
 
@@ -392,7 +402,7 @@ def ensure_auth_manager_loaded(auth_mgr):
     """Ensure an auth manager is considered loaded."""
     store = auth_mgr._store
     if store._users is None:
-        store._users = OrderedDict()
+        store._set_defaults()
 
 
 class MockModule:
