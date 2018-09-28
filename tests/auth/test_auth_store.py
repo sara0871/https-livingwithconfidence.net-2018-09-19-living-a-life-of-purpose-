@@ -1,7 +1,7 @@
 """Test the auth store."""
 import json
 
-from homeassistant.auth import auth_store
+from homeassistant.auth import auth_store, models
 
 from tests.common import load_fixture
 
@@ -30,3 +30,18 @@ async def test_migration_v1_v2(hass, hass_storage):
 
     assert hassio['is_owner'] is False
     assert hassio['group_id'] == system_group['id']
+
+    assert len(data['refresh_tokens']) == 2
+    user_token, system_token = data['refresh_tokens']
+
+    assert user_token['token_type'] == models.TOKEN_TYPE_NORMAL
+    assert user_token['last_used_at'] is None
+    assert user_token['client_name'] is None
+    assert user_token['client_icon'] is None
+    assert user_token['last_used_ip'] is None
+
+    assert system_token['token_type'] == models.TOKEN_TYPE_SYSTEM
+    assert system_token['last_used_at'] is None
+    assert system_token['client_name'] is None
+    assert system_token['client_icon'] is None
+    assert system_token['last_used_ip'] is None

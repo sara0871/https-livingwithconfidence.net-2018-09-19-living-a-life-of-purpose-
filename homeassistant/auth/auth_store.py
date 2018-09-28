@@ -2,7 +2,6 @@
 from collections import OrderedDict
 from datetime import timedelta
 import hmac
-from logging import getLogger
 from typing import Any, Dict, List, Optional  # noqa: F401
 import uuid
 
@@ -46,13 +45,36 @@ class DataStore(storage.Store):
                 },
             ]
 
-            for user_info in old_data['users']:
-                if user_info.pop('system_generated'):
+            for user_dict in old_data['users']:
+                if user_dict.pop('system_generated'):
                     group_id = system_group_id
                 else:
                     group_id = family_group_id
 
-                user_info['group_id'] = group_id
+                user_dict['group_id'] = group_id
+
+            refresh_tokens = []
+
+            for rt_dict in old_data['refresh_tokens']:
+                if 'jwt_key' not in rt_dict:
+                    continue
+
+                if 'token_type' not in rt_dict:
+                    if rt_dict['client_id'] is None:
+                        token_type = models.TOKEN_TYPE_SYSTEM
+                    else:
+                        token_type = models.TOKEN_TYPE_NORMAL
+
+                    rt_dict['token_type'] = token_type
+
+                rt_dict.setdefault('last_used_at', None)
+                rt_dict.setdefault('client_name', None)
+                rt_dict.setdefault('client_icon', None)
+                rt_dict.setdefault('last_used_ip', None)
+
+                refresh_tokens.append(rt_dict)
+
+            old_data['refresh_tokens'] = refresh_tokens
 
         return old_data
 
@@ -303,26 +325,7 @@ class AuthStore:
             ))
 
         for rt_dict in data['refresh_tokens']:
-            # Filter out the old keys that don't have jwt_key (pre-0.76)
-            if 'jwt_key' not in rt_dict:
-                continue
-
-            created_at = dt_util.parse_datetime(rt_dict['created_at'])
-            if created_at is None:
-                getLogger(__name__).error(
-                    'Ignoring refresh token %(id)s with invalid created_at '
-                    '%(created_at)s for user_id %(user_id)s', rt_dict)
-                continue
-
-            token_type = rt_dict.get('token_type')
-            if token_type is None:
-                if rt_dict['client_id'] is None:
-                    token_type = models.TOKEN_TYPE_SYSTEM
-                else:
-                    token_type = models.TOKEN_TYPE_NORMAL
-
-            # old refresh_token don't have last_used_at (pre-0.78)
-            last_used_at_str = rt_dict.get('last_used_at')
+            last_used_at_str = rt_dict['last_used_at']
             if last_used_at_str:
                 last_used_at = dt_util.parse_datetime(last_used_at_str)
             else:
@@ -332,17 +335,16 @@ class AuthStore:
                 id=rt_dict['id'],
                 user=users[rt_dict['user_id']],
                 client_id=rt_dict['client_id'],
-                # use dict.get to keep backward compatibility
-                client_name=rt_dict.get('client_name'),
-                client_icon=rt_dict.get('client_icon'),
-                token_type=token_type,
-                created_at=created_at,
+                client_name=rt_dict['client_name'],
+                client_icon=rt_dict['client_icon'],
+                token_type=rt_dict['token_type'],
+                created_at=dt_util.parse_datetime(rt_dict['created_at']),
                 access_token_expiration=timedelta(
                     seconds=rt_dict['access_token_expiration']),
                 token=rt_dict['token'],
                 jwt_key=rt_dict['jwt_key'],
                 last_used_at=last_used_at,
-                last_used_ip=rt_dict.get('last_used_ip'),
+                last_used_ip=rt_dict['last_used_ip'],
             )
             users[rt_dict['user_id']].refresh_tokens[token.id] = token
 

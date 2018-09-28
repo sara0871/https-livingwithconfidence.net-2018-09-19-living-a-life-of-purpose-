@@ -1,7 +1,34 @@
 {
     "data": {
         "credentials": [],
-        "refresh_tokens": [],
+        "refresh_tokens": [
+            {
+                "access_token_expiration": 1800.0,
+                "client_id": "http://localhost:8123/",
+                "created_at": "2018-09-28T10:35:47.969734+00:00",
+                "id": "aaaaf7deb7ab454685d33c50c319ae7e",
+                "jwt_key": "some-jwt-key",
+                "token": "some-token",
+                "user_id": "74f25fa868d649bf83114b321f5f0256"
+            },
+            {
+                "access_token_expiration": 1800.0,
+                "client_id": "http://localhost:8123/",
+                "created_at": "2018-09-28T10:35:47.969734+00:00",
+                "id": "bbbbf7deb7ab454685d33c50c319ae7e",
+                "token": "some-token",
+                "user_id": "74f25fa868d649bf83114b321f5f0256"
+            },
+            {
+                "access_token_expiration": 1800.0,
+                "client_id": null,
+                "created_at": "2018-09-28T10:35:47.969734+00:00",
+                "id": "aaaaf7deb7ab454685d33c50c319ae7e",
+                "jwt_key": "some-jwt-key",
+                "token": "some-token",
+                "user_id": "74f25fa868d649bf83114b321f5f0256"
+            }
+        ],
         "users": [
             {
                 "id": "74f25fa868d649cd83114b321f5f0256",
