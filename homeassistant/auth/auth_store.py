@@ -20,11 +20,12 @@ STORAGE_KEY = 'auth'
 class DataStore(storage.Store):
     """Store the auth data on disk using JSON."""
 
-    def __init__(self, hass):
+    def __init__(self, hass: HomeAssistant) -> None:
         """Initialize the data store."""
         super().__init__(hass, STORAGE_VERSION, STORAGE_KEY, True)
 
-    async def _async_migrate_func(self, old_version, old_data):
+    async def _async_migrate_func(self, old_version: int,
+                                  old_data: Dict[str, Any]) -> Dict[str, Any]:
         """Migrate to the new version."""
         if old_version <= 1:
             system_group_id = old_data['system_user_group_id'] = \
@@ -99,7 +100,11 @@ class AuthStore:
         """Create a new user."""
         if self._users is None:
             await self._async_load()
-            assert self._users is not None
+
+        assert self._users is not None
+        assert self._groups is not None
+        assert self._system_user_group_id is not None
+        assert self._default_new_user_group_id is not None
 
         if system_generated:
             group_id = self._system_user_group_id
@@ -358,6 +363,7 @@ class AuthStore:
     def _data_to_save(self) -> Dict:
         """Return the data to store."""
         assert self._users is not None
+        assert self._groups is not None
 
         users = [
             {
@@ -422,9 +428,9 @@ class AuthStore:
             'system_user_group_id': self._system_user_group_id,
         }
 
-    def _set_defaults(self):
+    def _set_defaults(self) -> None:
         """Set default values for auth store."""
-        self._users = OrderedDict()
+        self._users = OrderedDict()  # type: Dict[str, models.User]
 
         # Add default groups
         system_group = models.Group(name='System', system_generated=True)
@@ -433,7 +439,7 @@ class AuthStore:
         self._default_new_user_group_id = family_group.id
         self._system_user_group_id = system_group.id
 
-        groups = OrderedDict()
+        groups = OrderedDict()  # type: Dict[str, models.Group]
         groups[system_group.id] = system_group
         groups[family_group.id] = family_group
 

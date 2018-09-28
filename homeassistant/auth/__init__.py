@@ -266,7 +266,8 @@ class AuthManager:
             else:
                 token_type = models.TOKEN_TYPE_NORMAL
 
-        if user.group.system_generated != (token_type == models.TOKEN_TYPE_SYSTEM):
+        if user.group.system_generated != (token_type ==
+                                           models.TOKEN_TYPE_SYSTEM):
             raise ValueError(
                 'System generated users can only have system type '
                 'refresh tokens')
