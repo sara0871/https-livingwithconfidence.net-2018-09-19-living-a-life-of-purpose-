@@ -2,6 +2,7 @@
 from collections import OrderedDict
 from datetime import timedelta
 import hmac
+from logging import getLogger
 from typing import Any, Dict, List, Optional  # noqa: F401
 import uuid
 
@@ -325,6 +326,13 @@ class AuthStore:
             ))
 
         for rt_dict in data['refresh_tokens']:
+            created_at = dt_util.parse_datetime(rt_dict['created_at'])
+            if created_at is None:
+                getLogger(__name__).error(
+                    'Ignoring refresh token %(id)s with invalid created_at '
+                    '%(created_at)s for user_id %(user_id)s', rt_dict)
+                continue
+
             last_used_at_str = rt_dict['last_used_at']
             if last_used_at_str:
                 last_used_at = dt_util.parse_datetime(last_used_at_str)
@@ -338,7 +346,7 @@ class AuthStore:
                 client_name=rt_dict['client_name'],
                 client_icon=rt_dict['client_icon'],
                 token_type=rt_dict['token_type'],
-                created_at=dt_util.parse_datetime(rt_dict['created_at']),
+                created_at=created_at,
                 access_token_expiration=timedelta(
                     seconds=rt_dict['access_token_expiration']),
                 token=rt_dict['token'],
